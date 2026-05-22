@@ -21,7 +21,7 @@ export default function About() {
         </motion.h1>
         <motion.p {...fadeUp} transition={{ duration: 0.7, delay: 0.2 }}
           className="text-[17px] text-foreground/80 leading-[1.75]">
-          Paideia-Ren draws from the deepest wells of human educational thought — Greek, Confucian, and African — to build technology that forms whole persons within a shared humanity.
+          Paideia-Ren draws from the deepest wells of human educational thought: Greek, Confucian, and African, to build technology that forms whole persons within a shared humanity.
         </motion.p>
       </section>
 
@@ -37,7 +37,7 @@ export default function About() {
                 definition: "The lifelong cultivation of excellence in body, intellect, character, and civic life.",
                 quote: "Paideia: the process of educating man into his true form, the real and genuine human nature.",
                 attribution: "Werner Jaeger, Paideia: The Ideals of Greek Culture",
-                body: "In Plato's Republic, education is described as 'the craft of turning the whole soul' toward the Good — not data-loading but an inner reorientation. The paideutic ideal holds that learning is inseparable from character formation. This is our first foundation.",
+                body: "In Plato's Republic, education is described as 'the craft of turning the whole soul' toward the Good, not data-loading but an inner reorientation. The paideutic ideal holds that learning is inseparable from character formation. This is our first foundation.",
               },
               {
                 label: "Confucian",
@@ -45,16 +45,16 @@ export default function About() {
                 subtitle: "仁",
                 subtitleStyle: "font-serif text-[56px] text-accent leading-none",
                 definition: "Humaneness expressed in relationship. The character 仁 depicts two people side by side.",
-                quote: "To love others — that is ren.",
+                quote: "To love others: that is ren.",
                 attribution: "Confucius, Analects XII.22",
-                body: "Ren is the supreme Confucian virtue: benevolence, compassion, and human-heartedness realized in relationship. A person becomes fully human in right relation with others. Our AI is built never to replace this relational core — only to protect and extend it.",
+                body: "Ren is the supreme Confucian virtue: benevolence, compassion, and human-heartedness realized in relationship. A person becomes fully human in right relation with others. Our AI is built never to replace this relational core, only to protect and extend it.",
               },
               {
                 label: "African",
                 title: "Ubuntu",
                 subtitle: "umuntu ngumuntu ngabantu",
                 definition: "A person is a person through other persons. I am because we are.",
-                quote: "Umuntu ngumuntu ngabantu — a person is a person through other persons.",
+                quote: "Umuntu ngumuntu ngabantu: a person is a person through other persons.",
                 attribution: "African proverb",
                 body: "Ubuntu is a communal philosophy of selfhood: my flourishing is bound to yours. In education, this means knowledge is held collectively, learning is dialogical, and my child's literacy is inseparable from your child's literacy. This is the equity imperative.",
               },
@@ -71,7 +71,7 @@ export default function About() {
                 <p className="text-[15px] font-semibold text-foreground mb-6 leading-[1.6]">{item.definition}</p>
                 <blockquote className="border-l-gold mb-6">
                   <p className="font-serif text-xl text-primary italic leading-[1.6] mb-2">"{item.quote}"</p>
-                  <cite className="text-[13px] text-muted-foreground not-italic">— {item.attribution}</cite>
+                  <cite className="text-[13px] text-muted-foreground not-italic">{item.attribution}</cite>
                 </blockquote>
                 <p className="text-[17px] text-foreground/80 leading-[1.75]">{item.body}</p>
               </motion.div>
@@ -90,7 +90,7 @@ export default function About() {
             Why this matters
           </h2>
           <p className="text-[17px] text-foreground/80 leading-[1.75] mb-8">
-            Three traditions, three continents, three millennia of thought — converging on a single educational anthropology: <strong>true learning forms the whole person, and a whole person is one whose intelligence is bound to humaneness and to community.</strong>
+            Three traditions, three continents, three millennia of thought, converging on a single educational anthropology: <strong>true learning forms the whole person, and a whole person is one whose intelligence is bound to humaneness and to community.</strong>
           </p>
           <p className="text-[17px] text-foreground/80 leading-[1.75] mb-12">
             This is the philosophical bedrock that justifies an AI tutoring system grounded in adaptivity (paideia: each soul turned in the way it can turn), relational ethics (ren: technology in service of human relationship, never replacing it), and equity (ubuntu: my child's learning is bound to your child's learning).
@@ -101,39 +101,22 @@ export default function About() {
               <p className="font-serif text-xl text-primary italic leading-[1.6] mb-2">
                 "Paideia: the process of educating man into his true form, the real and genuine human nature."
               </p>
-              <cite className="text-[13px] text-muted-foreground not-italic">— Werner Jaeger</cite>
+              <cite className="text-[13px] text-muted-foreground not-italic">Werner Jaeger</cite>
             </blockquote>
             <blockquote className="border-l-gold">
               <p className="font-serif text-xl text-primary italic leading-[1.6] mb-2">
-                "To love others — that is ren."
+                "To love others: that is ren."
               </p>
-              <cite className="text-[13px] text-muted-foreground not-italic">— Confucius</cite>
+              <cite className="text-[13px] text-muted-foreground not-italic">Confucius</cite>
             </blockquote>
             <blockquote className="border-l-gold">
               <p className="font-serif text-xl text-primary italic leading-[1.6] mb-2">
-                "Umuntu ngumuntu ngabantu — a person is a person through other persons."
+                "Umuntu ngumuntu ngabantu: a person is a person through other persons."
               </p>
-              <cite className="text-[13px] text-muted-foreground not-italic">— African proverb</cite>
+              <cite className="text-[13px] text-muted-foreground not-italic">African proverb</cite>
             </blockquote>
           </div>
         </motion.div>
-      </section>
-
-      {/* Kiswahili Sub-line */}
-      <section className="bg-primary py-[120px] text-center">
-        <div className="max-w-[720px] mx-auto px-6">
-          <motion.p {...fadeUp} className="font-serif text-[13px] text-accent tracking-[0.3em] uppercase mb-6">
-            Kiswahili Honorific
-          </motion.p>
-          <motion.h2 {...fadeUp} transition={{ duration: 0.7, delay: 0.1 }}
-            className="font-serif text-4xl md:text-[56px] text-white italic leading-[1.2] mb-4">
-            Malezi ya Ulimwengu
-          </motion.h2>
-          <motion.p {...fadeUp} transition={{ duration: 0.7, delay: 0.2 }}
-            className="font-serif text-xl text-white/70 italic">
-            The formation of a world citizen.
-          </motion.p>
-        </div>
       </section>
     </div>
   );

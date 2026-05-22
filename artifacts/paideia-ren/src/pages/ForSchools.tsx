@@ -84,7 +84,7 @@ export default function ForSchools() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {[
               { label: "Interoperability", value: "LTI · OneRoster · SCORM · xAPI" },
-              { label: "Languages", value: "EN · FR · SW · PT at launch" },
+              { label: "Languages", value: "English at launch · More planned" },
               { label: "Connectivity", value: "Offline-first, 2G capable" },
               { label: "Data Protection", value: "FERPA · GDPR · POPIA · Kenya DPA 2019" },
             ].map((item) => (

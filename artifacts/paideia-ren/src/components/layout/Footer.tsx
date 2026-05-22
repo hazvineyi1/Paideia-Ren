@@ -18,9 +18,6 @@ export function Footer() {
             </Link>
             <p className="text-[13px] text-muted-foreground leading-relaxed max-w-[200px]">
               The formation of a relational human.
-              <br />
-              <br />
-              <em className="font-serif italic text-base">Malezi ya Ulimwengu</em>
             </p>
           </div>
 
@@ -62,7 +59,7 @@ export function Footer() {
             <Link href="/transparency" className="hover:text-foreground">Privacy Policy</Link>
             <Link href="/transparency" className="hover:text-foreground">Terms of Service</Link>
             <Link href="/transparency" className="hover:text-foreground">Accessibility</Link>
-            <span>© Paideia-Ren Inc. — Malezi ya Ulimwengu.</span>
+            <span>© Paideia-Ren Inc.</span>
           </div>
 
           <Button asChild className="bg-accent hover:bg-accent/90 text-white rounded-full px-6 font-medium">

@@ -54,7 +54,7 @@ const features = [
   { icon: Activity, title: "Adaptive Content Engine", description: "Real-time modality-responsive content delivery across every subject and grade level." },
   { icon: Users, title: "Teacher Co-Pilot", description: "Rich classroom dashboards, intervention signals, and suggested next steps, in the teacher's language." },
   { icon: CheckCircle2, title: "Cohort & Community Layer", description: "Peer learning cohorts, dialogical discussion prompts, and collaborative problem-solving tools." },
-  { icon: Globe, title: "Multi-Language Support", description: "English, French, Kiswahili, Portuguese at launch. Ten or more languages planned." },
+  { icon: Globe, title: "Multi-Language Support", description: "English at launch, with additional languages planned. Designed for multilingual curriculum contexts worldwide." },
   { icon: Wifi, title: "Offline-First & Low-Bandwidth", description: "Core learning experience functions on 2G. Content pre-fetches on any available connection." },
   { icon: BookMarked, title: "Curriculum Alignment", description: "National curricula, IB, Cambridge, Common Core, and CAPS, with ministry partnership tooling." },
   { icon: ShieldCheck, title: "Open Data & Privacy by Design", description: "FERPA, GDPR, POPIA, Kenya DPA 2019 compliant. Child-data minimization. No student surveillance." },
