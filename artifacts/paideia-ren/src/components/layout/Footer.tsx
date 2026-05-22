@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import { Linkedin } from "lucide-react";
 import { SiX, SiInstagram } from "react-icons/si";
 import { Button } from "@/components/ui/button";
+import { ShortFormDialog } from "@/components/ShortFormDialog";
 
 export function Footer() {
   return (
@@ -62,9 +63,22 @@ export function Footer() {
             <span>© Paideia-Ren Inc.</span>
           </div>
 
-          <Button asChild className="bg-accent hover:bg-accent/90 text-white rounded-full px-6 font-medium">
-            <Link href="/contact">Donate</Link>
-          </Button>
+          <ShortFormDialog
+            testIdPrefix="donate-footer"
+            trigger={
+              <Button className="bg-accent hover:bg-accent/90 text-white rounded-full px-6 font-medium" data-testid="button-donate-footer">
+                Donate
+              </Button>
+            }
+            title="Support our mission"
+            description="Tell us a little about you and our development team will follow up with giving options."
+            orgLabel="Organization (optional)"
+            orgPlaceholder="Foundation, family office, company"
+            showAmount
+            submitLabel="Send"
+            toastTitle="Thank you"
+            toastDescription="Our development team will be in touch within 2 business days."
+          />
         </div>
       </div>
     </footer>

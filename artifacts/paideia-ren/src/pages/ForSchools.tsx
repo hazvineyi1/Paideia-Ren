@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { CheckCircle2 } from "lucide-react";
+import { ShortFormDialog } from "@/components/ShortFormDialog";
 
 const fadeUp = {
   initial: { opacity: 0, y: 24 },
@@ -49,9 +50,9 @@ const tiers = [
 ];
 
 const regions = [
-  { country: "Kenya", region: "Sub-Saharan Africa", status: "Pilot underway", context: "Urban and peri-urban schools. Focus: mathematics and English literacy at upper primary level." },
-  { country: "Colombia", region: "Latin America", status: "Partnership in design", context: "Secondary mathematics aligned to national curriculum framework." },
-  { country: "India", region: "South Asia", status: "Pilot planned Q3 2026", context: "Rural low-bandwidth deployment. Offline-first configuration. Hindi and English dual-language." },
+  { country: "Ecuador", region: "Latin America", status: "Pilot planned", context: "Spanish-language secondary mathematics. Partnership scoping with regional education authorities." },
+  { country: "Zimbabwe", region: "Sub-Saharan Africa", status: "Pilot planned", context: "Upper-primary literacy and numeracy. Offline-first configuration for low-bandwidth schools." },
+  { country: "Malaysia", region: "Southeast Asia", status: "Pilot planned", context: "Secondary STEM pathways. English-medium deployment with curriculum alignment under design." },
 ];
 
 export default function ForSchools() {
@@ -139,9 +140,21 @@ export default function ForSchools() {
                     </li>
                   ))}
                 </ul>
-                <button className={`w-full py-3 px-6 text-[15px] font-medium border transition-colors ${tier.featured ? "border-white text-white hover:bg-white hover:text-primary" : "border-primary text-primary hover:bg-primary hover:text-white"}`}>
-                  {tier.cta}
-                </button>
+                <ShortFormDialog
+                  testIdPrefix={`tier-${tier.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
+                  trigger={
+                    <button className={`w-full py-3 px-6 text-[15px] font-medium border transition-colors ${tier.featured ? "border-white text-white hover:bg-white hover:text-primary" : "border-primary text-primary hover:bg-primary hover:text-white"}`}>
+                      {tier.cta}
+                    </button>
+                  }
+                  title={`${tier.name}: get in touch`}
+                  description="Share a few details and our partnerships team will respond within two business days."
+                  orgLabel="School, district, or ministry"
+                  orgPlaceholder="e.g. Ministry of Education, Kenya"
+                  submitLabel="Send request"
+                  toastTitle="Request received"
+                  toastDescription="Our partnerships team will contact you within 2 business days."
+                />
               </motion.div>
             ))}
           </div>
@@ -151,7 +164,7 @@ export default function ForSchools() {
       {/* Regions */}
       <section className="py-[120px]">
         <div className="max-w-[1200px] mx-auto px-6">
-          <motion.h2 {...fadeUp} className="font-serif text-3xl md:text-[40px] text-primary mb-16">Current and planned pilots.</motion.h2>
+          <motion.h2 {...fadeUp} className="font-serif text-3xl md:text-[40px] text-primary mb-16">Planned pilots.</motion.h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {regions.map((c, i) => (
               <motion.div key={c.country} initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }}

@@ -2,10 +2,12 @@ import React from "react";
 import { Link, useLocation } from "wouter";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ShortFormDialog } from "@/components/ShortFormDialog";
 
 export function Nav() {
   const [isScrolled, setIsScrolled] = React.useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+  const [mobileDonateOpen, setMobileDonateOpen] = React.useState(false);
   const [location] = useLocation();
 
   React.useEffect(() => {
@@ -52,9 +54,22 @@ export function Nav() {
                 {link.label}
               </Link>
             ))}
-            <Button asChild className="bg-accent hover:bg-accent/90 text-white rounded-full px-6 font-medium">
-              <Link href="/contact">Donate</Link>
-            </Button>
+            <ShortFormDialog
+              testIdPrefix="donate-nav"
+              trigger={
+                <Button className="bg-accent hover:bg-accent/90 text-white rounded-full px-6 font-medium" data-testid="button-donate-nav">
+                  Donate
+                </Button>
+              }
+              title="Support our mission"
+              description="Tell us a little about you and our development team will follow up with giving options."
+              orgLabel="Organization (optional)"
+              orgPlaceholder="Foundation, family office, company"
+              showAmount
+              submitLabel="Send"
+              toastTitle="Thank you"
+              toastDescription="Our development team will be in touch within 2 business days."
+            />
             <span className="text-[15px] font-medium text-foreground cursor-pointer hover:text-terracotta">EN ▾</span>
           </nav>
 
@@ -97,16 +112,33 @@ export function Nav() {
                 {link.label}
               </Link>
             ))}
-            <Link
-              href="/contact"
-              onClick={() => setMobileMenuOpen(false)}
+            <button
+              onClick={() => {
+                setMobileMenuOpen(false);
+                setMobileDonateOpen(true);
+              }}
               className="font-serif text-4xl text-accent hover:text-white transition-colors"
+              data-testid="button-donate-mobile"
             >
               Donate
-            </Link>
+            </button>
           </div>
         </div>
       )}
+
+      <ShortFormDialog
+        testIdPrefix="donate-mobile"
+        open={mobileDonateOpen}
+        onOpenChange={setMobileDonateOpen}
+        title="Support our mission"
+        description="Tell us a little about you and our development team will follow up with giving options."
+        orgLabel="Organization (optional)"
+        orgPlaceholder="Foundation, family office, company"
+        showAmount
+        submitLabel="Send"
+        toastTitle="Thank you"
+        toastDescription="Our development team will be in touch within 2 business days."
+      />
     </>
   );
 }

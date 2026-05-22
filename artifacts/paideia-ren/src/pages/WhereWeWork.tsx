@@ -14,11 +14,9 @@ const countries = [
   { country: "Kenya", region: "Sub-Saharan Africa", status: "Active pilot", context: "Nairobi County. Focus: upper primary mathematics and English literacy. Low-bandwidth deployment active.", color: "#1F2A5C" },
   { country: "Colombia", region: "Latin America", status: "Partnership in design", context: "Secondary mathematics engagement aligned to national curriculum framework.", color: "#1F2A5C" },
   { country: "India", region: "South Asia", status: "Pilot Q3 2026", context: "Rajasthan. Rural offline-first configuration. Dual-language Hindi and English.", color: "#1F2A5C" },
-  { country: "Tanzania", region: "Sub-Saharan Africa", status: "Scoping", context: "Local-language-first deployment. Alignment with Tanzania Institute of Education curriculum under exploration.", color: "#C9971C" },
-  { country: "Vietnam", region: "Southeast Asia", status: "Interest confirmed", context: "Focus on secondary STEM pathways and rural access. Early-stage engagement.", color: "#C9971C" },
-  { country: "Brazil", region: "Latin America", status: "Research dialogue", context: "Portuguese-language adaptive content and assessment co-design. Early-stage academic dialogue.", color: "#C9971C" },
-  { country: "Ghana", region: "Sub-Saharan Africa", status: "Scoping", context: "Alignment with National Teacher Education Curriculum Framework under exploration.", color: "#C9971C" },
-  { country: "Bangladesh", region: "South Asia", status: "Interest confirmed", context: "Offline-capable deployment for rural secondary schools. Early-stage exploration.", color: "#C9971C" },
+  { country: "Ecuador", region: "Latin America", status: "Pilot planned", context: "Spanish-language secondary mathematics. Partnership scoping with regional education authorities.", color: "#C9971C" },
+  { country: "Zimbabwe", region: "Sub-Saharan Africa", status: "Pilot planned", context: "Upper-primary literacy and numeracy. Offline-first configuration for low-bandwidth schools.", color: "#C9971C" },
+  { country: "Malaysia", region: "Southeast Asia", status: "Pilot planned", context: "Secondary STEM pathways. English-medium deployment with curriculum alignment under design.", color: "#C9971C" },
 ];
 
 export default function WhereWeWork() {
