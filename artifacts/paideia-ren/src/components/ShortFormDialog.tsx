@@ -32,6 +32,8 @@ interface Props {
   toastTitle: string;
   toastDescription: string;
   testIdPrefix?: string;
+  endpoint?: string;
+  source?: string;
 }
 
 export function ShortFormDialog({
@@ -47,6 +49,8 @@ export function ShortFormDialog({
   toastTitle,
   toastDescription,
   testIdPrefix = "shortform",
+  endpoint,
+  source,
 }: Props) {
   const { toast } = useToast();
   const [internalOpen, setInternalOpen] = React.useState(false);
@@ -61,7 +65,40 @@ export function ShortFormDialog({
     defaultValues: { name: "", email: "", organization: "", amount: "", message: "" },
   });
 
-  function onSubmit(_: Values) {
+  const [submitting, setSubmitting] = React.useState(false);
+
+  async function onSubmit(values: Values) {
+    if (endpoint) {
+      setSubmitting(true);
+      try {
+        const res = await fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            source: source ?? testIdPrefix,
+            contactName: values.name,
+            contactEmail: values.email,
+            organization: values.organization || null,
+            message: [values.amount ? `Intended gift: ${values.amount}` : null, values.message || null]
+              .filter(Boolean)
+              .join("\n\n") || null,
+          }),
+        });
+        if (!res.ok) throw new Error(`Request failed (${res.status})`);
+        toast({ title: toastTitle, description: toastDescription });
+        form.reset();
+        setOpen(false);
+      } catch (err) {
+        toast({
+          title: "Could not send",
+          description: (err as Error).message + ". Please try again or email hello@paideia-ren.org.",
+          variant: "destructive",
+        });
+      } finally {
+        setSubmitting(false);
+      }
+      return;
+    }
     toast({ title: toastTitle, description: toastDescription });
     form.reset();
     setOpen(false);
@@ -118,8 +155,8 @@ export function ShortFormDialog({
                 <FormMessage />
               </FormItem>
             )} />
-            <Button type="submit" className="bg-primary hover:bg-primary/90 text-white rounded-none h-12 w-full" data-testid={`${testIdPrefix}-submit`}>
-              {submitLabel}
+            <Button type="submit" disabled={submitting} className="bg-primary hover:bg-primary/90 text-white rounded-none h-12 w-full" data-testid={`${testIdPrefix}-submit`}>
+              {submitting ? "Sending." : submitLabel}
             </Button>
           </form>
         </Form>

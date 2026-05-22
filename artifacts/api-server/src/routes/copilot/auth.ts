@@ -52,6 +52,11 @@ router.post("/signup", async (req, res) => {
   const data = parsed.data;
   const emailLower = data.email.trim().toLowerCase();
 
+  if (adminEmails().has(emailLower)) {
+    res.status(403).json({ error: "This email address cannot be used to sign up. Please contact support." });
+    return;
+  }
+
   const existing = await db
     .select({ id: teachersTable.id })
     .from(teachersTable)
@@ -157,9 +162,18 @@ router.patch("/me", requireAuth, async (req, res) => {
   res.json({ teacher: serialiseTeacher(updated) });
 });
 
+export function adminEmails(): Set<string> {
+  return new Set(
+    (process.env["ADMIN_EMAILS"] ?? "")
+      .split(",")
+      .map((s) => s.trim().toLowerCase())
+      .filter(Boolean),
+  );
+}
+
 function serialiseTeacher(t: typeof teachersTable.$inferSelect) {
   const { passwordHash: _ignored, ...rest } = t;
-  return rest;
+  return { ...rest, isAdmin: adminEmails().has(t.email.toLowerCase()) };
 }
 
 export default router;

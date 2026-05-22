@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -59,9 +60,31 @@ export default function ForSchools() {
   const { toast } = useToast();
   const form = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: { schoolName: "", country: "", gradeLevels: "", contactName: "", contactEmail: "" } });
 
-  function onSubmit(_: FormValues) {
-    toast({ title: "Request received", description: "Our partnerships team will contact you within 2 business days." });
-    form.reset();
+  const [submitting, setSubmitting] = useState(false);
+
+  async function onSubmit(values: FormValues) {
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/copilot/pilot-requests", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          source: "for-schools-form",
+          schoolName: values.schoolName,
+          country: values.country,
+          gradeLevels: values.gradeLevels,
+          contactName: values.contactName,
+          contactEmail: values.contactEmail,
+        }),
+      });
+      if (!res.ok) throw new Error(`Request failed (${res.status})`);
+      toast({ title: "Request received", description: "Our partnerships team will contact you within 2 business days." });
+      form.reset();
+    } catch (err) {
+      toast({ title: "Could not send", description: (err as Error).message + ". Please try again.", variant: "destructive" });
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -142,6 +165,8 @@ export default function ForSchools() {
                 </ul>
                 <ShortFormDialog
                   testIdPrefix={`tier-${tier.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
+                  endpoint="/api/copilot/pilot-requests"
+                  source={`tier-${tier.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
                   trigger={
                     <button className={`w-full py-3 px-6 text-[15px] font-medium border transition-colors ${tier.featured ? "border-white text-white hover:bg-white hover:text-primary" : "border-primary text-primary hover:bg-primary hover:text-white"}`}>
                       {tier.cta}
@@ -240,9 +265,9 @@ export default function ForSchools() {
                     </FormItem>
                   )} />
                 </div>
-                <Button type="submit" size="lg" data-testid="button-submit-pilot"
+                <Button type="submit" size="lg" disabled={submitting} data-testid="button-submit-pilot"
                   className="bg-primary hover:bg-primary/90 text-white px-10 h-14 text-base rounded-none w-full">
-                  Submit pilot request
+                  {submitting ? "Sending." : "Submit pilot request"}
                 </Button>
               </form>
             </Form>

@@ -28,6 +28,7 @@ import PublicTake from "@/pages/PublicTake";
 import StudentLogin from "@/pages/student/StudentLogin";
 import StudentDashboard from "@/pages/student/StudentDashboard";
 import StudentTake from "@/pages/student/StudentTake";
+import Admin from "@/pages/Admin";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
@@ -68,6 +69,7 @@ function AppRoutes() {
       <Route path="/classes">{() => <Protected component={Classes} />}</Route>
       <Route path="/assignments/:id">{() => <Protected component={AssignmentView} />}</Route>
       <Route path="/settings">{() => <Protected component={Settings} />}</Route>
+      <Route path="/admin">{() => <Protected component={Admin} />}</Route>
       <Route component={NotFound} />
     </Switch>
   );

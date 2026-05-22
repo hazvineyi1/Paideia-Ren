@@ -10,6 +10,8 @@ import classesRouter from "./classes.js";
 import assignmentsRouter from "./assignments.js";
 import shareRouter from "./share.js";
 import studentRouter from "./student.js";
+import pilotRequestsRouter from "./pilot-requests.js";
+import adminRouter from "./admin.js";
 
 const router: IRouter = Router();
 
@@ -24,5 +26,7 @@ router.use("/classes", classesRouter);
 router.use("/assignments", assignmentsRouter);
 router.use("/share", shareRouter);
 router.use("/student", studentRouter);
+router.use("/pilot-requests", pilotRequestsRouter);
+router.use("/admin", adminRouter);
 
 export default router;

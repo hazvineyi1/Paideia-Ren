@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import type { ReactNode } from "react";
-import { LayoutDashboard, FileText, ClipboardList, MessageSquare, HelpCircle, BookOpen, Users, Settings, LogOut } from "lucide-react";
+import { LayoutDashboard, FileText, ClipboardList, MessageSquare, HelpCircle, BookOpen, Users, Settings, LogOut, BarChart3 } from "lucide-react";
 
 const NAV = [
   { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -13,6 +13,8 @@ const NAV = [
   { path: "/samples", label: "Samples library", icon: BookOpen },
   { path: "/settings", label: "Settings", icon: Settings },
 ];
+
+const ADMIN_NAV = { path: "/admin", label: "Founder admin", icon: BarChart3 };
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { teacher, signOut } = useAuth();
@@ -33,7 +35,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </Link>
         </div>
         <nav className="flex-1 p-3 space-y-1">
-          {NAV.map((item) => {
+          {[...NAV, ...(teacher?.isAdmin ? [ADMIN_NAV] : [])].map((item) => {
             const Icon = item.icon;
             const active = loc === item.path || (item.path !== "/dashboard" && loc.startsWith(item.path.replace("/new", "")));
             return (

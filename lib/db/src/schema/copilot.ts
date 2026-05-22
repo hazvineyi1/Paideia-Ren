@@ -196,6 +196,23 @@ export const submissionsTable = pgTable("copilot_submissions", {
     .where(sql`${t.studentId} IS NOT NULL`),
 }));
 
+export const pilotRequestsTable = pgTable("copilot_pilot_requests", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  source: text("source").notNull(),
+  schoolName: text("school_name"),
+  country: text("country"),
+  gradeLevels: text("grade_levels"),
+  organization: text("organization"),
+  contactName: text("contact_name").notNull(),
+  contactEmail: text("contact_email").notNull(),
+  message: text("message"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => ({
+  createdIdx: index("copilot_pilot_requests_created_idx").on(t.createdAt),
+}));
+
+export type PilotRequest = typeof pilotRequestsTable.$inferSelect;
+
 export type Teacher = typeof teachersTable.$inferSelect;
 export type InsertTeacher = typeof teachersTable.$inferInsert;
 export type LessonPlan = typeof lessonPlansTable.$inferSelect;

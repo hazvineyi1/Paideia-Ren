@@ -7,7 +7,27 @@ export interface Teacher {
   schoolName: string | null;
   subjects: string[];
   yearGroups: string[];
+  isAdmin: boolean;
   createdAt: string;
+}
+
+export interface AdminStats {
+  totals: {
+    teachers: number;
+    activeTeachersThisWeek: number;
+    classes: number;
+    students: number;
+    lessonPlans: number;
+    worksheets: number;
+    quizzes: number;
+    parentDrafts: number;
+    assignments: number;
+    submissions: number;
+    pilotRequests: number;
+  };
+  recentSignups: { id: string; name: string; email: string; schoolName: string | null; country: string | null; region: string; createdAt: string }[];
+  recentPilotRequests: { id: string; source: string; schoolName: string | null; country: string | null; organization: string | null; contactName: string; contactEmail: string; message: string | null; gradeLevels: string | null; createdAt: string }[];
+  weeklyActivity: { weekStart: string; teachers: number; resources: number; submissions: number }[];
 }
 
 export interface RegionInfo {
