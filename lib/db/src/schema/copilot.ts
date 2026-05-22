@@ -206,12 +206,70 @@ export const pilotRequestsTable = pgTable("copilot_pilot_requests", {
   contactName: text("contact_name").notNull(),
   contactEmail: text("contact_email").notNull(),
   message: text("message"),
+  status: text("status").notNull().default("new"),
+  notes: text("notes"),
+  contactedAt: timestamp("contacted_at"),
+  sourcePath: text("source_path"),
+  sourceReferrer: text("source_referrer"),
+  sourceUtm: jsonb("source_utm").$type<Record<string, string>>(),
+  anonymousId: text("anonymous_id"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, (t) => ({
   createdIdx: index("copilot_pilot_requests_created_idx").on(t.createdAt),
+  statusIdx: index("copilot_pilot_requests_status_idx").on(t.status),
+}));
+
+export const analyticsEventsTable = pgTable("copilot_events", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  occurredAt: timestamp("occurred_at").defaultNow().notNull(),
+  receivedAt: timestamp("received_at").defaultNow().notNull(),
+  teacherId: uuid("teacher_id").references(() => teachersTable.id, { onDelete: "set null" }),
+  studentId: uuid("student_id").references(() => studentsTable.id, { onDelete: "set null" }),
+  anonymousId: text("anonymous_id"),
+  sessionId: text("session_id"),
+  surface: text("surface").notNull(),
+  eventName: text("event_name").notNull(),
+  path: text("path"),
+  referrer: text("referrer"),
+  props: jsonb("props").$type<Record<string, unknown>>().notNull().default({}),
+  userAgent: text("user_agent"),
+  ipHash: text("ip_hash"),
+}, (t) => ({
+  occurredIdx: index("copilot_events_occurred_idx").on(t.occurredAt),
+  teacherIdx: index("copilot_events_teacher_idx").on(t.teacherId),
+  nameIdx: index("copilot_events_name_idx").on(t.eventName),
+  anonIdx: index("copilot_events_anon_idx").on(t.anonymousId),
+  sessionIdx: index("copilot_events_session_idx").on(t.sessionId),
+  nameSurfaceTimeIdx: index("copilot_events_name_surface_time_idx").on(
+    t.eventName,
+    t.surface,
+    t.occurredAt,
+  ),
+}));
+
+export const aiUsageTable = pgTable("copilot_ai_usage", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  teacherId: uuid("teacher_id").references(() => teachersTable.id, { onDelete: "set null" }),
+  kind: text("kind").notNull(),
+  model: text("model").notNull(),
+  promptTokens: integer("prompt_tokens").notNull().default(0),
+  completionTokens: integer("completion_tokens").notNull().default(0),
+  totalTokens: integer("total_tokens").notNull().default(0),
+  costMicrosUsd: integer("cost_micros_usd").notNull().default(0),
+  latencyMs: integer("latency_ms").notNull().default(0),
+  success: boolean("success").notNull().default(true),
+  errorMessage: text("error_message"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => ({
+  teacherIdx: index("copilot_ai_usage_teacher_idx").on(t.teacherId),
+  createdIdx: index("copilot_ai_usage_created_idx").on(t.createdAt),
+  kindIdx: index("copilot_ai_usage_kind_idx").on(t.kind),
 }));
 
 export type PilotRequest = typeof pilotRequestsTable.$inferSelect;
+export type AnalyticsEvent = typeof analyticsEventsTable.$inferSelect;
+export type AiUsage = typeof aiUsageTable.$inferSelect;
 
 export type Teacher = typeof teachersTable.$inferSelect;
 export type InsertTeacher = typeof teachersTable.$inferInsert;

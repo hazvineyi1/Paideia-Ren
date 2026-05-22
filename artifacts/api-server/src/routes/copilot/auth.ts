@@ -12,6 +12,7 @@ import {
 } from "../../lib/auth.js";
 import { REGION_IDS } from "../../lib/catalog.js";
 import { requireAuth } from "../../middlewares/auth.js";
+import { logEvent } from "../../lib/eventLog.js";
 
 const router: IRouter = Router();
 
@@ -89,6 +90,12 @@ router.post("/signup", async (req, res) => {
   });
 
   res.cookie(SESSION_COOKIE, token, cookieOptions());
+  req.teacher = teacher;
+  void logEvent(req, "teacher_signed_up", {
+    region: data.region,
+    country: data.country ?? null,
+    school: data.schoolName ?? null,
+  }, { surface: "app" });
   res.json({ teacher: serialiseTeacher(teacher) });
 });
 
@@ -116,6 +123,8 @@ router.post("/login", async (req, res) => {
     expiresAt: sessionExpiry(),
   });
   res.cookie(SESSION_COOKIE, token, cookieOptions());
+  req.teacher = teacher;
+  void logEvent(req, "teacher_logged_in", {}, { surface: "app" });
   res.json({ teacher: serialiseTeacher(teacher) });
 });
 
@@ -124,6 +133,7 @@ router.post("/logout", async (req, res) => {
   if (token) {
     await db.delete(sessionsTable).where(eq(sessionsTable.token, token));
   }
+  void logEvent(req, "teacher_logged_out", {}, { surface: "app" });
   res.clearCookie(SESSION_COOKIE, { path: "/" });
   res.json({ ok: true });
 });

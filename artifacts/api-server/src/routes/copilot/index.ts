@@ -11,6 +11,7 @@ import assignmentsRouter from "./assignments.js";
 import shareRouter from "./share.js";
 import studentRouter from "./student.js";
 import pilotRequestsRouter from "./pilot-requests.js";
+import eventsRouter from "./events.js";
 import adminRouter from "./admin.js";
 
 const router: IRouter = Router();
@@ -27,6 +28,7 @@ router.use("/assignments", assignmentsRouter);
 router.use("/share", shareRouter);
 router.use("/student", studentRouter);
 router.use("/pilot-requests", pilotRequestsRouter);
+router.use("/events", eventsRouter);
 router.use("/admin", adminRouter);
 
 export default router;

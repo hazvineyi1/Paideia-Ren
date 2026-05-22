@@ -5,6 +5,7 @@ import { and, desc, eq } from "drizzle-orm";
 import { requireAuth } from "../../middlewares/auth.js";
 import { REGION_IDS } from "../../lib/catalog.js";
 import { generateJSON } from "../../lib/openai.js";
+import { logEvent } from "../../lib/eventLog.js";
 import { quizPrompt } from "../../lib/prompts.js";
 
 const router: IRouter = Router();
@@ -35,7 +36,10 @@ router.post("/", async (req, res) => {
   }
   try {
     const prompt = quizPrompt(parsed.data);
-    const content = await generateJSON<QuizContent>(prompt.system, prompt.user);
+    const content = await generateJSON<QuizContent>(prompt.system, prompt.user, {
+      teacherId: req.teacher!.id,
+      kind: "quiz",
+    });
     const title =
       (typeof content.title === "string" && content.title) ||
       `${parsed.data.subject} ${parsed.data.format}: ${parsed.data.topic}`;
@@ -53,6 +57,14 @@ router.post("/", async (req, res) => {
         content,
       })
       .returning();
+    void logEvent(req, "quiz_created", {
+      subject: parsed.data.subject,
+      yearGroup: parsed.data.yearGroup,
+      region: parsed.data.region,
+      format: parsed.data.format,
+      questionCount: parsed.data.questionCount,
+      resourceId: quiz?.id,
+    }, { surface: "app" });
     res.json({ quiz });
   } catch (err) {
     req.log?.error({ err }, "quiz generation failed");

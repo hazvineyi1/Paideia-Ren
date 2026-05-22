@@ -1,6 +1,7 @@
 import { Router, type IRouter } from "express";
 import { z } from "zod";
 import { db, pilotRequestsTable } from "@workspace/db";
+import { logEvent } from "../../lib/eventLog.js";
 
 const router: IRouter = Router();
 
@@ -13,6 +14,10 @@ const schema = z.object({
   contactName: z.string().min(2).max(120),
   contactEmail: z.string().email().max(200),
   message: z.string().max(2000).optional().nullable(),
+  sourcePath: z.string().max(400).optional().nullable(),
+  sourceReferrer: z.string().max(400).optional().nullable(),
+  sourceUtm: z.record(z.string(), z.string().max(200)).optional().nullable(),
+  anonymousId: z.string().max(80).optional().nullable(),
 });
 
 router.post("/", async (req, res) => {
@@ -33,8 +38,23 @@ router.post("/", async (req, res) => {
       contactName: d.contactName.trim(),
       contactEmail: d.contactEmail.trim().toLowerCase(),
       message: d.message?.trim() || null,
+      sourcePath: d.sourcePath ?? null,
+      sourceReferrer: d.sourceReferrer ?? null,
+      sourceUtm: d.sourceUtm ?? null,
+      anonymousId: d.anonymousId ?? null,
     })
     .returning();
+  void logEvent(req, "pilot_request_submitted", {
+    source: d.source,
+    school: d.schoolName ?? null,
+    country: d.country ?? null,
+    pilotRequestId: row?.id,
+  }, {
+    surface: "site",
+    path: d.sourcePath ?? null,
+    referrer: d.sourceReferrer ?? null,
+    anonymousId: d.anonymousId ?? null,
+  });
   res.status(201).json({ ok: true, id: row?.id });
 });
 

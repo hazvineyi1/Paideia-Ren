@@ -5,6 +5,7 @@ import { and, desc, eq } from "drizzle-orm";
 import { requireAuth } from "../../middlewares/auth.js";
 import { REGION_IDS } from "../../lib/catalog.js";
 import { generateJSON } from "../../lib/openai.js";
+import { logEvent } from "../../lib/eventLog.js";
 import { worksheetPrompt } from "../../lib/prompts.js";
 
 const router: IRouter = Router();
@@ -33,7 +34,10 @@ router.post("/", async (req, res) => {
   }
   try {
     const prompt = worksheetPrompt(parsed.data);
-    const content = await generateJSON<WorksheetContent>(prompt.system, prompt.user);
+    const content = await generateJSON<WorksheetContent>(prompt.system, prompt.user, {
+      teacherId: req.teacher!.id,
+      kind: "worksheet",
+    });
     const title =
       (typeof content.title === "string" && content.title) ||
       `${parsed.data.subject} worksheet: ${parsed.data.topic}`;
@@ -51,6 +55,14 @@ router.post("/", async (req, res) => {
         content,
       })
       .returning();
+    void logEvent(req, "worksheet_created", {
+      subject: parsed.data.subject,
+      yearGroup: parsed.data.yearGroup,
+      region: parsed.data.region,
+      difficulty: parsed.data.difficulty,
+      questionCount: parsed.data.questionCount,
+      resourceId: worksheet?.id,
+    }, { surface: "app" });
     res.json({ worksheet });
   } catch (err) {
     req.log?.error({ err }, "worksheet generation failed");

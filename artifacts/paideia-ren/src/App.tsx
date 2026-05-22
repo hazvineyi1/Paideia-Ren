@@ -1,7 +1,9 @@
-import { Switch, Route, Router as WouterRouter } from "wouter";
+import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { useEffect, useRef } from "react";
+import { initAnalytics, track } from "@/lib/analytics";
 import NotFound from "@/pages/not-found";
 
 import { Nav } from "@/components/layout/Nav";
@@ -23,9 +25,30 @@ import Contact from "@/pages/Contact";
 
 const queryClient = new QueryClient();
 
+function AnalyticsTracker() {
+  const [loc] = useLocation();
+  const inited = useRef(false);
+  const prev = useRef<string | null>(null);
+  useEffect(() => {
+    if (!inited.current) {
+      initAnalytics({ surface: "site" });
+      inited.current = true;
+      prev.current = loc;
+      track("page_view", { initial: true });
+      return;
+    }
+    if (prev.current !== loc) {
+      prev.current = loc;
+      track("page_view", { trigger: "spa" });
+    }
+  }, [loc]);
+  return null;
+}
+
 function Router() {
   return (
     <div className="flex flex-col min-h-[100dvh]">
+      <AnalyticsTracker />
       <Nav />
       <main className="flex-1">
         <Switch>

@@ -11,6 +11,7 @@ import { and, desc, eq } from "drizzle-orm";
 import { requireAuth } from "../../middlewares/auth.js";
 import { REGION_IDS } from "../../lib/catalog.js";
 import { generateJSON } from "../../lib/openai.js";
+import { logEvent } from "../../lib/eventLog.js";
 import { lessonPlanPrompt, type StudentProfileSummary } from "../../lib/prompts.js";
 
 const router: IRouter = Router();
@@ -100,7 +101,10 @@ router.post("/", async (req, res) => {
       }
     }
     const prompt = lessonPlanPrompt(studentProfile ? { ...rest, studentProfile } : rest);
-    const content = await generateJSON<LessonPlanContent>(prompt.system, prompt.user);
+    const content = await generateJSON<LessonPlanContent>(prompt.system, prompt.user, {
+      teacherId: req.teacher!.id,
+      kind: "lesson_plan",
+    });
     const title =
       (typeof content.title === "string" && content.title) ||
       `${parsed.data.subject}: ${parsed.data.topic}`;
@@ -119,6 +123,13 @@ router.post("/", async (req, res) => {
         content,
       })
       .returning();
+    void logEvent(req, "lesson_plan_created", {
+      subject: parsed.data.subject,
+      yearGroup: parsed.data.yearGroup,
+      region: parsed.data.region,
+      withStudentProfile: Boolean(studentProfile),
+      resourceId: plan?.id,
+    }, { surface: "app" });
     res.json({ plan });
   } catch (err) {
     req.log?.error({ err }, "lesson plan generation failed");

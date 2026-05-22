@@ -14,6 +14,7 @@ export interface Teacher {
 export interface AdminStats {
   totals: {
     teachers: number;
+    activeTeachersToday: number;
     activeTeachersThisWeek: number;
     classes: number;
     students: number;
@@ -24,10 +25,87 @@ export interface AdminStats {
     assignments: number;
     submissions: number;
     pilotRequests: number;
+    events: number;
+    aiCalls: number;
+    aiTokens: number;
+    aiCostUsd: number;
   };
-  recentSignups: { id: string; name: string; email: string; schoolName: string | null; country: string | null; region: string; createdAt: string }[];
-  recentPilotRequests: { id: string; source: string; schoolName: string | null; country: string | null; organization: string | null; contactName: string; contactEmail: string; message: string | null; gradeLevels: string | null; createdAt: string }[];
   weeklyActivity: { weekStart: string; teachers: number; resources: number; submissions: number }[];
+  dailyActivity: { day: string; activeTeachers: number; sessions: number }[];
+  weeklyActiveTeachers: { weekStart: string; activeTeachers: number }[];
+  signupFunnel: { signups: number; createdResource: number; returnedAfterWeek: number };
+  recentSignups: { id: string; name: string; email: string; schoolName: string | null; country: string | null; region: string; createdAt: string }[];
+}
+
+export interface AdminEngagement {
+  retentionCohorts: { weekStart: string; size: number; retention: number[] }[];
+  teacherLeaderboard: {
+    id: string;
+    name: string;
+    email: string;
+    schoolName: string | null;
+    country: string | null;
+    region: string;
+    createdAt: string;
+    lessonPlans: number;
+    worksheets: number;
+    quizzes: number;
+    parentDrafts: number;
+    assignments: number;
+    events: number;
+    lastSeen: string | null;
+  }[];
+  featureUsage: { feature: string; total: number; uniqueTeachers: number }[];
+}
+
+export interface AdminProduct {
+  topEvents: { label: string; surface: string | null; count: number; uniqueUsers: number }[];
+  topPagesApp: { label: string; surface: string | null; count: number; uniqueUsers: number }[];
+  topPagesSite: { label: string; surface: string | null; count: number; uniqueUsers: number }[];
+  surfaceBreakdown: { label: string; surface: string | null; count: number; uniqueUsers: number }[];
+}
+
+export interface AdminAiUsage {
+  totals: {
+    calls: number;
+    successful: number;
+    failed: number;
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
+    costUsd: number;
+    avgLatencyMs: number;
+  };
+  byTeacher: { id: string | null; name: string; email: string | null; schoolName: string | null; calls: number; tokens: number; costUsd: number }[];
+  daily: { day: string; calls: number; costUsd: number }[];
+  byKind: { kind: string; calls: number; tokens: number; costUsd: number }[];
+}
+
+export type PilotStatus = "new" | "contacted" | "scheduled" | "in_pilot" | "won" | "lost";
+
+export interface AdminPilot {
+  id: string;
+  source: string;
+  schoolName: string | null;
+  country: string | null;
+  organization: string | null;
+  contactName: string;
+  contactEmail: string;
+  gradeLevels: string | null;
+  message: string | null;
+  status: PilotStatus;
+  notes: string | null;
+  contactedAt: string | null;
+  sourcePath: string | null;
+  sourceReferrer: string | null;
+  sourceUtm: Record<string, string> | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminPilots {
+  statusCounts: { status: string; count: number }[];
+  pilots: AdminPilot[];
 }
 
 export interface RegionInfo {

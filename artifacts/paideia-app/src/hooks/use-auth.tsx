@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { api } from "@/lib/api";
+import { identify, track } from "@/lib/analytics";
 import type { Teacher } from "@/lib/types";
 
 interface AuthCtx {
@@ -20,6 +21,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const res = await api.get<{ teacher: Teacher | null }>("/auth/me");
       setTeacher(res.teacher);
+      if (res.teacher) identify();
     } catch {
       setTeacher(null);
     } finally {
@@ -31,13 +33,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     void refresh();
   }, []);
 
+  const setTeacherTracked = (t: Teacher | null) => {
+    setTeacher(t);
+    if (t) {
+      identify();
+      track("session_started");
+    }
+  };
+
   const signOut = async () => {
+    track("sign_out_clicked");
     await api.post("/auth/logout");
     setTeacher(null);
   };
 
   return (
-    <Ctx.Provider value={{ teacher, loading, refresh, setTeacher, signOut }}>
+    <Ctx.Provider value={{ teacher, loading, refresh, setTeacher: setTeacherTracked, signOut }}>
       {children}
     </Ctx.Provider>
   );

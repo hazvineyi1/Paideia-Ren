@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { getAnonymousId, getUtm, track } from "@/lib/analytics";
 
 const schema = z.object({
   name: z.string().min(2, "Name is required"),
@@ -71,6 +72,7 @@ export function ShortFormDialog({
     if (endpoint) {
       setSubmitting(true);
       try {
+        const utm = getUtm();
         const res = await fetch(endpoint, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -82,9 +84,14 @@ export function ShortFormDialog({
             message: [values.amount ? `Intended gift: ${values.amount}` : null, values.message || null]
               .filter(Boolean)
               .join("\n\n") || null,
+            sourcePath: typeof window !== "undefined" ? window.location.pathname + window.location.search : null,
+            sourceReferrer: typeof document !== "undefined" ? document.referrer || null : null,
+            sourceUtm: Object.keys(utm).length > 0 ? utm : null,
+            anonymousId: getAnonymousId(),
           }),
         });
         if (!res.ok) throw new Error(`Request failed (${res.status})`);
+        track("pilot_form_submitted", { source: source ?? testIdPrefix });
         toast({ title: toastTitle, description: toastDescription });
         form.reset();
         setOpen(false);

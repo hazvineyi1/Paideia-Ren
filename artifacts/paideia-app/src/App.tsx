@@ -4,7 +4,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { StudentAuthProvider } from "@/hooks/use-student-auth";
-import { useEffect, type ComponentType } from "react";
+import { useEffect, useRef, type ComponentType } from "react";
+import { initAnalytics, track } from "@/lib/analytics";
 
 import Landing from "@/pages/Landing";
 import Login from "@/pages/Login";
@@ -41,6 +42,26 @@ function Protected({ component: Component }: { component: ComponentType }) {
   }, [loading, teacher, setLoc]);
   if (loading || !teacher) return null;
   return <Component />;
+}
+
+function AnalyticsTracker() {
+  const [loc] = useLocation();
+  const inited = useRef(false);
+  const prev = useRef<string | null>(null);
+  useEffect(() => {
+    if (!inited.current) {
+      initAnalytics({ surface: "app" });
+      inited.current = true;
+      prev.current = loc;
+      track("page_view", { initial: true });
+      return;
+    }
+    if (prev.current !== loc) {
+      prev.current = loc;
+      track("page_view", { trigger: "spa" });
+    }
+  }, [loc]);
+  return null;
 }
 
 function AppRoutes() {
@@ -82,6 +103,7 @@ function App() {
         <AuthProvider>
           <StudentAuthProvider>
             <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+              <AnalyticsTracker />
               <AppRoutes />
             </WouterRouter>
             <Toaster />
