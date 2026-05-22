@@ -22,6 +22,8 @@ import WhereWeWork from "@/pages/WhereWeWork";
 import News from "@/pages/News";
 import Transparency from "@/pages/Transparency";
 import Contact from "@/pages/Contact";
+import Privacy from "@/pages/Privacy";
+import Terms from "@/pages/Terms";
 
 const queryClient = new QueryClient();
 
@@ -65,6 +67,8 @@ function Router() {
           <Route path="/news" component={News} />
           <Route path="/transparency" component={Transparency} />
           <Route path="/contact" component={Contact} />
+          <Route path="/privacy" component={Privacy} />
+          <Route path="/terms" component={Terms} />
           <Route component={NotFound} />
         </Switch>
       </main>

@@ -2,8 +2,10 @@ import { Router, type IRouter } from "express";
 import { z } from "zod";
 import { db, pilotRequestsTable } from "@workspace/db";
 import { logEvent } from "../../lib/eventLog.js";
+import { rateLimit } from "../../middlewares/rateLimit.js";
 
 const router: IRouter = Router();
+router.use(rateLimit({ windowMs: 60 * 60 * 1000, max: 10 }));
 
 const schema = z.object({
   source: z.string().min(1).max(60),

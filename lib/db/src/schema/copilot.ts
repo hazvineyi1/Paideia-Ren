@@ -22,8 +22,26 @@ export const teachersTable = pgTable("copilot_teachers", {
   schoolName: text("school_name"),
   subjects: jsonb("subjects").$type<string[]>().notNull().default([]),
   yearGroups: jsonb("year_groups").$type<string[]>().notNull().default([]),
+  status: text("status").notNull().default("active"),
+  onboardedAt: timestamp("onboarded_at"),
+  approvedAt: timestamp("approved_at"),
+  approvedBy: uuid("approved_by"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
+export const passwordResetsTable = pgTable("copilot_password_resets", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  teacherId: uuid("teacher_id")
+    .notNull()
+    .references(() => teachersTable.id, { onDelete: "cascade" }),
+  token: text("token").unique().notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  usedAt: timestamp("used_at"),
+  issuedByAdminId: uuid("issued_by_admin_id"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => ({
+  teacherIdx: index("copilot_password_resets_teacher_idx").on(t.teacherId),
+}));
 
 export const sessionsTable = pgTable("copilot_sessions", {
   id: serial("id").primaryKey(),
@@ -267,6 +285,36 @@ export const aiUsageTable = pgTable("copilot_ai_usage", {
   kindIdx: index("copilot_ai_usage_kind_idx").on(t.kind),
 }));
 
+export const classProfilesTable = pgTable("copilot_class_profiles", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  teacherId: uuid("teacher_id").notNull().references(() => teachersTable.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  subject: text("subject").notNull(),
+  yearGroup: text("year_group").notNull(),
+  syllabus: text("syllabus"),
+  languageLevel: text("language_level"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => ({
+  teacherIdx: index("copilot_class_profiles_teacher_idx").on(t.teacherId),
+}));
+
+export const resourceSharesTable = pgTable("copilot_resource_shares", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  resourceType: text("resource_type").notNull(),
+  resourceId: uuid("resource_id").notNull(),
+  fromTeacherId: uuid("from_teacher_id").notNull().references(() => teachersTable.id, { onDelete: "cascade" }),
+  toEmail: text("to_email").notNull(),
+  toTeacherId: uuid("to_teacher_id").references(() => teachersTable.id, { onDelete: "set null" }),
+  copiedResourceId: uuid("copied_resource_id"),
+  message: text("message"),
+  sharedAt: timestamp("shared_at").defaultNow().notNull(),
+  viewedAt: timestamp("viewed_at"),
+}, (t) => ({
+  toEmailIdx: index("copilot_resource_shares_to_email_idx").on(t.toEmail),
+  fromIdx: index("copilot_resource_shares_from_idx").on(t.fromTeacherId),
+}));
+
 export type PilotRequest = typeof pilotRequestsTable.$inferSelect;
 export type AnalyticsEvent = typeof analyticsEventsTable.$inferSelect;
 export type AiUsage = typeof aiUsageTable.$inferSelect;
@@ -282,3 +330,5 @@ export type ClassRow = typeof classesTable.$inferSelect;
 export type Student = typeof studentsTable.$inferSelect;
 export type Assignment = typeof assignmentsTable.$inferSelect;
 export type Submission = typeof submissionsTable.$inferSelect;
+export type ClassProfile = typeof classProfilesTable.$inferSelect;
+export type ResourceShare = typeof resourceSharesTable.$inferSelect;

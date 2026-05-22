@@ -51,6 +51,9 @@ export default function Login() {
           No account yet?{" "}
           <Link href="/signup" className="text-primary underline">Create one</Link>
         </p>
+        <p className="text-xs text-center text-muted-foreground">
+          Lost your password? Email hazvimusoni@gmail.com for a one-time reset link.
+        </p>
       </form>
     </AuthShell>
   );

@@ -10,11 +10,11 @@ import {
   studentsTable,
 } from "@workspace/db";
 import { and, desc, eq } from "drizzle-orm";
-import { requireAuth } from "../../middlewares/auth.js";
+import { requireAuth, requireActiveTeacher } from "../../middlewares/auth.js";
 import { generateShortCode } from "../../lib/auth.js";
 
 const router: IRouter = Router();
-router.use(requireAuth);
+router.use(requireAuth, requireActiveTeacher);
 
 const createSchema = z.object({
   classId: z.string().uuid(),

@@ -12,6 +12,7 @@ import { useCatalog } from "@/hooks/use-catalog";
 import { GeneratingSpinner } from "@/components/Loading";
 import { api, ApiError } from "@/lib/api";
 import type { ParentDraft } from "@/lib/types";
+import { ClassProfileSelector } from "@/components/ClassProfileSelector";
 
 const TONES = ["warm and positive", "gently concerned", "factual and brief", "celebratory"];
 
@@ -52,6 +53,9 @@ export default function ParentDraftNew() {
     <AppShell>
       <WorkflowForm title="New parent update" subtitle="A warm, professional draft you can copy, edit, and send. No student data is sent to AI beyond what you type here.">
         <form onSubmit={submit} className="space-y-5">
+          <ClassProfileSelector onSelect={(p) => {
+            setYearGroup(p.yearGroup);
+          }} />
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="student">Student first name</Label>

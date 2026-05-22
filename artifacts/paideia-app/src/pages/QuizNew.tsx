@@ -14,6 +14,7 @@ import { GeneratingSpinner } from "@/components/Loading";
 import { api, ApiError } from "@/lib/api";
 import type { Quiz } from "@/lib/types";
 import { FileText } from "lucide-react";
+import { ClassProfileSelector } from "@/components/ClassProfileSelector";
 
 const FORMATS = ["exit ticket", "starter quiz", "mid-unit check", "end-of-unit assessment"];
 
@@ -62,6 +63,11 @@ export default function QuizNew() {
           </div>
         )}
         <form onSubmit={submit} className="space-y-5">
+          <ClassProfileSelector onSelect={(p) => {
+            setSubject(p.subject);
+            setYearGroup(p.yearGroup);
+            if (p.notes) setNotes(p.notes);
+          }} />
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Subject</Label>

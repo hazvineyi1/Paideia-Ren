@@ -54,8 +54,8 @@ export function Footer() {
           </div>
           
           <div className="flex flex-wrap justify-center items-center gap-6 text-[13px] text-muted-foreground">
-            <Link href="/transparency" className="hover:text-foreground">Privacy Policy</Link>
-            <Link href="/transparency" className="hover:text-foreground">Terms of Service</Link>
+            <Link href="/privacy" className="hover:text-foreground">Privacy Policy</Link>
+            <Link href="/terms" className="hover:text-foreground">Terms of Service</Link>
             <Link href="/transparency" className="hover:text-foreground">Accessibility</Link>
             <span>© Paideia-Ren Inc.</span>
           </div>

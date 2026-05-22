@@ -3,6 +3,7 @@ import { z } from "zod";
 import {
   db,
   teachersTable,
+  sessionsTable,
   classesTable,
   studentsTable,
   lessonPlansTable,
@@ -15,6 +16,7 @@ import {
   analyticsEventsTable,
   aiUsageTable,
 } from "@workspace/db";
+import { mintPasswordReset } from "./auth.js";
 import { sql, desc, eq } from "drizzle-orm";
 import { requireAuth } from "../../middlewares/auth.js";
 
@@ -284,6 +286,124 @@ router.get("/stats", async (_req, res) => {
   });
 });
 
+// Weekly digest: this 7d window vs prior 7d window
+router.get("/digest", async (_req, res) => {
+  const now = new Date();
+  const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const twoWeeksAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+
+  async function windowStats(from: Date, to: Date) {
+    const [signups, pilots, plans, sheets, quizzes, drafts, assigns, subs, active, ai, events] =
+      await Promise.all([
+        db.execute(sql`SELECT COUNT(*)::int AS c FROM copilot_teachers WHERE created_at >= ${from} AND created_at < ${to}`),
+        db.execute(sql`SELECT COUNT(*)::int AS c FROM copilot_pilot_requests WHERE created_at >= ${from} AND created_at < ${to}`),
+        db.execute(sql`SELECT COUNT(*)::int AS c FROM copilot_lesson_plans WHERE created_at >= ${from} AND created_at < ${to}`),
+        db.execute(sql`SELECT COUNT(*)::int AS c FROM copilot_worksheets WHERE created_at >= ${from} AND created_at < ${to}`),
+        db.execute(sql`SELECT COUNT(*)::int AS c FROM copilot_quizzes WHERE created_at >= ${from} AND created_at < ${to}`),
+        db.execute(sql`SELECT COUNT(*)::int AS c FROM copilot_parent_drafts WHERE created_at >= ${from} AND created_at < ${to}`),
+        db.execute(sql`SELECT COUNT(*)::int AS c FROM copilot_assignments WHERE created_at >= ${from} AND created_at < ${to}`),
+        db.execute(sql`SELECT COUNT(*)::int AS c FROM copilot_submissions WHERE created_at >= ${from} AND created_at < ${to}`),
+        db.execute(sql`
+          SELECT COUNT(DISTINCT teacher_id)::int AS c FROM (
+            SELECT teacher_id FROM copilot_lesson_plans WHERE created_at >= ${from} AND created_at < ${to}
+            UNION ALL SELECT teacher_id FROM copilot_worksheets WHERE created_at >= ${from} AND created_at < ${to}
+            UNION ALL SELECT teacher_id FROM copilot_quizzes WHERE created_at >= ${from} AND created_at < ${to}
+            UNION ALL SELECT teacher_id FROM copilot_parent_drafts WHERE created_at >= ${from} AND created_at < ${to}
+            UNION ALL SELECT teacher_id FROM copilot_assignments WHERE created_at >= ${from} AND created_at < ${to}
+            UNION ALL SELECT teacher_id FROM copilot_events WHERE occurred_at >= ${from} AND occurred_at < ${to} AND teacher_id IS NOT NULL
+          ) a
+        `),
+        db.execute(sql`
+          SELECT COALESCE(SUM(cost_micros_usd),0)::bigint AS micros,
+                 COALESCE(SUM(total_tokens),0)::bigint AS tokens,
+                 COUNT(*)::int AS calls
+          FROM copilot_ai_usage WHERE created_at >= ${from} AND created_at < ${to}
+        `),
+        db.execute(sql`SELECT COUNT(*)::int AS c FROM copilot_events WHERE occurred_at >= ${from} AND occurred_at < ${to}`),
+      ]);
+    const get = (r: { rows?: Row[] }, k: string) => Number((r.rows?.[0] as Row | undefined)?.[k] ?? 0);
+    return {
+      signups: get(signups, "c"),
+      pilots: get(pilots, "c"),
+      lessonPlans: get(plans, "c"),
+      worksheets: get(sheets, "c"),
+      quizzes: get(quizzes, "c"),
+      parentDrafts: get(drafts, "c"),
+      assignments: get(assigns, "c"),
+      submissions: get(subs, "c"),
+      activeTeachers: get(active, "c"),
+      aiCalls: get(ai, "calls"),
+      aiTokens: get(ai, "tokens"),
+      aiCostUsd: get(ai, "micros") / 1_000_000,
+      events: get(events, "c"),
+    };
+  }
+
+  const [current, previous, topEventsRows, newPilotsRows, topTeachersRows] = await Promise.all([
+    windowStats(weekAgo, now),
+    windowStats(twoWeeksAgo, weekAgo),
+    db.execute(sql`
+      SELECT event_name AS name, surface, COUNT(*)::int AS c
+      FROM copilot_events
+      WHERE occurred_at >= ${weekAgo}
+      GROUP BY event_name, surface
+      ORDER BY c DESC LIMIT 10
+    `),
+    db.execute(sql`
+      SELECT id::text AS id, contact_name AS "contactName", contact_email AS "contactEmail",
+             organization, school_name AS "schoolName", country, status, created_at AS "createdAt"
+      FROM copilot_pilot_requests
+      WHERE created_at >= ${weekAgo}
+      ORDER BY created_at DESC LIMIT 10
+    `),
+    db.execute(sql`
+      SELECT t.id::text AS id, t.name, t.email, t.school_name AS "schoolName",
+             COUNT(e.id)::int AS events
+      FROM copilot_teachers t
+      LEFT JOIN copilot_events e ON e.teacher_id = t.id AND e.occurred_at >= ${weekAgo}
+      GROUP BY t.id, t.name, t.email, t.school_name
+      HAVING COUNT(e.id) > 0
+      ORDER BY events DESC LIMIT 5
+    `),
+  ]);
+
+  res.json({
+    windowStart: weekAgo.toISOString(),
+    windowEnd: now.toISOString(),
+    previousStart: twoWeeksAgo.toISOString(),
+    current,
+    previous,
+    topEvents: (topEventsRows.rows ?? []).map((r) => ({
+      name: String((r as Row)["name"] ?? ""),
+      surface: ((r as Row)["surface"] as string | null) ?? null,
+      count: Number((r as Row)["c"] ?? 0),
+    })),
+    newPilots: (newPilotsRows.rows ?? []).map((r) => {
+      const row = r as Row;
+      return {
+        id: String(row["id"] ?? ""),
+        contactName: String(row["contactName"] ?? ""),
+        contactEmail: String(row["contactEmail"] ?? ""),
+        organization: (row["organization"] as string | null) ?? null,
+        schoolName: (row["schoolName"] as string | null) ?? null,
+        country: (row["country"] as string | null) ?? null,
+        status: String(row["status"] ?? "new"),
+        createdAt: (row["createdAt"] as Date).toISOString(),
+      };
+    }),
+    topTeachers: (topTeachersRows.rows ?? []).map((r) => {
+      const row = r as Row;
+      return {
+        id: String(row["id"] ?? ""),
+        name: String(row["name"] ?? ""),
+        email: String(row["email"] ?? ""),
+        schoolName: (row["schoolName"] as string | null) ?? null,
+        events: Number(row["events"] ?? 0),
+      };
+    }),
+  });
+});
+
 // Engagement: retention cohorts, teacher leaderboard, feature usage
 router.get("/engagement", async (_req, res) => {
   const eightWeeksAgo = new Date(Date.now() - 8 * 7 * 24 * 60 * 60 * 1000);
@@ -525,6 +645,92 @@ router.get("/ai-usage", async (_req, res) => {
       costUsd: usdFromMicros(r["cost_micros"]),
     })),
   });
+});
+
+// Lightweight inbox counter for the admin nav badge
+router.get("/inbox-counts", async (_req, res) => {
+  const [t] = await db.execute(sql`SELECT COUNT(*)::int AS c FROM copilot_teachers WHERE status = 'pending'`).then((r) => r.rows as Row[]);
+  const [p] = await db.execute(sql`SELECT COUNT(*)::int AS c FROM copilot_pilot_requests WHERE status = 'new'`).then((r) => r.rows as Row[]);
+  res.json({
+    pendingTeachers: Number(t?.["c"] ?? 0),
+    newPilots: Number(p?.["c"] ?? 0),
+  });
+});
+
+// Pending teachers awaiting founder approval
+router.get("/pending-teachers", async (_req, res) => {
+  const rows = await db
+    .select({
+      id: teachersTable.id,
+      email: teachersTable.email,
+      name: teachersTable.name,
+      region: teachersTable.region,
+      country: teachersTable.country,
+      schoolName: teachersTable.schoolName,
+      subjects: teachersTable.subjects,
+      yearGroups: teachersTable.yearGroups,
+      status: teachersTable.status,
+      createdAt: teachersTable.createdAt,
+    })
+    .from(teachersTable)
+    .where(eq(teachersTable.status, "pending"))
+    .orderBy(desc(teachersTable.createdAt))
+    .limit(200);
+  res.json({
+    pending: rows.map((r) => ({ ...r, createdAt: r.createdAt.toISOString() })),
+  });
+});
+
+router.post("/teachers/:id/approve", async (req, res) => {
+  const id = req.params["id"];
+  if (!id) {
+    res.status(400).json({ error: "Missing id" });
+    return;
+  }
+  const [updated] = await db
+    .update(teachersTable)
+    .set({ status: "active", approvedAt: new Date(), approvedBy: req.teacher!.id })
+    .where(eq(teachersTable.id, id))
+    .returning();
+  if (!updated) {
+    res.status(404).json({ error: "Teacher not found" });
+    return;
+  }
+  res.json({ ok: true });
+});
+
+router.post("/teachers/:id/suspend", async (req, res) => {
+  const id = req.params["id"];
+  if (!id) {
+    res.status(400).json({ error: "Missing id" });
+    return;
+  }
+  await db
+    .update(teachersTable)
+    .set({ status: "suspended" })
+    .where(eq(teachersTable.id, id));
+  // Kill any active sessions so they're booted immediately.
+  await db.delete(sessionsTable).where(eq(sessionsTable.teacherId, id));
+  res.json({ ok: true });
+});
+
+router.post("/teachers/:id/reset-link", async (req, res) => {
+  const id = req.params["id"];
+  if (!id) {
+    res.status(400).json({ error: "Missing id" });
+    return;
+  }
+  const rows = await db
+    .select({ email: teachersTable.email })
+    .from(teachersTable)
+    .where(eq(teachersTable.id, id))
+    .limit(1);
+  if (rows.length === 0) {
+    res.status(404).json({ error: "Teacher not found" });
+    return;
+  }
+  const { token, expiresAt } = await mintPasswordReset(id, req.teacher!.id);
+  res.json({ token, expiresAt: expiresAt.toISOString(), email: rows[0].email });
 });
 
 // Pilot pipeline: pilots grouped by status, with status counts

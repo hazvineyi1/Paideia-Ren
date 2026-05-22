@@ -5,14 +5,16 @@ import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 import type { LessonPlan } from "@/lib/types";
 import { LessonPlanView } from "@/components/Renderers";
-import { Printer, Trash2, ClipboardList, HelpCircle } from "lucide-react";
+import { Printer, Trash2, ClipboardList, HelpCircle, Share2 } from "lucide-react";
 import { Link } from "wouter";
+import { ShareResourceDialog } from "@/components/ShareResourceDialog";
 
 export default function PlanView() {
   const [, params] = useRoute<{ id: string }>("/plans/:id");
   const [, setLoc] = useLocation();
   const [plan, setPlan] = useState<LessonPlan | null>(null);
   const [loading, setLoading] = useState(true);
+  const [shareOpen, setShareOpen] = useState(false);
 
   useEffect(() => {
     if (!params?.id) return;
@@ -42,9 +44,11 @@ export default function PlanView() {
         </div>
         <div className="flex gap-2 shrink-0">
           <Button variant="outline" size="sm" onClick={() => window.print()}><Printer className="h-4 w-4 mr-1" />Print</Button>
+          <Button variant="outline" size="sm" onClick={() => setShareOpen(true)}><Share2 className="h-4 w-4 mr-1" />Share</Button>
           <Button variant="ghost" size="sm" onClick={onDelete}><Trash2 className="h-4 w-4 mr-1" />Delete</Button>
         </div>
       </header>
+      <ShareResourceDialog open={shareOpen} onOpenChange={setShareOpen} resourceType="plan" resourceId={plan.id} resourceTitle={plan.title} />
       <div className="bg-card border rounded-lg p-8 print-page">
         <LessonPlanView c={plan.content} />
       </div>

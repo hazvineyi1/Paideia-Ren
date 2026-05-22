@@ -2,14 +2,14 @@ import { Router, type IRouter } from "express";
 import { z } from "zod";
 import { db, worksheetsTable } from "@workspace/db";
 import { and, desc, eq } from "drizzle-orm";
-import { requireAuth } from "../../middlewares/auth.js";
+import { requireAuth, requireActiveTeacher } from "../../middlewares/auth.js";
 import { REGION_IDS } from "../../lib/catalog.js";
 import { generateJSON } from "../../lib/openai.js";
 import { logEvent } from "../../lib/eventLog.js";
 import { worksheetPrompt } from "../../lib/prompts.js";
 
 const router: IRouter = Router();
-router.use(requireAuth);
+router.use(requireAuth, requireActiveTeacher);
 
 const createSchema = z.object({
   region: z.string().refine((v) => REGION_IDS.includes(v)),

@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 import type { ParentDraft } from "@/lib/types";
 import { ParentDraftView as Renderer } from "@/components/Renderers";
-import { Copy, Trash2, Printer, Check } from "lucide-react";
+import { Copy, Trash2, Printer, Check, Share2 } from "lucide-react";
+import { ShareResourceDialog } from "@/components/ShareResourceDialog";
 
 export default function ParentDraftView() {
   const [, params] = useRoute<{ id: string }>("/parent-drafts/:id");
@@ -13,6 +14,7 @@ export default function ParentDraftView() {
   const [d, setD] = useState<ParentDraft | null>(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
 
   useEffect(() => {
     if (!params?.id) return;
@@ -60,10 +62,12 @@ export default function ParentDraftView() {
         <div className="flex gap-2 shrink-0">
           <Button variant="outline" size="sm" onClick={onCopy}>{copied ? <><Check className="h-4 w-4 mr-1" />Copied</> : <><Copy className="h-4 w-4 mr-1" />Copy</>}</Button>
           <Button variant="outline" size="sm" onClick={() => window.print()}><Printer className="h-4 w-4 mr-1" />Print</Button>
+          <Button variant="outline" size="sm" onClick={() => setShareOpen(true)}><Share2 className="h-4 w-4 mr-1" />Share</Button>
           <Button variant="ghost" size="sm" onClick={onDelete}><Trash2 className="h-4 w-4 mr-1" />Delete</Button>
         </div>
       </header>
       <Renderer c={d.content} />
+      <ShareResourceDialog open={shareOpen} onOpenChange={setShareOpen} resourceType="parent-draft" resourceId={d.id} resourceTitle={`Message about ${d.studentName}`} />
     </AppShell>
   );
 }

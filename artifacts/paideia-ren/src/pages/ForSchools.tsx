@@ -61,6 +61,7 @@ export default function ForSchools() {
   const form = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: { schoolName: "", country: "", gradeLevels: "", contactName: "", contactEmail: "" } });
 
   const [submitting, setSubmitting] = useState(false);
+  const [submittedRef, setSubmittedRef] = useState<string | null>(null);
 
   async function onSubmit(values: FormValues) {
     setSubmitting(true);
@@ -78,7 +79,8 @@ export default function ForSchools() {
         }),
       });
       if (!res.ok) throw new Error(`Request failed (${res.status})`);
-      toast({ title: "Request received", description: "Our partnerships team will contact you within 2 business days." });
+      const ref = (values.schoolName.slice(0, 3) + "-" + Date.now().toString(36).slice(-5)).toUpperCase();
+      setSubmittedRef(ref);
       form.reset();
     } catch (err) {
       toast({ title: "Could not send", description: (err as Error).message + ". Please try again.", variant: "destructive" });
@@ -205,9 +207,68 @@ export default function ForSchools() {
         </div>
       </section>
 
+      {/* FAQ */}
+      <section className="py-[120px]">
+        <div className="max-w-[820px] mx-auto px-6">
+          <motion.h2 {...fadeUp} className="font-serif text-3xl md:text-[40px] text-primary mb-12 leading-[1.2]">Frequently asked.</motion.h2>
+          <div className="divide-y border-y">
+            {[
+              { q: "What does a pilot actually look like?", a: "Two to six teachers from your school use Classroom Companion for one term. We onboard each teacher personally, meet every two weeks, and share a written outcomes summary at the end of the term." },
+              { q: "What does it cost to run a pilot?", a: "Pilots are run at no charge during this phase of the work. We ask in return for honest feedback, an end-of-term debrief, and permission to anonymise outcome data." },
+              { q: "Do you replace teachers?", a: "No. The product is teacher-augmenting by design. It drafts lesson plans, worksheets, quizzes and parent updates that the teacher reviews, edits and owns. The teacher is always in the loop." },
+              { q: "How is student data handled?", a: "We minimise child data by default. Rosters live under the teacher's account, are never sold, and are never used to train models. Read our Privacy Policy for the full detail." },
+              { q: "Which curricula are supported?", a: "Common Core and US state standards, the UK National Curriculum and GCSE, IB and Cambridge International today. Add a country in your pilot request and we will confirm coverage." },
+              { q: "What devices and systems work?", a: "Anything with a modern browser: Chromebook, iPad, desktop. We integrate with most LMSes via LTI, OneRoster, SCORM and xAPI." },
+              { q: "How do you decide who joins a pilot?", a: "Each pilot enquiry is reviewed by the founder. We prioritise schools where one teacher can champion the rollout and where leadership is willing to give the work a fair term." },
+              { q: "How quickly will we hear back?", a: "Within two business days. If urgent, mention it in the pilot form and we will reply sooner." },
+            ].map((item) => (
+              <details key={item.q} className="group py-5">
+                <summary className="cursor-pointer list-none flex items-center justify-between gap-4">
+                  <span className="font-serif text-xl text-primary">{item.q}</span>
+                  <span className="text-muted-foreground group-open:rotate-45 transition-transform text-2xl leading-none">+</span>
+                </summary>
+                <p className="mt-4 text-[15px] text-foreground/80 leading-[1.75]">{item.a}</p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Pilot Request Form */}
       <section className="py-[120px] bg-secondary">
         <div className="max-w-[720px] mx-auto px-6">
+          {submittedRef ? (
+            <motion.div {...fadeUp} className="text-center bg-white border border-border p-12">
+              <div className="text-4xl mb-4">✓</div>
+              <h2 className="font-serif text-3xl md:text-[40px] text-primary mb-4 leading-[1.2]">Request received.</h2>
+              <p className="text-[17px] text-foreground/80 leading-[1.75] mb-6">
+                Your reference is <strong className="text-primary">{submittedRef}</strong>. The founder will personally review your enquiry and reply within two business days.
+              </p>
+              <p className="text-[15px] text-foreground/70 leading-[1.75] mb-8">
+                While you wait, share the work with a colleague who might want in.
+              </p>
+              <div className="flex flex-wrap gap-3 justify-center">
+                <Button
+                  variant="outline"
+                  className="rounded-none"
+                  onClick={() => {
+                    void navigator.clipboard.writeText(window.location.href);
+                    toast({ title: "Link copied", description: "Paste it anywhere you would like to share." });
+                  }}
+                  data-testid="button-copy-pilot-link"
+                >
+                  Copy link to this page
+                </Button>
+                <Button
+                  className="bg-primary hover:bg-primary/90 text-white rounded-none"
+                  onClick={() => setSubmittedRef(null)}
+                  data-testid="button-submit-another"
+                >
+                  Submit another request
+                </Button>
+              </div>
+            </motion.div>
+          ) : (
           <motion.div {...fadeUp}>
             <h2 className="font-serif text-3xl md:text-[40px] text-primary mb-4 leading-[1.2]">Request a pilot.</h2>
             <p className="text-[17px] text-foreground/80 leading-[1.75] mb-12">
@@ -272,6 +333,7 @@ export default function ForSchools() {
               </form>
             </Form>
           </motion.div>
+          )}
         </div>
       </section>
     </div>

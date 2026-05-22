@@ -1,7 +1,8 @@
 import { Router, type IRouter } from "express";
 import { z } from "zod";
-import { db, teachersTable, sessionsTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { randomBytes } from "crypto";
+import { db, teachersTable, sessionsTable, passwordResetsTable } from "@workspace/db";
+import { and, eq, gt, isNull } from "drizzle-orm";
 import {
   hashPassword,
   newSessionToken,
@@ -12,6 +13,7 @@ import {
 } from "../../lib/auth.js";
 import { REGION_IDS } from "../../lib/catalog.js";
 import { requireAuth } from "../../middlewares/auth.js";
+import { rateLimit } from "../../middlewares/rateLimit.js";
 import { logEvent } from "../../lib/eventLog.js";
 
 const router: IRouter = Router();
@@ -44,7 +46,7 @@ function cookieOptions() {
   };
 }
 
-router.post("/signup", async (req, res) => {
+router.post("/signup", rateLimit({ windowMs: 60 * 60 * 1000, max: 5 }), async (req, res) => {
   const parsed = signupSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Invalid input", details: parsed.error.flatten() });
@@ -52,11 +54,7 @@ router.post("/signup", async (req, res) => {
   }
   const data = parsed.data;
   const emailLower = data.email.trim().toLowerCase();
-
-  if (adminEmails().has(emailLower)) {
-    res.status(403).json({ error: "This email address cannot be used to sign up. Please contact support." });
-    return;
-  }
+  const isFounder = adminEmails().has(emailLower);
 
   const existing = await db
     .select({ id: teachersTable.id })
@@ -79,6 +77,8 @@ router.post("/signup", async (req, res) => {
       schoolName: data.schoolName?.trim() || null,
       subjects: data.subjects,
       yearGroups: data.yearGroups,
+      status: isFounder ? "active" : "pending",
+      approvedAt: isFounder ? new Date() : null,
     })
     .returning();
 
@@ -99,7 +99,7 @@ router.post("/signup", async (req, res) => {
   res.json({ teacher: serialiseTeacher(teacher) });
 });
 
-router.post("/login", async (req, res) => {
+router.post("/login", rateLimit({ windowMs: 15 * 60 * 1000, max: 20 }), async (req, res) => {
   const parsed = loginSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Invalid input" });
@@ -146,6 +146,84 @@ router.get("/me", (req, res) => {
   res.json({ teacher: serialiseTeacher(req.teacher) });
 });
 
+const onboardingSchema = z.object({
+  country: z.string().min(1).max(120),
+  schoolName: z.string().min(1).max(200),
+  subjects: z.array(z.string().max(120)).min(1).max(20),
+  yearGroups: z.array(z.string().max(40)).min(1).max(20),
+});
+
+router.post("/complete-onboarding", requireAuth, async (req, res) => {
+  const parsed = onboardingSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Please complete every field" });
+    return;
+  }
+  const [updated] = await db
+    .update(teachersTable)
+    .set({
+      country: parsed.data.country.trim(),
+      schoolName: parsed.data.schoolName.trim(),
+      subjects: parsed.data.subjects,
+      yearGroups: parsed.data.yearGroups,
+      onboardedAt: new Date(),
+    })
+    .where(eq(teachersTable.id, req.teacher!.id))
+    .returning();
+  void logEvent(req, "onboarding_completed", {}, { surface: "app" });
+  res.json({ teacher: serialiseTeacher(updated) });
+});
+
+const resetPasswordSchema = z.object({
+  token: z.string().min(20).max(200),
+  password: z.string().min(8).max(200),
+});
+
+router.post("/reset-password", rateLimit({ windowMs: 15 * 60 * 1000, max: 10 }), async (req, res) => {
+  const parsed = resetPasswordSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Invalid input" });
+    return;
+  }
+  const rows = await db
+    .select()
+    .from(passwordResetsTable)
+    .where(
+      and(
+        eq(passwordResetsTable.token, parsed.data.token),
+        isNull(passwordResetsTable.usedAt),
+        gt(passwordResetsTable.expiresAt, new Date()),
+      ),
+    )
+    .limit(1);
+  const reset = rows[0];
+  if (!reset) {
+    res.status(400).json({ error: "This reset link is invalid or has expired." });
+    return;
+  }
+  await db
+    .update(teachersTable)
+    .set({ passwordHash: hashPassword(parsed.data.password) })
+    .where(eq(teachersTable.id, reset.teacherId));
+  await db
+    .update(passwordResetsTable)
+    .set({ usedAt: new Date() })
+    .where(eq(passwordResetsTable.id, reset.id));
+  // Invalidate all existing sessions for this teacher.
+  await db.delete(sessionsTable).where(eq(sessionsTable.teacherId, reset.teacherId));
+  void logEvent(req, "password_reset_completed", {}, { surface: "app" });
+  res.json({ ok: true });
+});
+
+export async function mintPasswordReset(teacherId: string, adminId: string | null): Promise<{ token: string; expiresAt: Date }> {
+  const token = randomBytes(24).toString("hex");
+  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  await db
+    .insert(passwordResetsTable)
+    .values({ teacherId, token, expiresAt, issuedByAdminId: adminId });
+  return { token, expiresAt };
+}
+
 const updateProfileSchema = z.object({
   name: z.string().min(1).max(120).optional(),
   region: z
@@ -183,7 +261,13 @@ export function adminEmails(): Set<string> {
 
 function serialiseTeacher(t: typeof teachersTable.$inferSelect) {
   const { passwordHash: _ignored, ...rest } = t;
-  return { ...rest, isAdmin: adminEmails().has(t.email.toLowerCase()) };
+  return {
+    ...rest,
+    isAdmin: adminEmails().has(t.email.toLowerCase()),
+    onboardedAt: t.onboardedAt ? t.onboardedAt.toISOString() : null,
+    approvedAt: t.approvedAt ? t.approvedAt.toISOString() : null,
+    createdAt: t.createdAt.toISOString(),
+  };
 }
 
 export default router;

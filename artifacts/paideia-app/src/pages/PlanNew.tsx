@@ -14,6 +14,7 @@ import { GeneratingSpinner } from "@/components/Loading";
 import { api, ApiError } from "@/lib/api";
 import type { LessonPlan } from "@/lib/types";
 import { Sparkles } from "lucide-react";
+import { ClassProfileSelector } from "@/components/ClassProfileSelector";
 
 export default function PlanNew() {
   const { teacher } = useAuth();
@@ -67,6 +68,11 @@ export default function PlanNew() {
           </div>
         )}
         <form onSubmit={submit} className="space-y-5">
+          <ClassProfileSelector onSelect={(p) => {
+            setSubject(p.subject);
+            setYearGroup(p.yearGroup);
+            if (p.notes) setGroupContext(p.notes);
+          }} />
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Subject</Label>

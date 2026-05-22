@@ -1,7 +1,8 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
-import type { ReactNode } from "react";
-import { LayoutDashboard, FileText, ClipboardList, MessageSquare, HelpCircle, BookOpen, Users, Settings, LogOut, BarChart3 } from "lucide-react";
+import { useEffect, useState, type ReactNode } from "react";
+import { api } from "@/lib/api";
+import { LayoutDashboard, FileText, ClipboardList, MessageSquare, HelpCircle, BookOpen, Users, Settings, LogOut, BarChart3, FolderOpen, Inbox } from "lucide-react";
 
 const NAV = [
   { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -9,6 +10,8 @@ const NAV = [
   { path: "/worksheets/new", label: "Worksheet generator", icon: ClipboardList },
   { path: "/parent-drafts/new", label: "Parent update", icon: MessageSquare },
   { path: "/quizzes/new", label: "Quiz and exit tickets", icon: HelpCircle },
+  { path: "/library", label: "Library", icon: FolderOpen },
+  { path: "/shared", label: "Shared with me", icon: Inbox },
   { path: "/classes", label: "Classes and students", icon: Users },
   { path: "/samples", label: "Samples library", icon: BookOpen },
   { path: "/settings", label: "Settings", icon: Settings },
@@ -19,6 +22,34 @@ const ADMIN_NAV = { path: "/admin", label: "Founder admin", icon: BarChart3 };
 export function AppShell({ children }: { children: ReactNode }) {
   const { teacher, signOut } = useAuth();
   const [loc, setLoc] = useLocation();
+  const [inboxCount, setInboxCount] = useState(0);
+  const [sharedCount, setSharedCount] = useState(0);
+
+  useEffect(() => {
+    if (!teacher?.isAdmin) return;
+    let cancelled = false;
+    const load = () => {
+      api.get<{ pendingTeachers: number; newPilots: number }>("/admin/inbox-counts")
+        .then((r) => { if (!cancelled) setInboxCount(r.pendingTeachers + r.newPilots); })
+        .catch(() => undefined);
+    };
+    load();
+    const id = window.setInterval(load, 60000);
+    return () => { cancelled = true; window.clearInterval(id); };
+  }, [teacher?.isAdmin]);
+
+  useEffect(() => {
+    if (!teacher) return;
+    let cancelled = false;
+    const load = () => {
+      api.get<{ count: number }>("/resource-shares/inbox-count")
+        .then((r) => { if (!cancelled) setSharedCount(r.count); })
+        .catch(() => undefined);
+    };
+    load();
+    const id = window.setInterval(load, 60000);
+    return () => { cancelled = true; window.clearInterval(id); };
+  }, [teacher?.id]);
 
   const onSignOut = async () => {
     await signOut();
@@ -49,7 +80,17 @@ export function AppShell({ children }: { children: ReactNode }) {
                 }`}
               >
                 <Icon className="h-4 w-4" />
-                {item.label}
+                <span className="flex-1">{item.label}</span>
+                {item.path === "/admin" && inboxCount > 0 ? (
+                  <span className="ml-auto inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-accent text-white text-[11px] font-semibold">
+                    {inboxCount}
+                  </span>
+                ) : null}
+                {item.path === "/shared" && sharedCount > 0 ? (
+                  <span className="ml-auto inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-accent text-white text-[11px] font-semibold">
+                    {sharedCount}
+                  </span>
+                ) : null}
               </Link>
             );
           })}

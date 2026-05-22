@@ -15,6 +15,8 @@ import type {
   AdminAiUsage,
   AdminPilots,
   AdminPilot,
+  AdminDigest,
+  PendingTeacher,
   PilotStatus,
 } from "@/lib/types";
 
@@ -66,11 +68,13 @@ export default function Admin() {
   const { teacher, loading: authLoading } = useAuth();
   const [, setLoc] = useLocation();
   const [stats, setStats] = useState<AdminStats | null>(null);
+  const [digest, setDigest] = useState<AdminDigest | null>(null);
   const [engagement, setEngagement] = useState<AdminEngagement | null>(null);
   const [product, setProduct] = useState<AdminProduct | null>(null);
   const [aiUsage, setAiUsage] = useState<AdminAiUsage | null>(null);
   const [pilots, setPilots] = useState<AdminPilots | null>(null);
   const [pilotFilter, setPilotFilter] = useState<string>("all");
+  const [pending, setPending] = useState<PendingTeacher[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -87,17 +91,21 @@ export default function Admin() {
     }
     Promise.all([
       api.get<AdminStats>("/admin/stats"),
+      api.get<AdminDigest>("/admin/digest"),
       api.get<AdminEngagement>("/admin/engagement"),
       api.get<AdminProduct>("/admin/product"),
       api.get<AdminAiUsage>("/admin/ai-usage"),
       api.get<AdminPilots>("/admin/pilots"),
+      api.get<{ pending: PendingTeacher[] }>("/admin/pending-teachers"),
     ])
-      .then(([s, e, p, a, pl]) => {
+      .then(([s, d, e, p, a, pl, pt]) => {
         setStats(s);
+        setDigest(d);
         setEngagement(e);
         setProduct(p);
         setAiUsage(a);
         setPilots(pl);
+        setPending(pt.pending);
       })
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false));
@@ -112,6 +120,25 @@ export default function Admin() {
   async function updatePilot(id: string, patch: { status?: PilotStatus; notes?: string | null }) {
     await api.patch(`/admin/pilots/${id}`, patch);
     await reloadPilots(pilotFilter);
+  }
+
+  async function reloadPending() {
+    const r = await api.get<{ pending: PendingTeacher[] }>("/admin/pending-teachers");
+    setPending(r.pending);
+  }
+
+  async function approveTeacher(id: string) {
+    await api.post(`/admin/teachers/${id}/approve`);
+    await reloadPending();
+  }
+
+  async function suspendTeacher(id: string) {
+    await api.post(`/admin/teachers/${id}/suspend`);
+    await reloadPending();
+  }
+
+  async function mintResetLink(id: string): Promise<{ token: string; email: string; expiresAt: string }> {
+    return api.post<{ token: string; email: string; expiresAt: string }>(`/admin/teachers/${id}/reset-link`);
   }
 
   return (
@@ -144,14 +171,22 @@ export default function Admin() {
         {loading ? <div className="mt-8 text-muted-foreground">Loading founder analytics.</div> : null}
 
         {!loading && stats ? (
-          <Tabs defaultValue="overview" className="mt-8">
+          <Tabs defaultValue="digest" className="mt-8">
             <TabsList className="flex flex-wrap">
+              <TabsTrigger value="digest" data-track="admin_tab" data-track-tab="digest">Digest</TabsTrigger>
               <TabsTrigger value="overview" data-track="admin_tab" data-track-tab="overview">Overview</TabsTrigger>
               <TabsTrigger value="engagement" data-track="admin_tab" data-track-tab="engagement">Engagement</TabsTrigger>
               <TabsTrigger value="product" data-track="admin_tab" data-track-tab="product">Product</TabsTrigger>
               <TabsTrigger value="ai" data-track="admin_tab" data-track-tab="ai">AI usage</TabsTrigger>
               <TabsTrigger value="pilots" data-track="admin_tab" data-track-tab="pilots">Pilots</TabsTrigger>
+              <TabsTrigger value="approvals" data-track="admin_tab" data-track-tab="approvals">
+                Approvals{pending.length > 0 ? ` (${pending.length})` : ""}
+              </TabsTrigger>
             </TabsList>
+
+            <TabsContent value="digest" className="mt-6">
+              {digest ? <DigestTab data={digest} /> : null}
+            </TabsContent>
 
             <TabsContent value="overview" className="mt-6">
               <OverviewTab stats={stats} />
@@ -167,6 +202,10 @@ export default function Admin() {
 
             <TabsContent value="ai" className="mt-6">
               {aiUsage ? <AiTab data={aiUsage} /> : null}
+            </TabsContent>
+
+            <TabsContent value="approvals" className="mt-6">
+              <ApprovalsTab pending={pending} onApprove={approveTeacher} onSuspend={suspendTeacher} onResetLink={mintResetLink} />
             </TabsContent>
 
             <TabsContent value="pilots" className="mt-6">
@@ -186,6 +225,116 @@ export default function Admin() {
         ) : null}
       </div>
     </AppShell>
+  );
+}
+
+function Delta({ current, previous, format = "num", invertSign = false }: { current: number; previous: number; format?: "num" | "usd"; invertSign?: boolean }) {
+  const diff = current - previous;
+  const pct = previous === 0 ? (current === 0 ? 0 : 100) : (diff / previous) * 100;
+  const goodWhenUp = !invertSign;
+  const isUp = diff > 0;
+  const color = diff === 0 ? "text-muted-foreground" : ((isUp === goodWhenUp) ? "text-green-700" : "text-rose-700");
+  const arrow = diff === 0 ? "·" : isUp ? "▲" : "▼";
+  const formatted = format === "usd" ? fmtUsd(Math.abs(diff)) : fmtNum(Math.abs(diff));
+  const pctStr = previous === 0 ? (current === 0 ? "0%" : "new") : `${Math.abs(Math.round(pct))}%`;
+  return <span className={`text-xs ${color}`}>{arrow} {formatted} ({pctStr} vs prior 7d)</span>;
+}
+
+function DigestCell({ label, current, previous, format = "num", invertSign = false }: { label: string; current: number; previous: number; format?: "num" | "usd"; invertSign?: boolean }) {
+  return (
+    <div className="border rounded-lg bg-card p-5">
+      <div className="text-xs uppercase tracking-wider text-muted-foreground">{label}</div>
+      <div className="font-serif text-3xl text-primary mt-1">{format === "usd" ? fmtUsd(current) : fmtNum(current)}</div>
+      <div className="mt-1"><Delta current={current} previous={previous} format={format} invertSign={invertSign} /></div>
+    </div>
+  );
+}
+
+function DigestTab({ data }: { data: AdminDigest }) {
+  const c = data.current;
+  const p = data.previous;
+  const resourcesCurrent: number = c.lessonPlans + c.worksheets + c.quizzes + c.parentDrafts;
+  const resourcesPrev: number = p.lessonPlans + p.worksheets + p.quizzes + p.parentDrafts;
+  return (
+    <div className="space-y-8">
+      <div>
+        <h2 className="font-serif text-xl text-primary">This week at a glance</h2>
+        <p className="text-sm text-muted-foreground">
+          {new Date(data.windowStart).toLocaleDateString()} to {new Date(data.windowEnd).toLocaleDateString()}, compared with the prior 7 days.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <DigestCell label="New sign-ups" current={c.signups} previous={p.signups} />
+        <DigestCell label="Pilot requests" current={c.pilots} previous={p.pilots} />
+        <DigestCell label="Active teachers" current={c.activeTeachers} previous={p.activeTeachers} />
+        <DigestCell label="Resources created" current={resourcesCurrent} previous={resourcesPrev} />
+        <DigestCell label="Assignments" current={c.assignments} previous={p.assignments} />
+        <DigestCell label="Student submissions" current={c.submissions} previous={p.submissions} />
+        <DigestCell label="AI cost" current={c.aiCostUsd} previous={p.aiCostUsd} format="usd" invertSign />
+        <DigestCell label="Events captured" current={c.events} previous={p.events} />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <h3 className="font-serif text-lg text-primary mb-2">New pilot requests this week</h3>
+          <div className="border rounded-lg bg-card divide-y">
+            {data.newPilots.length === 0 ? (
+              <div className="p-4 text-sm text-muted-foreground">No new pilot requests in the last 7 days.</div>
+            ) : null}
+            {data.newPilots.map((p) => (
+              <div key={p.id} className="p-4 text-sm">
+                <div className="font-medium">{p.contactName} <span className="text-xs text-muted-foreground font-normal">· {p.status.replace(/_/g, " ")}</span></div>
+                <div className="text-xs text-muted-foreground">
+                  <a className="underline" href={`mailto:${p.contactEmail}`}>{p.contactEmail}</a>
+                  {p.organization || p.schoolName ? ` · ${p.organization ?? p.schoolName}` : ""}
+                  {p.country ? ` · ${p.country}` : ""}
+                </div>
+                <div className="text-xs text-muted-foreground mt-1">{new Date(p.createdAt).toLocaleString()}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <h3 className="font-serif text-lg text-primary mb-2">Most active teachers this week</h3>
+          <div className="border rounded-lg bg-card divide-y">
+            {data.topTeachers.length === 0 ? (
+              <div className="p-4 text-sm text-muted-foreground">No teacher activity yet this week.</div>
+            ) : null}
+            {data.topTeachers.map((t) => (
+              <div key={t.id} className="p-4 text-sm flex items-center justify-between gap-3">
+                <div>
+                  <div className="font-medium">{t.name}</div>
+                  <div className="text-xs text-muted-foreground">{t.email}{t.schoolName ? ` · ${t.schoolName}` : ""}</div>
+                </div>
+                <div className="text-right">
+                  <div className="font-serif text-xl text-primary">{t.events}</div>
+                  <div className="text-xs text-muted-foreground">events</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h3 className="font-serif text-lg text-primary mb-2">Top events this week</h3>
+        <div className="border rounded-lg bg-card p-4 space-y-1">
+          {data.topEvents.length === 0 ? <div className="text-sm text-muted-foreground">No events captured yet.</div> : null}
+          {data.topEvents.map((e, i) => {
+            const max = Math.max(1, ...data.topEvents.map((x) => x.count));
+            return (
+              <div key={`${e.name}-${i}`} className="flex items-center gap-3 text-sm">
+                <span className="flex-1 truncate">{e.name}{e.surface ? <span className="ml-2 text-xs text-muted-foreground">{e.surface}</span> : null}</span>
+                <div className="w-1/3"><Bar value={e.count} max={max} /></div>
+                <span className="w-16 text-right text-muted-foreground tabular-nums">{e.count}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -526,6 +675,99 @@ function PilotsTab({
           <PilotCard key={p.id} pilot={p} onUpdate={onUpdate} />
         ))}
       </div>
+    </div>
+  );
+}
+
+function ApprovalsTab({
+  pending,
+  onApprove,
+  onSuspend,
+  onResetLink,
+}: {
+  pending: PendingTeacher[];
+  onApprove: (id: string) => Promise<void>;
+  onSuspend: (id: string) => Promise<void>;
+  onResetLink: (id: string) => Promise<{ token: string; email: string; expiresAt: string }>;
+}) {
+  return (
+    <div className="space-y-4">
+      <div>
+        <h2 className="font-serif text-xl text-primary">Awaiting approval</h2>
+        <p className="text-sm text-muted-foreground">
+          New teachers cannot create resources until you approve them here. Use the reset link button to mint a one-time password reset for any teacher who has lost access.
+        </p>
+      </div>
+      {pending.length === 0 ? (
+        <div className="border rounded-lg bg-card p-6 text-muted-foreground">No new sign-ups waiting. Nice and quiet.</div>
+      ) : null}
+      {pending.map((t) => (
+        <ApprovalRow key={t.id} teacher={t} onApprove={onApprove} onSuspend={onSuspend} onResetLink={onResetLink} />
+      ))}
+    </div>
+  );
+}
+
+function ApprovalRow({
+  teacher,
+  onApprove,
+  onSuspend,
+  onResetLink,
+}: {
+  teacher: PendingTeacher;
+  onApprove: (id: string) => Promise<void>;
+  onSuspend: (id: string) => Promise<void>;
+  onResetLink: (id: string) => Promise<{ token: string; email: string; expiresAt: string }>;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [link, setLink] = useState<string | null>(null);
+
+  async function doApprove() { setBusy(true); try { await onApprove(teacher.id); } finally { setBusy(false); } }
+  async function doSuspend() { setBusy(true); try { await onSuspend(teacher.id); } finally { setBusy(false); } }
+  async function doReset() {
+    setBusy(true);
+    try {
+      const r = await onResetLink(teacher.id);
+      const base = window.location.origin + window.location.pathname.replace(/\/admin.*/, "");
+      setLink(`${base}/reset-password?token=${r.token}`);
+    } finally { setBusy(false); }
+  }
+  async function copyLink() {
+    if (!link) return;
+    try { await navigator.clipboard.writeText(link); } catch { /* ignore */ }
+  }
+
+  return (
+    <div className="border rounded-lg bg-card p-5">
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <div className="font-medium text-lg">{teacher.name}</div>
+          <div className="text-sm text-muted-foreground">
+            <a className="underline" href={`mailto:${teacher.email}`}>{teacher.email}</a>
+            {teacher.schoolName ? ` · ${teacher.schoolName}` : ""}
+            {teacher.country ? ` · ${teacher.country}` : ""}
+          </div>
+          <div className="text-xs text-muted-foreground mt-1">
+            Region: {teacher.region}
+            {teacher.subjects.length > 0 ? ` · Subjects: ${teacher.subjects.join(", ")}` : ""}
+          </div>
+          <div className="text-xs text-muted-foreground mt-1">Signed up {new Date(teacher.createdAt).toLocaleString()}</div>
+        </div>
+        <div className="flex gap-2 flex-wrap">
+          <Button size="sm" onClick={doApprove} disabled={busy} data-track="admin_approve_teacher">Approve</Button>
+          <Button size="sm" variant="outline" onClick={doSuspend} disabled={busy} data-track="admin_suspend_teacher">Suspend</Button>
+          <Button size="sm" variant="outline" onClick={doReset} disabled={busy} data-track="admin_mint_reset_link">Reset link</Button>
+        </div>
+      </div>
+      {link ? (
+        <div className="mt-3 p-3 bg-muted/40 rounded text-xs">
+          <div className="font-medium mb-1">One-time reset link (valid 24 hours):</div>
+          <div className="flex gap-2 items-center">
+            <code className="flex-1 truncate">{link}</code>
+            <Button size="sm" variant="outline" onClick={copyLink}>Copy</Button>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

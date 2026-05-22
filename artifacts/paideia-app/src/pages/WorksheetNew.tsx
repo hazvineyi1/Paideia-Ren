@@ -14,6 +14,7 @@ import { GeneratingSpinner } from "@/components/Loading";
 import { api, ApiError } from "@/lib/api";
 import type { Worksheet } from "@/lib/types";
 import { FileText } from "lucide-react";
+import { ClassProfileSelector } from "@/components/ClassProfileSelector";
 
 export default function WorksheetNew() {
   const { teacher } = useAuth();
@@ -60,6 +61,11 @@ export default function WorksheetNew() {
           </div>
         )}
         <form onSubmit={submit} className="space-y-5">
+          <ClassProfileSelector onSelect={(p) => {
+            setSubject(p.subject);
+            setYearGroup(p.yearGroup);
+            if (p.notes) setNotes(p.notes);
+          }} />
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Subject</Label>

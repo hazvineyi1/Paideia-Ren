@@ -30,17 +30,34 @@ import StudentLogin from "@/pages/student/StudentLogin";
 import StudentDashboard from "@/pages/student/StudentDashboard";
 import StudentTake from "@/pages/student/StudentTake";
 import Admin from "@/pages/Admin";
+import Library from "@/pages/Library";
+import Shared from "@/pages/Shared";
+import AwaitingApproval from "@/pages/AwaitingApproval";
+import Onboarding from "@/pages/Onboarding";
+import ResetPassword from "@/pages/ResetPassword";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
 
-function Protected({ component: Component }: { component: ComponentType }) {
+function Protected({ component: Component, allowPending = false, allowUnonboarded = false }: { component: ComponentType; allowPending?: boolean; allowUnonboarded?: boolean }) {
   const { teacher, loading } = useAuth();
-  const [, setLoc] = useLocation();
+  const [loc, setLoc] = useLocation();
+  useEffect(() => {
+    if (loading || !teacher) return;
+    if (teacher.status === "pending" && !allowPending && loc !== "/awaiting-approval") {
+      setLoc("/awaiting-approval");
+      return;
+    }
+    if (teacher.status === "active" && !teacher.onboardedAt && !allowUnonboarded && loc !== "/onboarding") {
+      setLoc("/onboarding");
+    }
+  }, [loading, teacher, setLoc, loc, allowPending, allowUnonboarded]);
   useEffect(() => {
     if (!loading && !teacher) setLoc("/login");
   }, [loading, teacher, setLoc]);
   if (loading || !teacher) return null;
+  if (teacher.status === "pending" && !allowPending) return null;
+  if (teacher.status === "active" && !teacher.onboardedAt && !allowUnonboarded) return null;
   return <Component />;
 }
 
@@ -70,6 +87,9 @@ function AppRoutes() {
       <Route path="/" component={Landing} />
       <Route path="/login" component={Login} />
       <Route path="/signup" component={Signup} />
+      <Route path="/reset-password" component={ResetPassword} />
+      <Route path="/awaiting-approval">{() => <Protected component={AwaitingApproval} allowPending />}</Route>
+      <Route path="/onboarding">{() => <Protected component={Onboarding} allowUnonboarded />}</Route>
       <Route path="/take/:code" component={PublicTake} />
       <Route path="/student/login" component={StudentLogin} />
       <Route path="/student/assignments/:id" component={StudentTake} />
@@ -91,6 +111,8 @@ function AppRoutes() {
       <Route path="/assignments/:id">{() => <Protected component={AssignmentView} />}</Route>
       <Route path="/settings">{() => <Protected component={Settings} />}</Route>
       <Route path="/admin">{() => <Protected component={Admin} />}</Route>
+      <Route path="/library">{() => <Protected component={Library} />}</Route>
+      <Route path="/shared">{() => <Protected component={Shared} />}</Route>
       <Route component={NotFound} />
     </Switch>
   );

@@ -8,12 +8,12 @@ import {
   submissionsTable,
 } from "@workspace/db";
 import { and, desc, eq, sql } from "drizzle-orm";
-import { requireAuth } from "../../middlewares/auth.js";
+import { requireAuth, requireActiveTeacher } from "../../middlewares/auth.js";
 import { REGION_IDS } from "../../lib/catalog.js";
 import { generateShortCode, hashPassword } from "../../lib/auth.js";
 
 const router: IRouter = Router();
-router.use(requireAuth);
+router.use(requireAuth, requireActiveTeacher);
 
 const createClassSchema = z.object({
   name: z.string().min(1).max(120),

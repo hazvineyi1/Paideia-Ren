@@ -8,6 +8,55 @@ export interface Teacher {
   subjects: string[];
   yearGroups: string[];
   isAdmin: boolean;
+  status: "pending" | "active" | "suspended";
+  onboardedAt: string | null;
+  approvedAt: string | null;
+  createdAt: string;
+}
+
+export interface ClassProfile {
+  id: string;
+  name: string;
+  subject: string;
+  yearGroup: string;
+  syllabus: string | null;
+  languageLevel: string | null;
+  notes: string | null;
+  createdAt: string;
+}
+
+export interface LibraryItem {
+  id: string;
+  kind: "plan" | "worksheet" | "quiz" | "parent-draft";
+  title: string;
+  subject: string;
+  yearGroup: string;
+  topic: string | null;
+  createdAt: string;
+}
+
+export interface SharedItem {
+  id: string;
+  resourceType: "plan" | "worksheet" | "quiz" | "parent-draft";
+  resourceId: string;
+  copiedResourceId: string | null;
+  message: string | null;
+  sharedAt: string;
+  viewedAt: string | null;
+  fromName: string;
+  fromEmail: string;
+}
+
+export interface PendingTeacher {
+  id: string;
+  email: string;
+  name: string;
+  region: string;
+  country: string | null;
+  schoolName: string | null;
+  subjects: string[];
+  yearGroups: string[];
+  status: string;
   createdAt: string;
 }
 
@@ -106,6 +155,42 @@ export interface AdminPilot {
 export interface AdminPilots {
   statusCounts: { status: string; count: number }[];
   pilots: AdminPilot[];
+}
+
+export interface DigestWindowStats {
+  signups: number;
+  pilots: number;
+  lessonPlans: number;
+  worksheets: number;
+  quizzes: number;
+  parentDrafts: number;
+  assignments: number;
+  submissions: number;
+  activeTeachers: number;
+  aiCalls: number;
+  aiTokens: number;
+  aiCostUsd: number;
+  events: number;
+}
+
+export interface AdminDigest {
+  windowStart: string;
+  windowEnd: string;
+  previousStart: string;
+  current: DigestWindowStats;
+  previous: DigestWindowStats;
+  topEvents: { name: string; surface: string | null; count: number }[];
+  newPilots: {
+    id: string;
+    contactName: string;
+    contactEmail: string;
+    organization: string | null;
+    schoolName: string | null;
+    country: string | null;
+    status: string;
+    createdAt: string;
+  }[];
+  topTeachers: { id: string; name: string; email: string; schoolName: string | null; events: number }[];
 }
 
 export interface RegionInfo {

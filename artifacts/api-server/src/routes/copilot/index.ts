@@ -13,6 +13,9 @@ import studentRouter from "./student.js";
 import pilotRequestsRouter from "./pilot-requests.js";
 import eventsRouter from "./events.js";
 import adminRouter from "./admin.js";
+import profilesRouter from "./profiles.js";
+import libraryRouter from "./library.js";
+import resourceSharesRouter from "./resource-shares.js";
 
 const router: IRouter = Router();
 
@@ -30,5 +33,8 @@ router.use("/student", studentRouter);
 router.use("/pilot-requests", pilotRequestsRouter);
 router.use("/events", eventsRouter);
 router.use("/admin", adminRouter);
+router.use("/profiles", profilesRouter);
+router.use("/library", libraryRouter);
+router.use("/resource-shares", resourceSharesRouter);
 
 export default router;

@@ -7,6 +7,7 @@ import type { Worksheet } from "@/lib/types";
 import { WorksheetView as Renderer } from "@/components/Renderers";
 import { AssignDialog } from "@/components/AssignDialog";
 import { Printer, Trash2, Share2 } from "lucide-react";
+import { ShareResourceDialog } from "@/components/ShareResourceDialog";
 
 export default function WorksheetView() {
   const [, params] = useRoute<{ id: string }>("/worksheets/:id");
@@ -14,6 +15,7 @@ export default function WorksheetView() {
   const [w, setW] = useState<Worksheet | null>(null);
   const [loading, setLoading] = useState(true);
   const [assignOpen, setAssignOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
 
   useEffect(() => {
     if (!params?.id) return;
@@ -43,6 +45,7 @@ export default function WorksheetView() {
         <div className="flex gap-2 shrink-0">
           <Button size="sm" onClick={() => setAssignOpen(true)}><Share2 className="h-4 w-4 mr-1" />Assign to a class</Button>
           <Button variant="outline" size="sm" onClick={() => window.print()}><Printer className="h-4 w-4 mr-1" />Print</Button>
+          <Button variant="outline" size="sm" onClick={() => setShareOpen(true)}><Share2 className="h-4 w-4 mr-1" />Share</Button>
           <Button variant="ghost" size="sm" onClick={onDelete}><Trash2 className="h-4 w-4 mr-1" />Delete</Button>
         </div>
       </header>
@@ -50,6 +53,7 @@ export default function WorksheetView() {
         <Renderer c={w.content} />
       </div>
       <AssignDialog open={assignOpen} onClose={() => setAssignOpen(false)} resourceKind="worksheet" resourceId={w.id} resourceTitle={w.title} />
+      <ShareResourceDialog open={shareOpen} onOpenChange={setShareOpen} resourceType="worksheet" resourceId={w.id} resourceTitle={w.title} />
     </AppShell>
   );
 }
