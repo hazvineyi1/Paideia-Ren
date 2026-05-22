@@ -37,7 +37,7 @@ const workflows = [
   { icon: Clock, title: "Saves you time on differentiation", description: "The platform handles the adaptation layer, identifying which students need more support, which need a harder path, and which need a different modality. You make the pedagogical decisions. The system does the labor." },
   { icon: BarChart2, title: "Surfaces what you cannot see", description: "A class of 35 has 35 individual learning trajectories. Paideia-Ren makes the hidden visible: who is in the productive struggle zone, who is cognitively overloaded, who has stopped trying. You see it. You act on it." },
   { icon: Lightbulb, title: "Respects your professional judgment", description: "Every recommendation the system makes is a suggestion, never an instruction. You override it. You contextualize it. The AI defers to you, always. Your professional expertise is the irreplaceable element in every classroom." },
-  { icon: Heart, title: "Built with teachers, for teachers", description: "Every feature in Paideia-Ren was designed in dialogue with practicing teachers across Africa, Asia, and the Americas. We ran user testing in classrooms before we ran it in conference rooms." },
+  { icon: Heart, title: "Built with teachers, for teachers", description: "Every feature in Paideia-Ren was designed in dialogue with practicing teachers across the United States, United Kingdom, and Europe. We ran user testing in classrooms before we ran it in conference rooms." },
 ];
 
 const interestOptions = [
@@ -115,7 +115,7 @@ export default function ForEducators() {
               Educator voices coming at launch.
             </h2>
             <p className="text-[17px] text-foreground/80 leading-[1.75]">
-              We are currently in pilot with teachers across Sub-Saharan Africa, South Asia, and Latin America. Their words will speak for themselves when the platform launches publicly.
+              We are currently in pilot with teachers across the United States, United Kingdom, and Europe. Their words will speak for themselves when the platform launches publicly.
             </p>
           </motion.div>
         </div>
@@ -150,7 +150,7 @@ export default function ForEducators() {
                 <FormField control={educatorForm.control} name="country" render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-[13px] font-semibold uppercase tracking-wide">Country</FormLabel>
-                    <FormControl><Input {...field} placeholder="e.g. Kenya" className="rounded-none h-12" data-testid="input-educator-country" /></FormControl>
+                    <FormControl><Input {...field} placeholder="e.g. United States" className="rounded-none h-12" data-testid="input-educator-country" /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
@@ -224,7 +224,7 @@ export default function ForEducators() {
                   <FormField control={learnerForm.control} name="country" render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-[13px] font-semibold uppercase tracking-wide">Country</FormLabel>
-                      <FormControl><Input {...field} placeholder="e.g. Nigeria" className="rounded-none h-12" data-testid="input-learner-country" /></FormControl>
+                      <FormControl><Input {...field} placeholder="e.g. United Kingdom" className="rounded-none h-12" data-testid="input-learner-country" /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />

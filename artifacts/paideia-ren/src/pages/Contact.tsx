@@ -27,7 +27,7 @@ const contactRoutes = [
   },
   {
     id: "school",
-    title: "School & Ministry",
+    title: "School & District",
     subtitle: "Pilot requests, district licensing, and government partnerships",
     tag: "[school]",
   },
@@ -186,7 +186,7 @@ export default function Contact() {
               <p className="text-[15px] text-foreground/70 leading-[1.75]">
                 Headquarters TBA<br />
                 Incorporated in the United States<br />
-                Global operations: Nairobi · Bogotá · New Delhi
+                Operations: New York · London · Berlin
               </p>
             </motion.div>
             <motion.div {...fadeUp} transition={{ duration: 0.7, delay: 0.1 }}>

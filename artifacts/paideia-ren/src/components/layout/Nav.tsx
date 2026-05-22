@@ -70,7 +70,6 @@ export function Nav() {
               toastTitle="Thank you"
               toastDescription="Our development team will be in touch within 2 business days."
             />
-            <span className="text-[15px] font-medium text-foreground cursor-pointer hover:text-terracotta">EN ▾</span>
           </nav>
 
           <button

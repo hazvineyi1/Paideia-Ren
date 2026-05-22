@@ -11,12 +11,12 @@ const fadeUp = {
 };
 
 const countries = [
-  { country: "Kenya", region: "Sub-Saharan Africa", status: "Active pilot", context: "Nairobi County. Focus: upper primary mathematics and English literacy. Low-bandwidth deployment active.", color: "#1F2A5C" },
-  { country: "Colombia", region: "Latin America", status: "Partnership in design", context: "Secondary mathematics engagement aligned to national curriculum framework.", color: "#1F2A5C" },
-  { country: "India", region: "South Asia", status: "Pilot Q3 2026", context: "Rajasthan. Rural offline-first configuration. Dual-language Hindi and English.", color: "#1F2A5C" },
-  { country: "Ecuador", region: "Latin America", status: "Pilot planned", context: "Spanish-language secondary mathematics. Partnership scoping with regional education authorities.", color: "#C9971C" },
-  { country: "Zimbabwe", region: "Sub-Saharan Africa", status: "Pilot planned", context: "Upper-primary literacy and numeracy. Offline-first configuration for low-bandwidth schools.", color: "#C9971C" },
-  { country: "Malaysia", region: "Southeast Asia", status: "Pilot planned", context: "Secondary STEM pathways. English-medium deployment with curriculum alignment under design.", color: "#C9971C" },
+  { country: "United States", region: "North America", status: "Partnership in design", context: "Independent and public-district partnerships. Focus on middle-school mathematics and high-school STEM, aligned to Common Core and state standards.", color: "#1F2A5C" },
+  { country: "United Kingdom", region: "Europe", status: "Partnership in design", context: "Multi-academy trust partnerships across England. Key Stage 3 and 4 mathematics and English, aligned to the National Curriculum and GCSE specifications.", color: "#1F2A5C" },
+  { country: "Germany", region: "Europe", status: "Pilot planned", context: "Gymnasium and Gesamtschule partnerships. English-medium deployment with state-level curriculum alignment under design.", color: "#C9971C" },
+  { country: "Canada", region: "North America", status: "Pilot planned", context: "English-medium deployment with provincial standards alignment under design. Initial focus on Ontario and British Columbia.", color: "#C9971C" },
+  { country: "Ireland", region: "Europe", status: "Pilot planned", context: "Post-primary mathematics and science, aligned to the Junior Cycle and Leaving Certificate frameworks.", color: "#C9971C" },
+  { country: "Netherlands", region: "Europe", status: "Pilot planned", context: "VWO and HAVO partnerships. English-medium deployment with curriculum alignment under design.", color: "#C9971C" },
 ];
 
 export default function WhereWeWork() {
@@ -31,7 +31,7 @@ export default function WhereWeWork() {
         </motion.h1>
         <motion.p {...fadeUp} transition={{ duration: 0.7, delay: 0.2 }}
           className="text-[17px] text-foreground/80 leading-[1.75]">
-          Paideia-Ren is built for the world's classrooms, not Silicon Valley's imagination of them. We design with context, not just for it.
+          Paideia-Ren is built alongside the teachers and students it serves. We design with context, not just for it.
         </motion.p>
       </section>
 
@@ -52,7 +52,7 @@ export default function WhereWeWork() {
               {/* Region labels */}
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="grid grid-cols-4 gap-8 px-12 w-full">
-                  {["Sub-Saharan Africa", "South Asia", "Latin America", "Southeast Asia"].map((region) => (
+                  {["United States", "United Kingdom", "European Union", "Canada"].map((region) => (
                     <div key={region} className="text-center">
                       <div className="w-3 h-3 bg-primary rounded-full mx-auto mb-2" />
                       <p className="text-[13px] font-semibold uppercase tracking-wide text-primary">{region}</p>
@@ -98,11 +98,11 @@ export default function WhereWeWork() {
       <section className="py-[120px] bg-primary text-center">
         <div className="max-w-[720px] mx-auto px-6">
           <motion.h2 {...fadeUp} className="font-serif text-3xl md:text-[48px] text-white leading-[1.2] mb-6">
-            Bring Paideia-Ren to your country.
+            Bring Paideia-Ren to your school or district.
           </motion.h2>
           <motion.p {...fadeUp} transition={{ duration: 0.7, delay: 0.1 }}
             className="text-[17px] text-white/70 leading-[1.75] mb-10">
-            We are actively seeking ministry partners, regional NGOs, and district-level champions who share the conviction that every child deserves an excellent education.
+            We are actively seeking district leaders, multi-academy trusts, independent schools, and education foundations who share the conviction that every child deserves an excellent education.
           </motion.p>
           <motion.div {...fadeUp} transition={{ duration: 0.7, delay: 0.2 }}>
             <Button asChild size="lg" className="bg-white text-primary hover:bg-white/90 px-10 h-14 text-base rounded-none">

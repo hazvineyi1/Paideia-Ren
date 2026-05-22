@@ -11,7 +11,7 @@ const fadeUp = {
 };
 
 const tocSteps = [
-  { label: "Inputs", items: ["Grant & philanthropy capital", "SaaS subscription revenue", "Ministry contracts", "Research partnerships"] },
+  { label: "Inputs", items: ["Grant & philanthropy capital", "SaaS subscription revenue", "District & trust contracts", "Research partnerships"] },
   { label: "Activities", items: ["Adaptive platform development", "Teacher co-pilot deployment", "Curriculum alignment", "Research & evaluation"] },
   { label: "Outputs", items: ["Students served", "Teachers supported", "Schools & districts onboarded", "RCT evidence produced"] },
   { label: "Outcomes", items: ["Improved learning outcomes", "Teacher capacity built", "Equity gaps narrowed", "Education systems strengthened"] },
@@ -22,21 +22,21 @@ const fundingLevels = [
   {
     name: "Seed",
     amount: "$250,000 – $500,000",
-    description: "Pilot in two countries",
-    outcomes: ["Full platform deployment in 2 pilot countries", "Rigorous pre/post evaluation", "Published research outputs", "Learning on low-bandwidth infrastructure"],
+    description: "Founding-partner pilots",
+    outcomes: ["Full platform deployment with 2 founding partner schools or districts", "Rigorous pre/post evaluation", "Published research outputs", "Iterative product learning with pilot teachers"],
   },
   {
     name: "Growth",
     amount: "$1M – $5M",
-    description: "50 schools, 3 countries",
-    outcomes: ["Multi-country district deployments", "RCT co-design with independent evaluator", "Teacher training programs", "Open-source curriculum modules"],
+    description: "50 schools across regions",
+    outcomes: ["District-level and multi-academy-trust deployments", "RCT co-design with independent evaluator", "Teacher professional learning programs", "Open-source curriculum modules"],
     featured: true,
   },
   {
     name: "Scale",
     amount: "$5M+",
-    description: "One ministry partnership",
-    outcomes: ["National-scale ministry deployment", "Curriculum localization in 3+ languages", "In-country capacity building", "Sustained 5-year research agenda"],
+    description: "Network or state-wide partnership",
+    outcomes: ["State, network, or trust-wide deployment", "Curriculum alignment across multiple state and national standards", "Educator capacity-building program", "Sustained 5-year research agenda"],
   },
 ];
 
@@ -69,10 +69,10 @@ export default function ForFunders() {
           <motion.p {...fadeUp} className="text-[13px] font-semibold uppercase tracking-widest text-white/60 mb-8 text-center">Why now</motion.p>
           <motion.blockquote {...fadeUp} transition={{ duration: 0.7, delay: 0.1 }} className="border-l-2 border-accent pl-8">
             <p className="font-serif text-2xl md:text-3xl text-white italic leading-[1.5] mb-6">
-              "With 7 in 10 of today's 10-year-olds in low- and middle-income countries now unable to read a simple text, political leaders and society must swiftly move to recover this generation's future."
+              Reading and math scores in the United States, the United Kingdom, and across Europe have not recovered to pre-pandemic levels. The classrooms of every advanced economy are now living with a learning debt that conventional instruction was not designed to repay.
             </p>
             <cite className="text-[13px] text-white/60 not-italic">
-              Jaime Saavedra, Global Director for Education, World Bank
+              Paideia-Ren Inc., on the case for catalytic capital
             </cite>
           </motion.blockquote>
         </div>

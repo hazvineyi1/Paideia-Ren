@@ -42,17 +42,17 @@ const tiers = [
     featured: true,
   },
   {
-    name: "National / Ministry Partnership",
+    name: "District & State Partnership",
     description: "Custom, multi-year",
-    features: ["Ministry-level deployment", "Capacity-building program", "Multi-year technical support", "National curriculum integration", "Co-branded research outputs"],
+    features: ["State, network, or trust-wide deployment", "Capacity-building program", "Multi-year technical support", "Curriculum integration across standards", "Co-branded research outputs"],
     cta: "Schedule a call",
   },
 ];
 
 const regions = [
-  { country: "Ecuador", region: "Latin America", status: "Pilot planned", context: "Spanish-language secondary mathematics. Partnership scoping with regional education authorities." },
-  { country: "Zimbabwe", region: "Sub-Saharan Africa", status: "Pilot planned", context: "Upper-primary literacy and numeracy. Offline-first configuration for low-bandwidth schools." },
-  { country: "Malaysia", region: "Southeast Asia", status: "Pilot planned", context: "Secondary STEM pathways. English-medium deployment with curriculum alignment under design." },
+  { country: "United States", region: "North America", status: "Pilot planned", context: "Independent and public-district pilots focused on middle-school mathematics and high-school STEM. Common Core and state-standard alignment." },
+  { country: "United Kingdom", region: "Europe", status: "Pilot planned", context: "Multi-academy trust partnerships across England. Key Stage 3 and 4 mathematics and English, aligned to the National Curriculum and GCSE specifications." },
+  { country: "Germany", region: "Europe", status: "Pilot planned", context: "Gymnasium and Gesamtschule partnerships. English-medium deployment with state-level curriculum alignment under design." },
 ];
 
 export default function ForSchools() {
@@ -68,14 +68,14 @@ export default function ForSchools() {
     <div className="min-h-screen pt-20">
       {/* Header */}
       <section className="py-[120px] max-w-[720px] mx-auto px-6 text-center">
-        <motion.p {...fadeUp} className="text-[13px] font-semibold uppercase tracking-widest text-muted-foreground mb-6">For Schools & Ministries</motion.p>
+        <motion.p {...fadeUp} className="text-[13px] font-semibold uppercase tracking-widest text-muted-foreground mb-6">For Schools & Districts</motion.p>
         <motion.h1 {...fadeUp} transition={{ duration: 0.7, delay: 0.1 }}
           className="font-serif text-5xl md:text-[72px] text-primary leading-[1.1] tracking-wide mb-8">
           Built for national scale.
         </motion.h1>
         <motion.p {...fadeUp} transition={{ duration: 0.7, delay: 0.2 }}
           className="text-[17px] text-foreground/80 leading-[1.75]">
-          Curriculum-aligned, teacher-augmenting, and designed for the realities of low-bandwidth classrooms from Nairobi to Bogotá to Rajasthan.
+          Curriculum-aligned, teacher-augmenting, and designed for the realities of real classrooms from Boston to London to Berlin.
         </motion.p>
       </section>
 
@@ -85,9 +85,9 @@ export default function ForSchools() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {[
               { label: "Interoperability", value: "LTI · OneRoster · SCORM · xAPI" },
-              { label: "Languages", value: "English at launch · More planned" },
-              { label: "Connectivity", value: "Offline-first, 2G capable" },
-              { label: "Data Protection", value: "FERPA · GDPR · POPIA · Kenya DPA 2019" },
+              { label: "Standards", value: "Common Core · State · UK National · IB" },
+              { label: "Devices", value: "Chromebook · iPad · Desktop · Web" },
+              { label: "Data Protection", value: "FERPA · COPPA · GDPR · UK GDPR" },
             ].map((item) => (
               <div key={item.label} className="text-center">
                 <p className="text-[13px] font-semibold uppercase tracking-widest text-muted-foreground mb-3">{item.label}</p>
@@ -104,13 +104,13 @@ export default function ForSchools() {
           <motion.div {...fadeUp}>
             <h2 className="font-serif text-3xl md:text-[40px] text-primary mb-8 leading-[1.2]">What we offer schools.</h2>
             <p className="text-[17px] text-foreground/80 leading-[1.75] mb-6">
-              Paideia-Ren is designed to work inside your existing systems, not replace them. Our platform is curriculum-aligned to national syllabi, IB, Cambridge International, Common Core, and CAPS, with a ministry partnership tooling layer that enables co-branded deployment at national scale.
+              Paideia-Ren is designed to work inside your existing systems, not replace them. Our platform is curriculum-aligned to Common Core, US state standards, the UK National Curriculum, IB, and Cambridge International, with district and multi-academy trust tooling that enables co-branded deployment at scale.
             </p>
             <p className="text-[17px] text-foreground/80 leading-[1.75] mb-8">
               Every deployment is teacher-augmenting by design. The platform surfaces actionable intelligence for teachers, not generic reports. It flags which students need attention, where the class is collectively stuck, and what the research suggests as the most effective intervention for this cohort.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {["Interoperable with your LMS (LTI, OneRoster, SCORM, xAPI)", "Offline-first, functional on 2G networks", "FERPA, GDPR, POPIA, Kenya DPA 2019 compliant", "WCAG 2.2 AA accessible", "Child-data minimization by default", "No student surveillance, ever"].map((f) => (
+              {["Interoperable with your LMS (LTI, OneRoster, SCORM, xAPI)", "Runs on Chromebooks, iPads, and standard desktops", "FERPA, COPPA, GDPR, and UK GDPR compliant", "WCAG 2.2 AA accessible", "Child-data minimization by default", "No student surveillance, ever"].map((f) => (
                 <div key={f} className="flex items-start gap-3">
                   <CheckCircle2 strokeWidth={1.5} size={18} className="text-primary flex-shrink-0 mt-0.5" />
                   <p className="text-[15px] text-foreground/80">{f}</p>
@@ -149,8 +149,8 @@ export default function ForSchools() {
                   }
                   title={`${tier.name}: get in touch`}
                   description="Share a few details and our partnerships team will respond within two business days."
-                  orgLabel="School, district, or ministry"
-                  orgPlaceholder="e.g. Ministry of Education, Kenya"
+                  orgLabel="School, district, or trust"
+                  orgPlaceholder="e.g. Lincoln Public Schools or Harris Federation"
                   submitLabel="Send request"
                   toastTitle="Request received"
                   toastDescription="Our partnerships team will contact you within 2 business days."
@@ -193,14 +193,14 @@ export default function ForSchools() {
                 <FormField control={form.control} name="schoolName" render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-[13px] font-semibold uppercase tracking-wide">School or Institution Name</FormLabel>
-                    <FormControl><Input {...field} placeholder="e.g. Nairobi Academy" className="rounded-none h-12" data-testid="input-school-name" /></FormControl>
+                    <FormControl><Input {...field} placeholder="e.g. Lincoln Academy" className="rounded-none h-12" data-testid="input-school-name" /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
                 <FormField control={form.control} name="country" render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-[13px] font-semibold uppercase tracking-wide">Country</FormLabel>
-                    <FormControl><Input {...field} placeholder="e.g. Kenya" className="rounded-none h-12" data-testid="input-country" /></FormControl>
+                    <FormControl><Input {...field} placeholder="e.g. United States" className="rounded-none h-12" data-testid="input-country" /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />

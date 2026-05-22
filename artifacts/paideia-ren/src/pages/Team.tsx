@@ -13,17 +13,17 @@ const fadeUp = {
 const placeholderTeam = [
   { name: "Name TBA", title: "Chief Executive Officer", bio: "Former ministry official with 20 years in global education policy." },
   { name: "Name TBA", title: "Chief Learning Officer", bio: "Learning scientist specializing in adaptive systems and cognitive-load theory." },
-  { name: "Name TBA", title: "Chief Technology Officer", bio: "AI researcher with deep expertise in NLP and low-bandwidth deployment." },
+  { name: "Name TBA", title: "Chief Technology Officer", bio: "AI researcher with deep expertise in NLP and learning infrastructure at scale." },
   { name: "Name TBA", title: "Chief Research Officer", bio: "Educational psychologist and RCT specialist, formerly at J-PAL." },
-  { name: "Name TBA", title: "VP, Partnerships & Policy", bio: "Education diplomat with ministry relationships across Sub-Saharan Africa." },
+  { name: "Name TBA", title: "VP, Partnerships & Policy", bio: "Education leader with district and government relationships across the United States and United Kingdom." },
   { name: "Name TBA", title: "VP, Product", bio: "Multilingual product leader who has shipped edtech at global scale." },
 ];
 
 const advisors = [
-  { name: "Advisor TBA", title: "University of Oxford — Education Policy", bio: "Expert in comparative education systems." },
+  { name: "Advisor TBA", title: "University of Oxford, Education Policy", bio: "Expert in comparative education systems." },
   { name: "Advisor TBA", title: "Harvard Graduate School of Education", bio: "Pioneer in mastery learning and adaptive pedagogy." },
-  { name: "Advisor TBA", title: "Stanford HAI — Human-Centered AI", bio: "Ethics of AI in educational contexts." },
-  { name: "Advisor TBA", title: "African Leadership University", bio: "Pan-African curriculum and youth leadership development." },
+  { name: "Advisor TBA", title: "Stanford HAI, Human-Centered AI", bio: "Ethics of AI in educational contexts." },
+  { name: "Advisor TBA", title: "UCL Institute of Education, London", bio: "Comparative education policy and teacher professional learning." },
 ];
 
 function PersonCard({ name, title, bio }: { name: string; title: string; bio: string }) {
@@ -64,7 +64,7 @@ export default function Team() {
               Our institutional mission
             </h2>
             <p className="text-[17px] text-foreground/80 leading-[1.75] mb-6">
-              Paideia-Ren Inc. exists to ensure that every learner — regardless of geography, income, language, or learning profile — has access to the kind of personalized, adaptive instruction that the world's most privileged students receive as a matter of course.
+              Paideia-Ren Inc. exists to ensure that every learner, regardless of geography, income, language, or learning profile, has access to the kind of personalized, adaptive instruction that the most privileged students receive as a matter of course.
             </p>
             <p className="text-[17px] text-foreground/80 leading-[1.75] mb-12">
               Our research agenda is anchored in the most rigorous learning science of our time. We translate VARK and the Felder–Silverman model into modality-responsive content delivery. We apply Kolb's experiential learning cycle and Bloom's taxonomy to scaffold mastery. We use cognitive-load theory to calibrate difficulty and Vygotsky's zone of proximal development to hold every learner at the precise edge of their growth.
@@ -85,7 +85,7 @@ export default function Team() {
               <p className="font-serif text-xl text-primary italic leading-[1.6] mb-2">
                 "The possession which no one can take away from a person is paideia."
               </p>
-              <cite className="text-[13px] text-muted-foreground not-italic">— Menander</cite>
+              <cite className="text-[13px] text-muted-foreground not-italic">Menander</cite>
             </blockquote>
 
             <h2 className="font-serif text-3xl text-primary mb-6">

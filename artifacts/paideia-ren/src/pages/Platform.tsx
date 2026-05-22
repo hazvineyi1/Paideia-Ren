@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle2, Eye, Headphones, BookOpen, Activity, Users, Globe, Wifi, BookMarked, ShieldCheck } from "lucide-react";
+import { CheckCircle2, Activity, Users, Globe, Monitor, BookMarked, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const fadeUp = {
@@ -15,7 +15,7 @@ const steps = [
     number: "01",
     title: "Recognize",
     subtitle: "Multi-modal assessment",
-    description: "Every learner begins with a diagnostic that assesses learning style, cognitive strengths, prior knowledge, and bandwidth constraints, without ever making them feel tested. VARK, Felder-Silverman, and cognitive-load baselines are established invisibly, through the way they engage.",
+    description: "Every learner begins with a diagnostic that assesses learning style, cognitive strengths, and prior knowledge, without ever making them feel tested. VARK, Felder-Silverman, and cognitive-load baselines are established invisibly, through the way they engage.",
   },
   {
     number: "02",
@@ -54,10 +54,10 @@ const features = [
   { icon: Activity, title: "Adaptive Content Engine", description: "Real-time modality-responsive content delivery across every subject and grade level." },
   { icon: Users, title: "Teacher Co-Pilot", description: "Rich classroom dashboards, intervention signals, and suggested next steps, in the teacher's language." },
   { icon: CheckCircle2, title: "Cohort & Community Layer", description: "Peer learning cohorts, dialogical discussion prompts, and collaborative problem-solving tools." },
-  { icon: Globe, title: "Multi-Language Support", description: "English at launch, with additional languages planned. Designed for multilingual curriculum contexts worldwide." },
-  { icon: Wifi, title: "Offline-First & Low-Bandwidth", description: "Core learning experience functions on 2G. Content pre-fetches on any available connection." },
-  { icon: BookMarked, title: "Curriculum Alignment", description: "National curricula, IB, Cambridge, Common Core, and CAPS, with ministry partnership tooling." },
-  { icon: ShieldCheck, title: "Open Data & Privacy by Design", description: "FERPA, GDPR, POPIA, Kenya DPA 2019 compliant. Child-data minimization. No student surveillance." },
+  { icon: Globe, title: "Built for Real Schools", description: "Designed alongside teachers in the United States, United Kingdom, and Europe. Plain English at launch." },
+  { icon: Monitor, title: "Modern Browser Support", description: "Runs on Chromebooks, iPads, and standard desktops used in classrooms and at home. No installation required." },
+  { icon: BookMarked, title: "Curriculum Alignment", description: "Common Core, state standards, the UK National Curriculum, IB, and Cambridge International, with district and trust tooling." },
+  { icon: ShieldCheck, title: "Open Data & Privacy by Design", description: "FERPA, COPPA, GDPR, and UK GDPR compliant. Child-data minimization. No student surveillance." },
 ];
 
 export default function Platform() {

@@ -18,10 +18,10 @@ const ethicsCharter = [
 
 const dataProtection = [
   { law: "FERPA", jurisdiction: "United States", description: "Family Educational Rights and Privacy Act, governing access to and privacy of student education records for US-based institutions." },
-  { law: "GDPR", jurisdiction: "European Union", description: "General Data Protection Regulation, the global gold standard for data privacy, applied to all EU data subjects regardless of where data is processed." },
-  { law: "POPIA", jurisdiction: "South Africa", description: "Protection of Personal Information Act, South Africa's comprehensive data protection law, aligned with GDPR principles." },
-  { law: "Kenya DPA 2019", jurisdiction: "Kenya", description: "Kenya Data Protection Act 2019, establishing the Office of the Data Protection Commissioner and governing personal data processing." },
   { law: "COPPA", jurisdiction: "United States", description: "Children's Online Privacy Protection Act, applicable where Paideia-Ren serves children under 13 in the United States." },
+  { law: "GDPR", jurisdiction: "European Union", description: "General Data Protection Regulation, the global gold standard for data privacy, applied to all EU data subjects regardless of where data is processed." },
+  { law: "UK GDPR", jurisdiction: "United Kingdom", description: "The United Kingdom's domestic data protection framework, retaining GDPR's core principles and enforced by the Information Commissioner's Office." },
+  { law: "PIPEDA", jurisdiction: "Canada", description: "Personal Information Protection and Electronic Documents Act, governing how private-sector organizations collect, use, and disclose personal information in Canada." },
 ];
 
 export default function Transparency() {

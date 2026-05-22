@@ -43,7 +43,7 @@ export default function Home() {
           viewport={{ once: true }}
           className="text-[22px] md:text-[28px] font-serif text-foreground leading-[1.5] mb-12"
         >
-          Paideia-Ren is a nonprofit AI tutor that meets every learner where they are — and connects them to a teacher, a community, and a world.
+          Paideia-Ren is a nonprofit AI tutor that meets every learner where they are, and connects them to a teacher, a community, and a world.
         </motion.p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-white px-8 h-14 text-base rounded-none">
@@ -64,9 +64,9 @@ export default function Home() {
                 <div className="p-3 bg-primary/5 rounded-full mb-6 text-primary">
                   <BookOpen strokeWidth={1.5} size={28} />
                 </div>
-                <h3 className="font-serif text-2xl text-primary mb-4">For Schools & Ministries</h3>
+                <h3 className="font-serif text-2xl text-primary mb-4">For Schools & Districts</h3>
                 <p className="text-foreground/80 mb-8 flex-1">
-                  Deploy a curriculum-aligned, teacher-augmenting platform built for low-bandwidth environments and national scale.
+                  Deploy a curriculum-aligned, teacher-augmenting platform built for independent schools, public districts, and education systems at scale.
                 </p>
                 <Link href="/for-schools" className="flex items-center gap-2 text-primary font-medium hover:text-terracotta transition-colors mt-auto">
                   Learn more <ArrowRight size={16} />
@@ -81,7 +81,7 @@ export default function Home() {
                 </div>
                 <h3 className="font-serif text-2xl text-primary mb-4">For Funders & Partners</h3>
                 <p className="text-foreground/80 mb-8 flex-1">
-                  Join our coalition to provide world-class personalized learning to the most marginalized students globally.
+                  Join our coalition to bring world-class personalized learning to students across our partner schools in the United States, United Kingdom, and Europe.
                 </p>
                 <Link href="/for-funders" className="flex items-center gap-2 text-primary font-medium hover:text-terracotta transition-colors mt-auto">
                   Partner with us <ArrowRight size={16} />
@@ -116,8 +116,8 @@ export default function Home() {
           <div className="flex flex-wrap justify-center items-center gap-x-16 gap-y-8 opacity-60">
             <span className="font-serif text-2xl">UN SDG 4</span>
             <span className="font-serif text-2xl">UNESCO</span>
-            <span className="font-serif text-2xl">FERPA · GDPR · POPIA</span>
-            <span className="font-serif text-2xl italic">IB · Cambridge · CAPS</span>
+            <span className="font-serif text-2xl">FERPA · COPPA · GDPR · UK GDPR</span>
+            <span className="font-serif text-2xl italic">IB · Cambridge · Common Core</span>
           </div>
         </div>
       </section>
@@ -126,7 +126,7 @@ export default function Home() {
       <section className="py-[120px]">
         <div className="max-w-[900px] mx-auto px-6 text-center">
           <p className="font-serif text-3xl md:text-[40px] italic text-primary leading-[1.4]">
-            "I am because we are — and we learn because we are together."
+            "I am because we are, and we learn because we are together."
           </p>
         </div>
       </section>

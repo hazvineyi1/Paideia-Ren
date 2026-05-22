@@ -23,18 +23,18 @@ type Category = typeof categories[number];
 const articles: Record<Category, { title: string; excerpt: string; status: string }[]> = {
   Research: [
     { title: "Adaptive tutoring and the 2-sigma gap: what the evidence actually says", excerpt: "A careful review of the RCT evidence on AI tutoring systems, what holds up, what is overstated, and what Paideia-Ren's research agenda will add to the field.", status: "Coming at launch" },
-    { title: "Cognitive-load theory in low-bandwidth classrooms: a practitioner's guide", excerpt: "Translating Sweller's cognitive-load research into classroom practice in Sub-Saharan Africa, South Asia, and Latin America, and what it means for content design.", status: "Coming at launch" },
+    { title: "Cognitive-load theory in the real classroom: a practitioner's guide", excerpt: "Translating Sweller's cognitive-load research into classroom practice in US public schools, UK academies, and European secondary education, and what it means for content design.", status: "Coming at launch" },
     { title: "Why 79% of edtech has no evidence, and what the 21% do differently", excerpt: "The Jacobs Foundation finding that most edtech lacks rigorous evidence is a design challenge, not a statistical curiosity. We map the path forward.", status: "Coming at launch" },
   ],
   "Field Notes": [
-    { title: "What teachers in low-connectivity classrooms taught us about offline-first design", excerpt: "Classroom observation in rural settings revealed that offline-first is a values statement, not only a technical specification.", status: "Coming at launch" },
+    { title: "What teachers told us about adaptive systems that get out of their way", excerpt: "Classroom observation across our pilot schools revealed that the best adaptive interface is one teachers stop noticing.", status: "Coming at launch" },
     { title: "When the platform encounters a learner who defies every modality assumption", excerpt: "Field notes from our first pilots on what happens when adaptive assumptions meet the full complexity of a real student.", status: "Coming at launch" },
     { title: "On what happens when a teacher is freed from the labor of differentiation", excerpt: "What becomes possible for a teacher when the system handles the adaptation layer and returns time for human attention.", status: "Coming at launch" },
   ],
   Philosophy: [
     { title: "Paideia in the age of artificial intelligence", excerpt: "What would Plato make of an AI tutor? A philosophical examination of whether adaptive technology can genuinely turn the soul, or only simulate doing so.", status: "Coming at launch" },
     { title: "Ren, relational AI, and the ethics of tutoring at scale", excerpt: "Confucius wrote that ren is realized in relationship. What does it mean to build AI that holds this as a design principle rather than a marketing claim?", status: "Coming at launch" },
-    { title: "Ubuntu pedagogy: why 'I am because we are' is a curriculum design principle", excerpt: "On dialogical learning, communal knowledge, and why African educational philosophy offers a corrective to purely individualistic models of adaptive learning.", status: "Coming at launch" },
+    { title: "Ubuntu pedagogy: why 'I am because we are' is a curriculum design principle", excerpt: "On dialogical learning, communal knowledge, and why this relational philosophy offers a corrective to purely individualistic models of adaptive learning.", status: "Coming at launch" },
   ],
 };
 

@@ -47,13 +47,10 @@ export function Footer() {
         </div>
 
         <div className="flex flex-col md:flex-row justify-between items-center pt-8 border-t border-border gap-6">
-          <div className="flex items-center gap-6">
-            <span className="text-sm font-medium text-foreground cursor-pointer hover:text-terracotta">EN ▾</span>
-            <div className="flex items-center gap-4">
-              <a href="#" className="text-muted-foreground hover:text-primary transition-colors"><Linkedin size={18} strokeWidth={1.5} /></a>
-              <a href="#" className="text-muted-foreground hover:text-primary transition-colors"><SiX size={18} /></a>
-              <a href="#" className="text-muted-foreground hover:text-primary transition-colors"><SiInstagram size={18} /></a>
-            </div>
+          <div className="flex items-center gap-4">
+            <a href="#" className="text-muted-foreground hover:text-primary transition-colors"><Linkedin size={18} strokeWidth={1.5} /></a>
+            <a href="#" className="text-muted-foreground hover:text-primary transition-colors"><SiX size={18} /></a>
+            <a href="#" className="text-muted-foreground hover:text-primary transition-colors"><SiInstagram size={18} /></a>
           </div>
           
           <div className="flex flex-wrap justify-center items-center gap-6 text-[13px] text-muted-foreground">
