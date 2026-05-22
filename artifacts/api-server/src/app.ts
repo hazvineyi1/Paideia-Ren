@@ -1,10 +1,12 @@
 import express, { type Express } from "express";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 import pinoHttp from "pino-http";
 import path from "path";
 import { fileURLToPath } from "url";
-import router from "./routes";
-import { logger } from "./lib/logger";
+import router from "./routes/index.js";
+import { logger } from "./lib/logger.js";
+import { loadTeacher } from "./middlewares/auth.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const reactBuildPath = path.resolve(__dirname, "../../paideia-ren/dist/public");
@@ -31,8 +33,11 @@ app.use(
   }),
 );
 app.use(cors());
-app.use(express.json());
+app.use(cookieParser());
+app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true }));
+
+app.use(loadTeacher);
 
 app.use("/api", router);
 

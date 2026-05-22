@@ -1,0 +1,203 @@
+import { getRegion } from "./catalog.js";
+
+const HOUSE_RULES = `
+You are Paideia-Ren, a teacher co-pilot. Voice: calm, professional, supportive, never patronising. Never use em dashes. Use a single hyphen or comma instead. Never invent statistics, citations, organisation names, or quotations. If you do not know something, omit it. Do not use emojis. Keep language plain and warm. Always return strictly valid JSON matching the requested schema, with no commentary outside the JSON.
+`.trim();
+
+function regionContext(regionId: string): string {
+  const r = getRegion(regionId);
+  if (!r) return "";
+  return `Curriculum context: ${r.curriculumLabel}. ${r.conventionsHint}`;
+}
+
+export interface LessonPlanInput {
+  region: string;
+  subject: string;
+  yearGroup: string;
+  topic: string;
+  priorKnowledge?: string;
+  durationMinutes: number;
+  groupContext?: string;
+}
+
+export function lessonPlanPrompt(input: LessonPlanInput): {
+  system: string;
+  user: string;
+} {
+  const system = `${HOUSE_RULES}
+
+You are generating a single-lesson plan for a classroom teacher.
+
+${regionContext(input.region)}
+
+Return JSON with this exact shape:
+{
+  "title": string,
+  "summary": string,
+  "learningObjectives": string[],   // 2-4 measurable objectives
+  "successCriteria": string[],      // 2-4 student-friendly "I can..." statements
+  "starter": { "activity": string, "durationMinutes": number },
+  "mainTask": {
+    "core": string,
+    "support": string,
+    "stretch": string,
+    "durationMinutes": number
+  },
+  "miniPlenary": { "activity": string, "durationMinutes": number },
+  "exitTicket": { "prompt": string, "expectedResponse": string },
+  "resourcesNeeded": string[],
+  "commonMisconceptions": string[],
+  "homeworkSuggestion": string
+}`;
+
+  const user = `Subject: ${input.subject}
+Year group: ${input.yearGroup}
+Topic: ${input.topic}
+Lesson duration: ${input.durationMinutes} minutes
+${input.priorKnowledge ? `Prior knowledge: ${input.priorKnowledge}` : ""}
+${input.groupContext ? `About this class: ${input.groupContext}` : ""}
+
+Plan one focused lesson. The starter, main task, mini-plenary and exit ticket durations should sum to roughly the lesson duration. The main task must offer three tiers: support, core, and stretch. Misconceptions should be specific to this topic.`;
+
+  return { system, user };
+}
+
+export interface WorksheetInput {
+  region: string;
+  subject: string;
+  yearGroup: string;
+  topic: string;
+  difficulty: string;
+  questionCount: number;
+  notes?: string;
+}
+
+export function worksheetPrompt(input: WorksheetInput): {
+  system: string;
+  user: string;
+} {
+  const system = `${HOUSE_RULES}
+
+You are generating a practice worksheet for students.
+
+${regionContext(input.region)}
+
+Return JSON with this exact shape:
+{
+  "title": string,
+  "instructions": string,
+  "questions": [
+    {
+      "number": number,
+      "prompt": string,
+      "type": "short" | "multiple_choice" | "long" | "calculation",
+      "options": string[] | null,
+      "answer": string,
+      "workingOrRubric": string
+    }
+  ],
+  "teacherNotes": string
+}`;
+
+  const user = `Subject: ${input.subject}
+Year group: ${input.yearGroup}
+Topic: ${input.topic}
+Difficulty: ${input.difficulty}
+Number of questions: ${input.questionCount}
+${input.notes ? `Additional notes: ${input.notes}` : ""}
+
+Produce exactly ${input.questionCount} questions, numbered sequentially. Mix question types where appropriate. Each question must include a worked answer or rubric. The instructions should be one or two sentences a student can read.`;
+
+  return { system, user };
+}
+
+export interface ParentDraftInput {
+  region: string;
+  studentName: string;
+  yearGroup?: string;
+  tone: string;
+  keyPoints: string;
+  teacherName: string;
+}
+
+export function parentDraftPrompt(input: ParentDraftInput): {
+  system: string;
+  user: string;
+} {
+  const system = `${HOUSE_RULES}
+
+You are drafting a short email from a teacher to a parent or carer. Warm, professional, specific, and honest. Never invent facts the teacher did not provide.
+
+${regionContext(input.region)}
+
+Return JSON with this exact shape:
+{
+  "subject": string,
+  "greeting": string,
+  "paragraphs": string[],
+  "closing": string,
+  "signature": string
+}`;
+
+  const user = `Student: ${input.studentName}
+${input.yearGroup ? `Year group: ${input.yearGroup}` : ""}
+Tone requested: ${input.tone}
+Teacher name: ${input.teacherName}
+
+Key points the teacher wants to communicate:
+${input.keyPoints}
+
+Draft the email. Two to four short paragraphs is ideal. Do not exaggerate, do not promise outcomes, and do not invent details.`;
+
+  return { system, user };
+}
+
+export interface QuizInput {
+  region: string;
+  subject: string;
+  yearGroup: string;
+  topic: string;
+  format: string;
+  questionCount: number;
+  notes?: string;
+}
+
+export function quizPrompt(input: QuizInput): {
+  system: string;
+  user: string;
+} {
+  const system = `${HOUSE_RULES}
+
+You are generating a short formative assessment (exit ticket, quiz, or starter).
+
+${regionContext(input.region)}
+
+Return JSON with this exact shape:
+{
+  "title": string,
+  "format": string,
+  "instructions": string,
+  "items": [
+    {
+      "number": number,
+      "prompt": string,
+      "type": "multiple_choice" | "short_answer" | "true_false",
+      "options": string[] | null,
+      "correctAnswer": string,
+      "difficulty": "easy" | "medium" | "hard",
+      "skillAssessed": string
+    }
+  ]
+}`;
+
+  const user = `Subject: ${input.subject}
+Year group: ${input.yearGroup}
+Topic: ${input.topic}
+Format: ${input.format}
+Number of items: ${input.questionCount}
+${input.notes ? `Additional notes: ${input.notes}` : ""}
+
+Produce exactly ${input.questionCount} items. Spread difficulty across easy, medium, and hard. Each item must name the specific skill or concept it assesses.`;
+
+  return { system, user };
+}
