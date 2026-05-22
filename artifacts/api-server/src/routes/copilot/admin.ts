@@ -302,7 +302,7 @@ router.get("/digest", async (_req, res) => {
         db.execute(sql`SELECT COUNT(*)::int AS c FROM copilot_quizzes WHERE created_at >= ${from} AND created_at < ${to}`),
         db.execute(sql`SELECT COUNT(*)::int AS c FROM copilot_parent_drafts WHERE created_at >= ${from} AND created_at < ${to}`),
         db.execute(sql`SELECT COUNT(*)::int AS c FROM copilot_assignments WHERE created_at >= ${from} AND created_at < ${to}`),
-        db.execute(sql`SELECT COUNT(*)::int AS c FROM copilot_submissions WHERE created_at >= ${from} AND created_at < ${to}`),
+        db.execute(sql`SELECT COUNT(*)::int AS c FROM copilot_submissions WHERE submitted_at >= ${from} AND submitted_at < ${to}`),
         db.execute(sql`
           SELECT COUNT(DISTINCT teacher_id)::int AS c FROM (
             SELECT teacher_id FROM copilot_lesson_plans WHERE created_at >= ${from} AND created_at < ${to}
