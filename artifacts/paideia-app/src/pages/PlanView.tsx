@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 import type { LessonPlan } from "@/lib/types";
 import { LessonPlanView } from "@/components/Renderers";
-import { Printer, Trash2 } from "lucide-react";
+import { Printer, Trash2, ClipboardList, HelpCircle } from "lucide-react";
+import { Link } from "wouter";
 
 export default function PlanView() {
   const [, params] = useRoute<{ id: string }>("/plans/:id");
@@ -47,6 +48,31 @@ export default function PlanView() {
       <div className="bg-card border rounded-lg p-8 print-page">
         <LessonPlanView c={plan.content} />
       </div>
+      <section className="mt-8 bg-secondary/40 border rounded-lg p-6 no-print">
+        <h2 className="font-serif text-xl text-primary mb-1">Carry this into your next resource</h2>
+        <p className="text-sm text-muted-foreground mb-4">
+          Subject, year group, and topic are pre-filled so you can keep working in one flow.
+        </p>
+        <div className="flex flex-wrap gap-3">
+          <Link href={`/worksheets/new?${buildQuery(plan)}`}>
+            <Button variant="outline"><ClipboardList className="h-4 w-4 mr-2" />Make a matching worksheet</Button>
+          </Link>
+          <Link href={`/quizzes/new?${buildQuery(plan)}`}>
+            <Button variant="outline"><HelpCircle className="h-4 w-4 mr-2" />Make an exit ticket or quiz</Button>
+          </Link>
+        </div>
+      </section>
     </AppShell>
   );
+}
+
+function buildQuery(plan: { subject: string; yearGroup: string; topic: string; id: string; title: string }) {
+  const p = new URLSearchParams({
+    subject: plan.subject,
+    yearGroup: plan.yearGroup,
+    topic: plan.topic,
+    fromPlanId: plan.id,
+    fromPlanTitle: plan.title,
+  });
+  return p.toString();
 }

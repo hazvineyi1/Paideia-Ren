@@ -9,19 +9,22 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/use-auth";
 import { useCatalog } from "@/hooks/use-catalog";
+import { usePrefill } from "@/hooks/use-prefill";
 import { GeneratingSpinner } from "@/components/Loading";
 import { api, ApiError } from "@/lib/api";
 import type { Worksheet } from "@/lib/types";
+import { FileText } from "lucide-react";
 
 export default function WorksheetNew() {
   const { teacher } = useAuth();
   const { regions } = useCatalog();
   const [, setLoc] = useLocation();
   const region = regions.find((r) => r.id === teacher?.region);
+  const prefill = usePrefill();
 
-  const [subject, setSubject] = useState("");
-  const [yearGroup, setYearGroup] = useState("");
-  const [topic, setTopic] = useState("");
+  const [subject, setSubject] = useState(prefill.subject ?? "");
+  const [yearGroup, setYearGroup] = useState(prefill.yearGroup ?? "");
+  const [topic, setTopic] = useState(prefill.topic ?? "");
   const [difficulty, setDifficulty] = useState("core");
   const [questionCount, setQuestionCount] = useState(10);
   const [notes, setNotes] = useState("");
@@ -48,6 +51,14 @@ export default function WorksheetNew() {
   return (
     <AppShell>
       <WorkflowForm title="New worksheet" subtitle="Practice questions with full answer keys.">
+        {prefill.fromPlanId && (
+          <div className="mb-5 flex items-start gap-3 bg-secondary/60 border rounded-md p-4 text-sm">
+            <FileText className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+            <div>
+              Based on your lesson plan{prefill.fromPlanTitle ? <>: <span className="font-medium">{prefill.fromPlanTitle}</span></> : null}. Subject, year group, and topic are pre-filled.
+            </div>
+          </div>
+        )}
         <form onSubmit={submit} className="space-y-5">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
