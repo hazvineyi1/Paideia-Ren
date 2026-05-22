@@ -16,7 +16,7 @@ const foundingPartners = [
 ];
 
 const inDesign = [
-  "Germany", "Canada", "Ireland", "Netherlands",
+  "Ecuador", "Zimbabwe", "Malaysia",
 ];
 
 export default function WhereWeWork() {
