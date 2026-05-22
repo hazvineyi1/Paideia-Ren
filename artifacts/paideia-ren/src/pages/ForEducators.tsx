@@ -76,7 +76,7 @@ export default function ForEducators() {
         <motion.p {...fadeUp} className="text-[13px] font-semibold uppercase tracking-widest text-muted-foreground mb-6">For Educators & Learners</motion.p>
         <motion.h1 {...fadeUp} transition={{ duration: 0.7, delay: 0.1 }}
           className="font-serif text-5xl md:text-[72px] text-primary leading-[1.1] tracking-wide mb-8">
-          Your co-pilot, not your replacement.
+          Your companion, not your replacement.
         </motion.h1>
         <motion.p {...fadeUp} transition={{ duration: 0.7, delay: 0.2 }}
           className="text-[17px] text-foreground/80 leading-[1.75]">

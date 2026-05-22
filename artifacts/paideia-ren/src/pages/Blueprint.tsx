@@ -29,7 +29,7 @@ const sections = [
   {
     number: "IV",
     title: "Pedagogical Architecture",
-    body: "The platform is organized around three pillars. Recognize: every learner begins with a diagnostic that assesses learning style, cognitive strengths, and prior knowledge, drawing on VARK, the Felder-Silverman model, and cognitive-load baselines. Adapt: real-time, modality-responsive content delivery calibrated to the learner's zone of proximal development. Connect: peer cohorts, dialogical discussion, and the teacher co-pilot that keeps human relationship at the center of the experience.",
+    body: "The platform is organized around three pillars. Recognize: every learner begins with a diagnostic that assesses learning style, cognitive strengths, and prior knowledge, drawing on VARK, the Felder-Silverman model, and cognitive-load baselines. Adapt: real-time, modality-responsive content delivery calibrated to the learner's zone of proximal development. Connect: peer cohorts, dialogical discussion, and the Classroom Companion that keeps human relationship at the center of the experience.",
   },
   {
     number: "V",
@@ -49,7 +49,7 @@ const sections = [
   {
     number: "VIII",
     title: "Theory of Change",
-    body: "Inputs: catalytic philanthropic capital, subscription revenue from districts and trusts, research partnerships. Activities: adaptive platform development, teacher co-pilot deployment, curriculum alignment, independent evaluation. Outputs: students served, teachers supported, schools and districts onboarded, RCT-grade evidence produced. Outcomes: measurable learning gains, teacher capacity built, equity gaps narrowed, education systems strengthened. Impact: a scalable, evidence-led model that contributes directly to SDG 4 and SDG 4.7.",
+    body: "Inputs: catalytic philanthropic capital, subscription revenue from districts and trusts, research partnerships. Activities: adaptive platform development, Classroom Companion deployment, curriculum alignment, independent evaluation. Outputs: students served, teachers supported, schools and districts onboarded, RCT-grade evidence produced. Outcomes: measurable learning gains, teacher capacity built, equity gaps narrowed, education systems strengthened. Impact: a scalable, evidence-led model that contributes directly to SDG 4 and SDG 4.7.",
   },
   {
     number: "IX",

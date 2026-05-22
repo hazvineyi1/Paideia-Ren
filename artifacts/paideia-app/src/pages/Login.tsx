@@ -33,7 +33,7 @@ export default function Login() {
   };
 
   return (
-    <AuthShell title="Welcome back" subtitle="Sign in to your teacher co-pilot.">
+    <AuthShell title="Welcome back" subtitle="Sign in to your Classroom Companion.">
       <form onSubmit={submit} className="space-y-5">
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>

@@ -12,7 +12,7 @@ const fadeUp = {
 
 const tocSteps = [
   { label: "Inputs", items: ["Grant & philanthropy capital", "SaaS subscription revenue", "District & trust contracts", "Research partnerships"] },
-  { label: "Activities", items: ["Adaptive platform development", "Teacher co-pilot deployment", "Curriculum alignment", "Research & evaluation"] },
+  { label: "Activities", items: ["Adaptive platform development", "Classroom Companion deployment", "Curriculum alignment", "Research & evaluation"] },
   { label: "Outputs", items: ["Students served", "Teachers supported", "Schools & districts onboarded", "RCT evidence produced"] },
   { label: "Outcomes", items: ["Improved learning outcomes", "Teacher capacity built", "Equity gaps narrowed", "Education systems strengthened"] },
   { label: "Impact", items: ["SDG 4: Quality education for all", "SDG 4.7: Global citizenship & equity", "Cost-per-learning-gain reduced", "Scalable model demonstrated"] },

@@ -29,7 +29,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <div className="p-6 border-b">
           <Link href="/dashboard" className="block">
             <div className="font-serif text-2xl text-primary leading-tight">Paideia-Ren</div>
-            <div className="text-xs tracking-wider uppercase text-muted-foreground mt-1">Teacher co-pilot</div>
+            <div className="text-xs tracking-wider uppercase text-muted-foreground mt-1">Classroom Companion</div>
           </Link>
         </div>
         <nav className="flex-1 p-3 space-y-1">
