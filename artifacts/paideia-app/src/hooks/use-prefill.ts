@@ -7,6 +7,8 @@ export interface Prefill {
   topic?: string;
   fromPlanId?: string;
   fromPlanTitle?: string;
+  studentId?: string;
+  studentName?: string;
 }
 
 export function usePrefill(): Prefill {
@@ -19,6 +21,8 @@ export function usePrefill(): Prefill {
     const topic = p.get("topic"); if (topic) out.topic = topic;
     const fromPlanId = p.get("fromPlanId"); if (fromPlanId) out.fromPlanId = fromPlanId;
     const fromPlanTitle = p.get("fromPlanTitle"); if (fromPlanTitle) out.fromPlanTitle = fromPlanTitle;
+    const studentId = p.get("studentId"); if (studentId) out.studentId = studentId;
+    const studentName = p.get("studentName"); if (studentName) out.studentName = studentName;
     return out;
   }, [search]);
 }

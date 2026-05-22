@@ -9,15 +9,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/use-auth";
 import { useCatalog } from "@/hooks/use-catalog";
+import { usePrefill } from "@/hooks/use-prefill";
 import { GeneratingSpinner } from "@/components/Loading";
 import { api, ApiError } from "@/lib/api";
 import type { LessonPlan } from "@/lib/types";
+import { Sparkles } from "lucide-react";
 
 export default function PlanNew() {
   const { teacher } = useAuth();
   const { regions } = useCatalog();
   const [, setLoc] = useLocation();
   const region = regions.find((r) => r.id === teacher?.region);
+  const prefill = usePrefill();
 
   const [subject, setSubject] = useState("");
   const [yearGroup, setYearGroup] = useState("");
@@ -41,6 +44,7 @@ export default function PlanNew() {
         durationMinutes: duration,
         priorKnowledge: priorKnowledge || undefined,
         groupContext: groupContext || undefined,
+        studentId: prefill.studentId,
       });
       setLoc(`/plans/${res.plan.id}`);
     } catch (err) {
@@ -54,6 +58,14 @@ export default function PlanNew() {
   return (
     <AppShell>
       <WorkflowForm title="New lesson plan" subtitle="A single, focused lesson with three tiers of differentiation.">
+        {prefill.studentId && (
+          <div className="mb-5 flex items-start gap-3 bg-accent/10 border border-accent/40 rounded-md p-4 text-sm">
+            <Sparkles className="h-4 w-4 text-accent mt-0.5 shrink-0" />
+            <div>
+              Personalising for <span className="font-medium">{prefill.studentName ?? "this student"}</span>. The plan will use their grade history to target weak skills and build on strengths.
+            </div>
+          </div>
+        )}
         <form onSubmit={submit} className="space-y-5">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">

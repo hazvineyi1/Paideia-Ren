@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import type { ReactNode } from "react";
-import { LayoutDashboard, FileText, ClipboardList, MessageSquare, HelpCircle, BookOpen, Settings, LogOut } from "lucide-react";
+import { LayoutDashboard, FileText, ClipboardList, MessageSquare, HelpCircle, BookOpen, Users, Settings, LogOut } from "lucide-react";
 
 const NAV = [
   { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -9,6 +9,7 @@ const NAV = [
   { path: "/worksheets/new", label: "Worksheet generator", icon: ClipboardList },
   { path: "/parent-drafts/new", label: "Parent update", icon: MessageSquare },
   { path: "/quizzes/new", label: "Quiz and exit tickets", icon: HelpCircle },
+  { path: "/classes", label: "Classes and students", icon: Users },
   { path: "/samples", label: "Samples library", icon: BookOpen },
   { path: "/settings", label: "Settings", icon: Settings },
 ];

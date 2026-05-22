@@ -6,6 +6,10 @@ import worksheetsRouter from "./worksheets.js";
 import parentDraftsRouter from "./parent-drafts.js";
 import quizzesRouter from "./quizzes.js";
 import samplesRouter from "./samples.js";
+import classesRouter from "./classes.js";
+import assignmentsRouter from "./assignments.js";
+import shareRouter from "./share.js";
+import studentRouter from "./student.js";
 
 const router: IRouter = Router();
 
@@ -16,5 +20,9 @@ router.use("/worksheets", worksheetsRouter);
 router.use("/parent-drafts", parentDraftsRouter);
 router.use("/quizzes", quizzesRouter);
 router.use("/samples", samplesRouter);
+router.use("/classes", classesRouter);
+router.use("/assignments", assignmentsRouter);
+router.use("/share", shareRouter);
+router.use("/student", studentRouter);
 
 export default router;

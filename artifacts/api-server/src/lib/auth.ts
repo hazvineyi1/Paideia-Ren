@@ -22,10 +22,21 @@ export function newSessionToken(): string {
 }
 
 export const SESSION_COOKIE = "copilot_session";
+export const STUDENT_SESSION_COOKIE = "copilot_student_session";
 export const SESSION_TTL_DAYS = 30;
 
 export function sessionExpiry(): Date {
   const d = new Date();
   d.setDate(d.getDate() + SESSION_TTL_DAYS);
   return d;
+}
+
+const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+export function generateShortCode(length = 6): string {
+  const bytes = randomBytes(length);
+  let out = "";
+  for (let i = 0; i < length; i++) {
+    out += CODE_ALPHABET[bytes[i]! % CODE_ALPHABET.length];
+  }
+  return out;
 }

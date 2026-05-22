@@ -126,6 +126,54 @@ export interface Quiz {
   createdAt: string;
 }
 
+export interface ClassRow {
+  id: string;
+  name: string;
+  subject: string | null;
+  yearGroup: string;
+  region: string;
+  studentCount?: number;
+  createdAt: string;
+}
+
+export interface Student {
+  id: string;
+  classId: string;
+  teacherId: string;
+  firstName: string;
+  lastInitial: string;
+  email: string | null;
+  joinCode: string;
+  createdAt: string;
+}
+
+export interface Assignment {
+  id: string;
+  teacherId: string;
+  classId: string;
+  resourceKind: "worksheet" | "quiz";
+  worksheetId: string | null;
+  quizId: string | null;
+  title: string;
+  deliveryMode: "share_link" | "accounts";
+  shareCode: string;
+  closed: boolean;
+  createdAt: string;
+}
+
+export interface Submission {
+  id: string;
+  assignmentId: string;
+  studentId: string | null;
+  displayName: string;
+  answers: Record<string, string>;
+  autoScore: number;
+  maxAutoScore: number;
+  needsReviewCount: number;
+  feedback: Array<{ number: number; given: string; correct: string | null; state: "correct" | "incorrect" | "needs_review"; skill?: string }> | null;
+  submittedAt: string;
+}
+
 export interface Sample {
   id: string;
   kind: "lesson_plan" | "worksheet" | "quiz" | "parent_draft";

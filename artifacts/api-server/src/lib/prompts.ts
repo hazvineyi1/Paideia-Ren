@@ -10,6 +10,16 @@ function regionContext(regionId: string): string {
   return `Curriculum context: ${r.curriculumLabel}. ${r.conventionsHint}`;
 }
 
+export interface StudentProfileSummary {
+  displayName: string;
+  yearGroup: string;
+  averagePercent: number | null;
+  totalAssessments: number;
+  recent: Array<{ title: string; topic?: string; percent: number; needsReviewCount: number; submittedAt: string }>;
+  weakSkills: string[];
+  strongSkills: string[];
+}
+
 export interface LessonPlanInput {
   region: string;
   subject: string;
@@ -18,6 +28,7 @@ export interface LessonPlanInput {
   priorKnowledge?: string;
   durationMinutes: number;
   groupContext?: string;
+  studentProfile?: StudentProfileSummary;
 }
 
 export function lessonPlanPrompt(input: LessonPlanInput): {
@@ -50,12 +61,25 @@ Return JSON with this exact shape:
   "homeworkSuggestion": string
 }`;
 
+  const sp = input.studentProfile;
+  const studentBlock = sp
+    ? `
+
+This lesson is being personalised for one student: ${sp.displayName} (${sp.yearGroup}).
+Recent performance: ${sp.totalAssessments} assessments captured${sp.averagePercent !== null ? `, average ${sp.averagePercent}%` : ""}.
+${sp.recent.length ? `Most recent results:\n${sp.recent.map((r) => `- ${r.title}${r.topic ? ` (${r.topic})` : ""}: ${r.percent}%${r.needsReviewCount > 0 ? `, ${r.needsReviewCount} items needing teacher review` : ""}`).join("\n")}` : ""}
+${sp.weakSkills.length ? `Skills the student has struggled with: ${sp.weakSkills.join("; ")}.` : ""}
+${sp.strongSkills.length ? `Skills the student is confident with: ${sp.strongSkills.join("; ")}.` : ""}
+
+Tailor the lesson to this evidence. The "support" tier of the main task should directly target the struggling skills. The "stretch" tier should build on confident areas. Use the misconceptions field to call out errors this student has actually made when relevant.`
+    : "";
+
   const user = `Subject: ${input.subject}
 Year group: ${input.yearGroup}
 Topic: ${input.topic}
 Lesson duration: ${input.durationMinutes} minutes
 ${input.priorKnowledge ? `Prior knowledge: ${input.priorKnowledge}` : ""}
-${input.groupContext ? `About this class: ${input.groupContext}` : ""}
+${input.groupContext ? `About this class: ${input.groupContext}` : ""}${studentBlock}
 
 Plan one focused lesson. The starter, main task, mini-plenary and exit ticket durations should sum to roughly the lesson duration. The main task must offer three tiers: support, core, and stretch. Misconceptions should be specific to this topic.`;
 

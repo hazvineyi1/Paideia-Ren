@@ -6,7 +6,11 @@ import {
   jsonb,
   integer,
   uuid,
+  index,
+  uniqueIndex,
+  boolean,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
 export const teachersTable = pgTable("copilot_teachers", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -107,6 +111,91 @@ export const samplesTable = pgTable("copilot_samples", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const classesTable = pgTable("copilot_classes", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  teacherId: uuid("teacher_id")
+    .notNull()
+    .references(() => teachersTable.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  subject: text("subject"),
+  yearGroup: text("year_group").notNull(),
+  region: text("region").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => ({
+  teacherIdx: index("copilot_classes_teacher_idx").on(t.teacherId),
+}));
+
+export const studentsTable = pgTable("copilot_students", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  classId: uuid("class_id")
+    .notNull()
+    .references(() => classesTable.id, { onDelete: "cascade" }),
+  teacherId: uuid("teacher_id")
+    .notNull()
+    .references(() => teachersTable.id, { onDelete: "cascade" }),
+  firstName: text("first_name").notNull(),
+  lastInitial: text("last_initial").notNull(),
+  email: text("email").unique(),
+  passwordHash: text("password_hash"),
+  joinCode: text("join_code").unique().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => ({
+  classIdx: index("copilot_students_class_idx").on(t.classId),
+  teacherIdx: index("copilot_students_teacher_idx").on(t.teacherId),
+}));
+
+export const studentSessionsTable = pgTable("copilot_student_sessions", {
+  id: serial("id").primaryKey(),
+  token: text("token").unique().notNull(),
+  studentId: uuid("student_id")
+    .notNull()
+    .references(() => studentsTable.id, { onDelete: "cascade" }),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const assignmentsTable = pgTable("copilot_assignments", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  teacherId: uuid("teacher_id")
+    .notNull()
+    .references(() => teachersTable.id, { onDelete: "cascade" }),
+  classId: uuid("class_id")
+    .notNull()
+    .references(() => classesTable.id, { onDelete: "cascade" }),
+  resourceKind: text("resource_kind").notNull(),
+  worksheetId: uuid("worksheet_id").references(() => worksheetsTable.id, { onDelete: "cascade" }),
+  quizId: uuid("quiz_id").references(() => quizzesTable.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  deliveryMode: text("delivery_mode").notNull(),
+  shareCode: text("share_code").unique().notNull(),
+  closed: boolean("closed").notNull().default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => ({
+  teacherIdx: index("copilot_assignments_teacher_idx").on(t.teacherId),
+  classIdx: index("copilot_assignments_class_idx").on(t.classId),
+}));
+
+export const submissionsTable = pgTable("copilot_submissions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  assignmentId: uuid("assignment_id")
+    .notNull()
+    .references(() => assignmentsTable.id, { onDelete: "cascade" }),
+  studentId: uuid("student_id").references(() => studentsTable.id, { onDelete: "set null" }),
+  displayName: text("display_name").notNull(),
+  answers: jsonb("answers").$type<Record<string, string>>().notNull(),
+  autoScore: integer("auto_score").notNull(),
+  maxAutoScore: integer("max_auto_score").notNull(),
+  needsReviewCount: integer("needs_review_count").notNull().default(0),
+  feedback: jsonb("feedback").$type<unknown>(),
+  submittedAt: timestamp("submitted_at").defaultNow().notNull(),
+}, (t) => ({
+  assignIdx: index("copilot_submissions_assignment_idx").on(t.assignmentId),
+  studentIdx: index("copilot_submissions_student_idx").on(t.studentId),
+  oneSubmissionPerStudent: uniqueIndex("copilot_submissions_unique_per_student")
+    .on(t.assignmentId, t.studentId)
+    .where(sql`${t.studentId} IS NOT NULL`),
+}));
+
 export type Teacher = typeof teachersTable.$inferSelect;
 export type InsertTeacher = typeof teachersTable.$inferInsert;
 export type LessonPlan = typeof lessonPlansTable.$inferSelect;
@@ -114,3 +203,7 @@ export type Worksheet = typeof worksheetsTable.$inferSelect;
 export type ParentDraft = typeof parentDraftsTable.$inferSelect;
 export type Quiz = typeof quizzesTable.$inferSelect;
 export type Sample = typeof samplesTable.$inferSelect;
+export type ClassRow = typeof classesTable.$inferSelect;
+export type Student = typeof studentsTable.$inferSelect;
+export type Assignment = typeof assignmentsTable.$inferSelect;
+export type Submission = typeof submissionsTable.$inferSelect;

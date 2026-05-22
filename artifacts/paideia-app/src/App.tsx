@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
+import { StudentAuthProvider } from "@/hooks/use-student-auth";
 import { useEffect, type ComponentType } from "react";
 
 import Landing from "@/pages/Landing";
@@ -19,6 +20,14 @@ import QuizNew from "@/pages/QuizNew";
 import QuizView from "@/pages/QuizView";
 import { SamplesList, SampleViewer } from "@/pages/Samples";
 import Settings from "@/pages/Settings";
+import Classes from "@/pages/Classes";
+import ClassView from "@/pages/ClassView";
+import StudentProfile from "@/pages/StudentProfile";
+import AssignmentView from "@/pages/AssignmentView";
+import PublicTake from "@/pages/PublicTake";
+import StudentLogin from "@/pages/student/StudentLogin";
+import StudentDashboard from "@/pages/student/StudentDashboard";
+import StudentTake from "@/pages/student/StudentTake";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
@@ -39,6 +48,10 @@ function AppRoutes() {
       <Route path="/" component={Landing} />
       <Route path="/login" component={Login} />
       <Route path="/signup" component={Signup} />
+      <Route path="/take/:code" component={PublicTake} />
+      <Route path="/student/login" component={StudentLogin} />
+      <Route path="/student/assignments/:id" component={StudentTake} />
+      <Route path="/student" component={StudentDashboard} />
       <Route path="/dashboard">{() => <Protected component={Dashboard} />}</Route>
       <Route path="/plans/new">{() => <Protected component={PlanNew} />}</Route>
       <Route path="/plans/:id">{() => <Protected component={PlanView} />}</Route>
@@ -50,6 +63,10 @@ function AppRoutes() {
       <Route path="/quizzes/:id">{() => <Protected component={QuizView} />}</Route>
       <Route path="/samples/:id">{() => <Protected component={SampleViewer} />}</Route>
       <Route path="/samples">{() => <Protected component={SamplesList} />}</Route>
+      <Route path="/classes/:id/students/:studentId">{() => <Protected component={StudentProfile} />}</Route>
+      <Route path="/classes/:id">{() => <Protected component={ClassView} />}</Route>
+      <Route path="/classes">{() => <Protected component={Classes} />}</Route>
+      <Route path="/assignments/:id">{() => <Protected component={AssignmentView} />}</Route>
       <Route path="/settings">{() => <Protected component={Settings} />}</Route>
       <Route component={NotFound} />
     </Switch>
@@ -61,10 +78,12 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <AuthProvider>
-          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-            <AppRoutes />
-          </WouterRouter>
-          <Toaster />
+          <StudentAuthProvider>
+            <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+              <AppRoutes />
+            </WouterRouter>
+            <Toaster />
+          </StudentAuthProvider>
         </AuthProvider>
       </TooltipProvider>
     </QueryClientProvider>

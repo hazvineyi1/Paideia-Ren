@@ -5,13 +5,15 @@ import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 import type { Quiz } from "@/lib/types";
 import { QuizView as Renderer } from "@/components/Renderers";
-import { Printer, Trash2 } from "lucide-react";
+import { AssignDialog } from "@/components/AssignDialog";
+import { Printer, Trash2, Share2 } from "lucide-react";
 
 export default function QuizView() {
   const [, params] = useRoute<{ id: string }>("/quizzes/:id");
   const [, setLoc] = useLocation();
   const [q, setQ] = useState<Quiz | null>(null);
   const [loading, setLoading] = useState(true);
+  const [assignOpen, setAssignOpen] = useState(false);
 
   useEffect(() => {
     if (!params?.id) return;
@@ -39,6 +41,7 @@ export default function QuizView() {
           <h1 className="font-serif text-4xl text-primary">{q.title}</h1>
         </div>
         <div className="flex gap-2 shrink-0">
+          <Button size="sm" onClick={() => setAssignOpen(true)}><Share2 className="h-4 w-4 mr-1" />Assign to a class</Button>
           <Button variant="outline" size="sm" onClick={() => window.print()}><Printer className="h-4 w-4 mr-1" />Print</Button>
           <Button variant="ghost" size="sm" onClick={onDelete}><Trash2 className="h-4 w-4 mr-1" />Delete</Button>
         </div>
@@ -46,6 +49,7 @@ export default function QuizView() {
       <div className="bg-card border rounded-lg p-8 print-page">
         <Renderer c={q.content} />
       </div>
+      <AssignDialog open={assignOpen} onClose={() => setAssignOpen(false)} resourceKind="quiz" resourceId={q.id} resourceTitle={q.title} />
     </AppShell>
   );
 }
