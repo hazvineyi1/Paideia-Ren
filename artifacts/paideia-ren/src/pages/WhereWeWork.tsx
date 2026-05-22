@@ -11,14 +11,14 @@ const fadeUp = {
 };
 
 const countries = [
-  { country: "Kenya", region: "Sub-Saharan Africa", status: "Active pilot", context: "Nairobi County — 58 schools, Grades 4–8 mathematics and English literacy. Low-bandwidth deployment active.", color: "#1F2A5C" },
-  { country: "Colombia", region: "Latin America", status: "Partnership in design", context: "Ministry of Education engagement for secondary mathematics. Curriculum alignment to national PISA-preparation framework.", color: "#1F2A5C" },
-  { country: "India", region: "South Asia", status: "Pilot Q3 2026", context: "Rajasthan — rural offline-first configuration. Dual-language Hindi/English. Targeting 12,000 students in first phase.", color: "#1F2A5C" },
-  { country: "Tanzania", region: "Sub-Saharan Africa", status: "Scoping", context: "Partnership with regional NGO coalition. Kiswahili-first deployment. Alignment with Tanzania Institute of Education curriculum.", color: "#C9971C" },
-  { country: "Vietnam", region: "Southeast Asia", status: "Interest confirmed", context: "Conversations with Ministry of Education and Training. Focus on secondary STEM pathways and rural access.", color: "#C9971C" },
-  { country: "Brazil", region: "Latin America", status: "Research partnership", context: "University of São Paulo collaboration on Portuguese-language adaptive content and assessment co-design.", color: "#C9971C" },
-  { country: "Ghana", region: "Sub-Saharan Africa", status: "Scoping", context: "Ghana Education Service discussions. Alignment with National Teacher Education Curriculum Framework.", color: "#C9971C" },
-  { country: "Bangladesh", region: "South Asia", status: "Interest confirmed", context: "BRAC partnership exploration — offline-capable deployment for rural secondary schools.", color: "#C9971C" },
+  { country: "Kenya", region: "Sub-Saharan Africa", status: "Active pilot", context: "Nairobi County. Focus: upper primary mathematics and English literacy. Low-bandwidth deployment active.", color: "#1F2A5C" },
+  { country: "Colombia", region: "Latin America", status: "Partnership in design", context: "Secondary mathematics engagement aligned to national curriculum framework.", color: "#1F2A5C" },
+  { country: "India", region: "South Asia", status: "Pilot Q3 2026", context: "Rajasthan. Rural offline-first configuration. Dual-language Hindi and English.", color: "#1F2A5C" },
+  { country: "Tanzania", region: "Sub-Saharan Africa", status: "Scoping", context: "Kiswahili-first deployment. Alignment with Tanzania Institute of Education curriculum under exploration.", color: "#C9971C" },
+  { country: "Vietnam", region: "Southeast Asia", status: "Interest confirmed", context: "Focus on secondary STEM pathways and rural access. Early-stage engagement.", color: "#C9971C" },
+  { country: "Brazil", region: "Latin America", status: "Research dialogue", context: "Portuguese-language adaptive content and assessment co-design. Early-stage academic dialogue.", color: "#C9971C" },
+  { country: "Ghana", region: "Sub-Saharan Africa", status: "Scoping", context: "Alignment with National Teacher Education Curriculum Framework under exploration.", color: "#C9971C" },
+  { country: "Bangladesh", region: "South Asia", status: "Interest confirmed", context: "Offline-capable deployment for rural secondary schools. Early-stage exploration.", color: "#C9971C" },
 ];
 
 export default function WhereWeWork() {
@@ -33,7 +33,7 @@ export default function WhereWeWork() {
         </motion.h1>
         <motion.p {...fadeUp} transition={{ duration: 0.7, delay: 0.2 }}
           className="text-[17px] text-foreground/80 leading-[1.75]">
-          Paideia-Ren is built for the world's classrooms — not Silicon Valley's imagination of them. We design with context, not just for it.
+          Paideia-Ren is built for the world's classrooms, not Silicon Valley's imagination of them. We design with context, not just for it.
         </motion.p>
       </section>
 

@@ -27,7 +27,7 @@ const studies = [
     authors: "Serban, Shubhendu, Bhatt et al.",
     citation: "arXiv:2203.03724",
     doi: "https://arxiv.org/abs/2203.03724",
-    summary: "Learners using the Korbit AI tutoring system achieved 2–2.5× the learning gains of a control group. Course completion rates rose to 40.9% from 18.5% in the control condition — a result with significant equity implications for online learning.",
+    summary: "Learners using the Korbit AI tutoring system achieved 2–2.5× the learning gains of a control group. Course completion rates rose to 40.9% from 18.5% in the control condition, a result with significant equity implications for online learning.",
   },
   {
     stat: "+4pp overall · +9pp",
@@ -36,7 +36,7 @@ const studies = [
     authors: "Wang, Ribeiro, Robinson, Loeb & Demszky",
     citation: "arXiv:2410.03017, October 2024",
     doi: "https://arxiv.org/abs/2410.03017",
-    summary: "A randomized controlled trial across 9 Title I schools with 1,787 eligible students and 900 tutors found that AI co-pilot support raised student outcomes by 4 percentage points overall — and 9 percentage points for students working with lower-rated tutors, the students with the greatest need.",
+    summary: "A randomized controlled trial across 9 Title I schools with 1,787 eligible students and 900 tutors found that AI co-pilot support raised student outcomes by 4 percentage points overall, and 9 percentage points for students working with lower-rated tutors: the students with the greatest need.",
   },
   {
     stat: "2× as much learning",
@@ -45,7 +45,7 @@ const studies = [
     authors: "Kestin, Miller, McCarty, Callaghan & Deslauriers",
     citation: "Scientific Reports, 2025 (n≈194)",
     doi: "#",
-    summary: "Students using the PS2 Pal AI tutor at Harvard learned 'more than twice as much in less time' compared to traditional instruction (n≈194, Harvard undergraduates). Note: a promising result from a single elite-institution sample — promising, not yet definitive at population scale.",
+    summary: "Students using the PS2 Pal AI tutor at Harvard learned more than twice as much in less time compared to traditional instruction (n≈194, Harvard undergraduates). A promising result from a single elite-institution sample, not yet definitive at population scale.",
     caveat: true,
   },
   {
@@ -55,7 +55,7 @@ const studies = [
     authors: "Benjamin Bloom",
     citation: "Educational Researcher, 1984",
     doi: "#",
-    summary: "Bloom's landmark paper established that one-on-one tutoring produces learning outcomes 2 standard deviations above conventional instruction. This remains the aspiration that motivates all adaptive learning technology — a goal we treat as a frame, not a replicated effect size.",
+    summary: "Bloom's landmark paper established that one-on-one tutoring produces learning outcomes 2 standard deviations above conventional instruction. This remains the aspiration that motivates all adaptive learning technology, a goal we treat as a frame rather than a replicated effect size.",
     caveat: true,
   },
 ];
@@ -111,7 +111,7 @@ export default function Research() {
                 </div>
                 <div>
                   <h3 className="text-[15px] font-semibold uppercase tracking-wide text-foreground mb-2">{s.title}</h3>
-                  <p className="text-[14px] text-muted-foreground mb-4">{s.authors} — {s.citation}</p>
+                  <p className="text-[14px] text-muted-foreground mb-4">{s.authors}, {s.citation}</p>
                   <p className="text-[16px] text-foreground/80 leading-[1.75] mb-4">{s.summary}</p>
                   {s.caveat && (
                     <p className="text-[13px] text-muted-foreground italic mb-4 border-l-2 border-border pl-3">
@@ -143,7 +143,7 @@ export default function Research() {
             </h2>
             <div className="space-y-6">
               {[
-                "Effect sizes by region and demographic — disaggregated, not averaged away.",
+                "Effect sizes by region and demographic, disaggregated rather than averaged away.",
                 "Equity gap closure across income, gender, language, and disability status.",
                 "Teacher time saved and professional confidence gained.",
                 "Long-term knowledge retention at 3, 6, and 12 months.",
@@ -170,7 +170,7 @@ export default function Research() {
               The Paideia-Ren Blueprint
             </h2>
             <p className="text-[17px] text-foreground/80 leading-[1.75] mb-10">
-              <em>"Reimagining Education with a Global Technological Lens"</em> — our strategic framework aligning adaptive AI with UNESCO's SDG 4 and SDG 4.7. Available for review and collaboration.
+              <em>"Reimagining Education with a Global Technological Lens"</em> is our strategic framework aligning adaptive AI with UNESCO's SDG 4 and SDG 4.7. Available for review and collaboration.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
               <Button size="lg" variant="outline"

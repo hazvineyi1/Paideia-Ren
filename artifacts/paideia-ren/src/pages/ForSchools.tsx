@@ -48,10 +48,10 @@ const tiers = [
   },
 ];
 
-const caseStudies = [
-  { country: "Kenya", region: "Nairobi County", status: "Pilot underway", context: "58 schools across urban and peri-urban areas. Focus: Grade 4–8 mathematics and English literacy." },
-  { country: "Colombia", region: "Bogotá & Medellín", status: "Partnership in design", context: "Ministry of Education partnership for secondary mathematics aligned to national curriculum." },
-  { country: "India", region: "Rajasthan", status: "Pilot planned Q3 2026", context: "Rural low-bandwidth deployment. Offline-first configuration. Hindi and English dual-language." },
+const regions = [
+  { country: "Kenya", region: "Sub-Saharan Africa", status: "Pilot underway", context: "Urban and peri-urban schools. Focus: mathematics and English literacy at upper primary level." },
+  { country: "Colombia", region: "Latin America", status: "Partnership in design", context: "Secondary mathematics aligned to national curriculum framework." },
+  { country: "India", region: "South Asia", status: "Pilot planned Q3 2026", context: "Rural low-bandwidth deployment. Offline-first configuration. Hindi and English dual-language." },
 ];
 
 export default function ForSchools() {
@@ -103,10 +103,10 @@ export default function ForSchools() {
           <motion.div {...fadeUp}>
             <h2 className="font-serif text-3xl md:text-[40px] text-primary mb-8 leading-[1.2]">What we offer schools.</h2>
             <p className="text-[17px] text-foreground/80 leading-[1.75] mb-6">
-              Paideia-Ren is designed to work inside your existing systems, not replace them. Our platform is curriculum-aligned to national syllabi, IB, Cambridge International, Common Core, and CAPS — with a ministry partnership tooling layer that enables co-branded deployment at national scale.
+              Paideia-Ren is designed to work inside your existing systems, not replace them. Our platform is curriculum-aligned to national syllabi, IB, Cambridge International, Common Core, and CAPS, with a ministry partnership tooling layer that enables co-branded deployment at national scale.
             </p>
             <p className="text-[17px] text-foreground/80 leading-[1.75] mb-8">
-              Every deployment is teacher-augmenting by design. The platform surfaces actionable intelligence for teachers — not generic reports. It flags which students need attention, where the class is collectively stuck, and what the research suggests as the most effective intervention for this cohort.
+              Every deployment is teacher-augmenting by design. The platform surfaces actionable intelligence for teachers, not generic reports. It flags which students need attention, where the class is collectively stuck, and what the research suggests as the most effective intervention for this cohort.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {["Interoperable with your LMS (LTI, OneRoster, SCORM, xAPI)", "Offline-first, functional on 2G networks", "FERPA, GDPR, POPIA, Kenya DPA 2019 compliant", "WCAG 2.2 AA accessible", "Child-data minimization by default", "No student surveillance, ever"].map((f) => (
@@ -148,12 +148,12 @@ export default function ForSchools() {
         </div>
       </section>
 
-      {/* Case Studies */}
+      {/* Regions */}
       <section className="py-[120px]">
         <div className="max-w-[1200px] mx-auto px-6">
-          <motion.h2 {...fadeUp} className="font-serif text-3xl md:text-[40px] text-primary mb-16">Current & planned pilots.</motion.h2>
+          <motion.h2 {...fadeUp} className="font-serif text-3xl md:text-[40px] text-primary mb-16">Current and planned pilots.</motion.h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {caseStudies.map((c, i) => (
+            {regions.map((c, i) => (
               <motion.div key={c.country} initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }} transition={{ duration: 0.6, delay: i * 0.1 }}
                 className="border border-border p-8">

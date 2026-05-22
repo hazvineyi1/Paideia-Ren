@@ -34,16 +34,10 @@ type EducatorValues = z.infer<typeof educatorSchema>;
 type LearnerValues = z.infer<typeof learnerSchema>;
 
 const workflows = [
-  { icon: Clock, title: "Saves you time on differentiation", description: "The platform handles the adaptation layer — identifying which students need more support, which need a harder path, and which need a different modality. You make the pedagogical decisions. The system does the labor." },
+  { icon: Clock, title: "Saves you time on differentiation", description: "The platform handles the adaptation layer, identifying which students need more support, which need a harder path, and which need a different modality. You make the pedagogical decisions. The system does the labor." },
   { icon: BarChart2, title: "Surfaces what you cannot see", description: "A class of 35 has 35 individual learning trajectories. Paideia-Ren makes the hidden visible: who is in the productive struggle zone, who is cognitively overloaded, who has stopped trying. You see it. You act on it." },
-  { icon: Lightbulb, title: "Respects your professional judgment", description: "Every recommendation the system makes is a suggestion, never an instruction. You override it. You contextualize it. The AI defers to you — always. Your professional expertise is the irreplaceable element in every classroom." },
+  { icon: Lightbulb, title: "Respects your professional judgment", description: "Every recommendation the system makes is a suggestion, never an instruction. You override it. You contextualize it. The AI defers to you, always. Your professional expertise is the irreplaceable element in every classroom." },
   { icon: Heart, title: "Built with teachers, for teachers", description: "Every feature in Paideia-Ren was designed in dialogue with practicing teachers across Africa, Asia, and the Americas. We ran user testing in classrooms before we ran it in conference rooms." },
-];
-
-const testimonials = [
-  { quote: "For the first time, I know exactly where each of my 42 students is — not just the ones who raise their hands.", attribution: "Teacher, Nairobi (placeholder — testimonials coming at launch)" },
-  { quote: "It doesn't replace my relationship with students. It makes that relationship possible at scale.", attribution: "Secondary school educator, Bogotá (placeholder)" },
-  { quote: "I was skeptical about AI in the classroom. This is different. It gives me data, not prescriptions.", attribution: "Primary teacher, Rajasthan (placeholder)" },
 ];
 
 const interestOptions = [
@@ -112,22 +106,18 @@ export default function ForEducators() {
         </div>
       </section>
 
-      {/* Testimonials */}
+      {/* Testimonials Coming */}
       <section className="py-[120px]">
-        <div className="max-w-[1200px] mx-auto px-6">
-          <motion.h2 {...fadeUp} className="font-serif text-3xl md:text-[40px] text-primary mb-16 text-center">
-            From the classroom.
-          </motion.h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {testimonials.map((t, i) => (
-              <motion.div key={i} initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }} transition={{ duration: 0.6, delay: i * 0.1 }}
-                className="border-l-gold">
-                <p className="font-serif text-xl text-primary italic leading-[1.6] mb-4">"{t.quote}"</p>
-                <cite className="text-[13px] text-muted-foreground not-italic">{t.attribution}</cite>
-              </motion.div>
-            ))}
-          </div>
+        <div className="max-w-[720px] mx-auto px-6 text-center">
+          <motion.div {...fadeUp}>
+            <p className="text-[13px] font-semibold uppercase tracking-widest text-muted-foreground mb-6">From the Classroom</p>
+            <h2 className="font-serif text-3xl md:text-[40px] text-primary mb-6 leading-[1.2]">
+              Educator voices coming at launch.
+            </h2>
+            <p className="text-[17px] text-foreground/80 leading-[1.75]">
+              We are currently in pilot with teachers across Sub-Saharan Africa, South Asia, and Latin America. Their words will speak for themselves when the platform launches publicly.
+            </p>
+          </motion.div>
         </div>
       </section>
 
@@ -137,7 +127,7 @@ export default function ForEducators() {
           <motion.div {...fadeUp}>
             <h2 className="font-serif text-3xl md:text-[40px] text-primary mb-4 leading-[1.2]">Join the Educator Network.</h2>
             <p className="text-[17px] text-foreground/80 leading-[1.75] mb-12">
-              A free professional learning community — monthly webinars, early access to features, and a voice in our research agenda.
+              A free professional learning community: monthly webinars, early access to features, and a voice in our research agenda.
             </p>
             <Form {...educatorForm}>
               <form onSubmit={educatorForm.handleSubmit(onEducatorSubmit)} className="space-y-6">

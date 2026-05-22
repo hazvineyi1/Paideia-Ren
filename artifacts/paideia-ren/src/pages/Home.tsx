@@ -111,13 +111,13 @@ export default function Home() {
       <section className="py-[64px] border-b border-border">
         <div className="max-w-[1200px] mx-auto px-6">
           <p className="text-center text-[13px] font-semibold text-muted-foreground uppercase tracking-widest mb-8">
-            Research Partnerships & Affiliations
+            Aligned to Global Standards
           </p>
-          <div className="flex flex-wrap justify-center items-center gap-x-16 gap-y-8 opacity-60 grayscale">
-            <span className="font-serif text-2xl font-semibold">Harvard University</span>
-            <span className="font-serif text-2xl">Stanford GSE</span>
-            <span className="font-serif text-2xl font-bold tracking-tighter">MIT</span>
-            <span className="font-serif text-2xl italic">Oxford</span>
+          <div className="flex flex-wrap justify-center items-center gap-x-16 gap-y-8 opacity-60">
+            <span className="font-serif text-2xl">UN SDG 4</span>
+            <span className="font-serif text-2xl">UNESCO</span>
+            <span className="font-serif text-2xl">FERPA · GDPR · POPIA</span>
+            <span className="font-serif text-2xl italic">IB · Cambridge · CAPS</span>
           </div>
         </div>
       </section>

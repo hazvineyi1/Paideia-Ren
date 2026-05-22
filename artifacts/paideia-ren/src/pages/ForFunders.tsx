@@ -29,7 +29,7 @@ const fundingLevels = [
     name: "Growth",
     amount: "$1M – $5M",
     description: "50 schools, 3 countries",
-    outcomes: ["Multi-country district deployments", "RCT co-design with J-PAL or equivalent", "Teacher training programs", "Open-source curriculum modules"],
+    outcomes: ["Multi-country district deployments", "RCT co-design with independent evaluator", "Teacher training programs", "Open-source curriculum modules"],
     featured: true,
   },
   {
@@ -72,7 +72,7 @@ export default function ForFunders() {
               "With 7 in 10 of today's 10-year-olds in low- and middle-income countries now unable to read a simple text, political leaders and society must swiftly move to recover this generation's future."
             </p>
             <cite className="text-[13px] text-white/60 not-italic">
-              — Jaime Saavedra, Global Director for Education, World Bank
+              Jaime Saavedra, Global Director for Education, World Bank
             </cite>
           </motion.blockquote>
         </div>
@@ -136,7 +136,7 @@ export default function ForFunders() {
         <div className="max-w-[1200px] mx-auto px-6">
           <motion.div {...fadeUp} className="mb-12 text-center">
             <p className="text-[13px] font-semibold uppercase tracking-widest text-muted-foreground mb-4">Organizations We Admire</p>
-            <p className="text-[15px] text-muted-foreground">Named aspirationally — not as confirmed partners.</p>
+            <p className="text-[15px] text-muted-foreground">Named aspirationally: not confirmed partners.</p>
           </motion.div>
           <div className="flex flex-wrap justify-center gap-6">
             {aspirationalFunders.map((f, i) => (

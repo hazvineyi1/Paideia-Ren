@@ -13,15 +13,15 @@ const ethicsCharter = [
   { title: "Child-data minimization", body: "We collect only the data necessary to adapt instruction. We retain it only as long as necessary. We anonymize all research datasets before publication. We will never monetize student data." },
   { title: "Explainable adaptation", body: "Every adaptive decision the system makes can be explained in plain language to the teacher and, where age-appropriate, to the student. There are no black-box decisions that affect a child's learning path without a human being able to understand and override them." },
   { title: "Human-in-the-loop on all consequential decisions", body: "Paideia-Ren AI makes recommendations. Humans make decisions. No placement, assessment outcome, or intervention is implemented automatically. Every consequential decision in a student's educational path requires a human educator's informed judgment." },
-  { title: "Open dataset commitments where ethical", body: "Where student privacy is fully protected, we commit to publishing anonymized research datasets, methodology documentation, and evaluation instruments — contributing to the global evidence base rather than hoarding it." },
+  { title: "Open dataset commitments where ethical", body: "Where student privacy is fully protected, we commit to publishing anonymized research datasets, methodology documentation, and evaluation instruments, contributing to the global evidence base rather than hoarding it." },
 ];
 
 const dataProtection = [
-  { law: "FERPA", jurisdiction: "United States", description: "Family Educational Rights and Privacy Act — governing access to and privacy of student education records for US-based institutions." },
-  { law: "GDPR", jurisdiction: "European Union", description: "General Data Protection Regulation — the global gold standard for data privacy, applied to all EU data subjects regardless of where data is processed." },
-  { law: "POPIA", jurisdiction: "South Africa", description: "Protection of Personal Information Act — South Africa's comprehensive data protection law, aligned with GDPR principles." },
-  { law: "Kenya DPA 2019", jurisdiction: "Kenya", description: "Kenya Data Protection Act 2019 — establishing the Office of the Data Protection Commissioner and governing personal data processing." },
-  { law: "COPPA", jurisdiction: "United States", description: "Children's Online Privacy Protection Act — applicable where Paideia-Ren serves children under 13 in the United States." },
+  { law: "FERPA", jurisdiction: "United States", description: "Family Educational Rights and Privacy Act, governing access to and privacy of student education records for US-based institutions." },
+  { law: "GDPR", jurisdiction: "European Union", description: "General Data Protection Regulation, the global gold standard for data privacy, applied to all EU data subjects regardless of where data is processed." },
+  { law: "POPIA", jurisdiction: "South Africa", description: "Protection of Personal Information Act, South Africa's comprehensive data protection law, aligned with GDPR principles." },
+  { law: "Kenya DPA 2019", jurisdiction: "Kenya", description: "Kenya Data Protection Act 2019, establishing the Office of the Data Protection Commissioner and governing personal data processing." },
+  { law: "COPPA", jurisdiction: "United States", description: "Children's Online Privacy Protection Act, applicable where Paideia-Ren serves children under 13 in the United States." },
 ];
 
 export default function Transparency() {
@@ -119,7 +119,7 @@ export default function Transparency() {
             <p className="text-[13px] font-semibold uppercase tracking-widest text-muted-foreground mb-4">Accessibility</p>
             <h2 className="font-serif text-3xl md:text-[40px] text-primary mb-6 leading-[1.2]">WCAG 2.2 AA committed.</h2>
             <p className="text-[17px] text-foreground/80 leading-[1.75]">
-              Paideia-Ren is committed to WCAG 2.2 AA accessibility across all product surfaces — including semantic HTML, skip-links, focus-visible states, alt text on every image, captions on every video, and no color-only signaling. Accessibility is not an afterthought; it is a prerequisite for serving the learners we exist to serve.
+              Paideia-Ren is committed to WCAG 2.2 AA accessibility across all product surfaces, including semantic HTML, skip-links, focus-visible states, alt text on every image, captions on every video, and no color-only signaling. Accessibility is not an afterthought; it is a prerequisite for serving the learners we exist to serve.
             </p>
           </motion.div>
         </div>

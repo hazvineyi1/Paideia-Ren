@@ -15,7 +15,7 @@ const steps = [
     number: "01",
     title: "Recognize",
     subtitle: "Multi-modal assessment",
-    description: "Every learner begins with a diagnostic that assesses learning style, cognitive strengths, prior knowledge, and bandwidth constraints — without ever making them feel tested. VARK, Felder–Silverman, and cognitive-load baselines are established invisibly, through the way they engage.",
+    description: "Every learner begins with a diagnostic that assesses learning style, cognitive strengths, prior knowledge, and bandwidth constraints, without ever making them feel tested. VARK, Felder-Silverman, and cognitive-load baselines are established invisibly, through the way they engage.",
   },
   {
     number: "02",
@@ -27,7 +27,7 @@ const steps = [
     number: "03",
     title: "Challenge",
     subtitle: "Zone of proximal development",
-    description: "Difficulty is calibrated to the learner's current developmental ceiling — never so easy that engagement collapses, never so hard that cognitive overload sets in. The system monitors cognitive load signals and adjusts within sessions, not just between them.",
+    description: "Difficulty is calibrated to the learner's current developmental ceiling, never so easy that engagement collapses, never so hard that cognitive overload sets in. The system monitors cognitive load signals and adjusts within sessions, not just between them.",
   },
   {
     number: "04",
@@ -52,11 +52,11 @@ const diagnosticQuestions = [
 
 const features = [
   { icon: Activity, title: "Adaptive Content Engine", description: "Real-time modality-responsive content delivery across every subject and grade level." },
-  { icon: Users, title: "Teacher Co-Pilot", description: "Rich classroom dashboards, intervention signals, and suggested next steps — in the teacher's language." },
+  { icon: Users, title: "Teacher Co-Pilot", description: "Rich classroom dashboards, intervention signals, and suggested next steps, in the teacher's language." },
   { icon: CheckCircle2, title: "Cohort & Community Layer", description: "Peer learning cohorts, dialogical discussion prompts, and collaborative problem-solving tools." },
   { icon: Globe, title: "Multi-Language Support", description: "English, French, Kiswahili, Portuguese at launch. Ten or more languages planned." },
   { icon: Wifi, title: "Offline-First & Low-Bandwidth", description: "Core learning experience functions on 2G. Content pre-fetches on any available connection." },
-  { icon: BookMarked, title: "Curriculum Alignment", description: "National curricula, IB, Cambridge, Common Core, and CAPS — with ministry partnership tooling." },
+  { icon: BookMarked, title: "Curriculum Alignment", description: "National curricula, IB, Cambridge, Common Core, and CAPS, with ministry partnership tooling." },
   { icon: ShieldCheck, title: "Open Data & Privacy by Design", description: "FERPA, GDPR, POPIA, Kenya DPA 2019 compliant. Child-data minimization. No student surveillance." },
 ];
 
