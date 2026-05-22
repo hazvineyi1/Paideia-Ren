@@ -12,6 +12,7 @@ import About from "@/pages/About";
 import Team from "@/pages/Team";
 import Platform from "@/pages/Platform";
 import Research from "@/pages/Research";
+import Blueprint from "@/pages/Blueprint";
 import ForSchools from "@/pages/ForSchools";
 import ForFunders from "@/pages/ForFunders";
 import ForEducators from "@/pages/ForEducators";
@@ -33,6 +34,7 @@ function Router() {
           <Route path="/team" component={Team} />
           <Route path="/platform" component={Platform} />
           <Route path="/research" component={Research} />
+          <Route path="/blueprint" component={Blueprint} />
           <Route path="/for-schools" component={ForSchools} />
           <Route path="/for-funders" component={ForFunders} />
           <Route path="/for-educators" component={ForEducators} />

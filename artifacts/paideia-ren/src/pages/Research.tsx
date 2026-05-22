@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Link } from "wouter";
-import { ExternalLink, Download, ArrowRight } from "lucide-react";
+import { ExternalLink, BookOpen, ArrowRight, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const fadeUp = {
@@ -170,16 +170,18 @@ export default function Research() {
               The Paideia-Ren Blueprint
             </h2>
             <p className="text-[17px] text-foreground/80 leading-[1.75] mb-10">
-              <em>"Reimagining Education with a Global Technological Lens"</em> is our strategic framework aligning adaptive AI with UNESCO's SDG 4 and SDG 4.7. Available for review and collaboration.
+              <em>"Reimagining Education with a Global Technological Lens"</em> is our strategic framework aligning adaptive AI with UNESCO's SDG 4 and SDG 4.7. Read the full Blueprint on this site, or request the complete PDF with appendices.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
-              <Button size="lg" variant="outline"
-                className="border-primary text-primary hover:bg-primary/5 px-8 h-14 text-base rounded-none inline-flex items-center gap-3">
-                <Download size={18} strokeWidth={1.5} /> Download Blueprint (PDF)
-              </Button>
               <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-white px-8 h-14 text-base rounded-none">
+                <Link href="/blueprint">
+                  <BookOpen size={18} strokeWidth={1.5} className="mr-2" /> Read the Blueprint
+                </Link>
+              </Button>
+              <Button asChild size="lg" variant="outline"
+                className="border-primary text-primary hover:bg-primary/5 px-8 h-14 text-base rounded-none">
                 <Link href="/contact">
-                  Collaborate with our research office <ArrowRight size={16} className="ml-2" />
+                  <Mail size={18} strokeWidth={1.5} className="mr-2" /> Request the full PDF
                 </Link>
               </Button>
             </div>
