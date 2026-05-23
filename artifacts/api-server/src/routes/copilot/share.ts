@@ -11,6 +11,7 @@ import {
 } from "@workspace/db";
 import { and, eq } from "drizzle-orm";
 import { gradeQuiz, gradeWorksheet } from "../../lib/grading.js";
+import { enqueueGrading } from "../../lib/gradingQueue.js";
 
 const router: IRouter = Router();
 
@@ -137,6 +138,7 @@ router.post("/:code/submit", async (req, res) => {
     res.status(500).json({ error: "Could not save submission" });
     return;
   }
+  enqueueGrading(submission.id);
   res.json({
     submission: {
       id: submission.id,
@@ -144,7 +146,47 @@ router.post("/:code/submit", async (req, res) => {
       maxAutoScore: submission.maxAutoScore,
       needsReviewCount: submission.needsReviewCount,
       feedback: graded.feedback,
+      gradingStatus: submission.gradingStatus,
     },
+  });
+});
+
+router.get("/:code/submissions/:id", async (req, res) => {
+  const code = req.params["code"] as string;
+  const id = req.params["id"] as string;
+  const aRows = await db
+    .select()
+    .from(assignmentsTable)
+    .where(eq(assignmentsTable.shareCode, code))
+    .limit(1);
+  const assignment = aRows[0];
+  if (!assignment) {
+    res.status(404).json({ error: "Assignment not found" });
+    return;
+  }
+  const sRows = await db
+    .select()
+    .from(submissionsTable)
+    .where(and(eq(submissionsTable.id, id), eq(submissionsTable.assignmentId, assignment.id)))
+    .limit(1);
+  const sub = sRows[0];
+  if (!sub) {
+    res.status(404).json({ error: "Submission not found" });
+    return;
+  }
+  res.json({
+    submission: {
+      id: sub.id,
+      displayName: sub.displayName,
+      autoScore: sub.autoScore,
+      maxAutoScore: sub.maxAutoScore,
+      needsReviewCount: sub.needsReviewCount,
+      feedback: sub.feedback,
+      gradingStatus: sub.gradingStatus,
+      gradedAt: sub.gradedAt,
+      submittedAt: sub.submittedAt,
+    },
+    assignment: { id: assignment.id, title: assignment.title, resourceKind: assignment.resourceKind },
   });
 });
 

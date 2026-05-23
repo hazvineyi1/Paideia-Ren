@@ -5,15 +5,14 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { api, ApiError } from "@/lib/api";
 import { useStudentAuth } from "@/hooks/use-student-auth";
-import { Check, X, HelpCircle } from "lucide-react";
 
 interface Q { number: number; prompt: string; type: string; options: string[] | null }
 interface Resp {
   assignment: { id: string; title: string; resourceKind: "worksheet" | "quiz"; closed: boolean };
   resource: { instructions?: string; questions?: Q[]; items?: Q[] };
-  submission: { id: string; autoScore: number; maxAutoScore: number; needsReviewCount: number; feedback: Array<{ number: number; given: string; correct: string | null; state: string }> } | null;
+  submission: { id: string } | null;
 }
-interface SubmitResp { submission: { autoScore: number; maxAutoScore: number; needsReviewCount: number; feedback: Array<{ number: number; given: string; correct: string | null; state: string }> } }
+interface SubmitResp { submission: { id: string } }
 
 export default function StudentTake() {
   const [, params] = useRoute<{ id: string }>("/student/assignments/:id");
@@ -23,7 +22,6 @@ export default function StudentTake() {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<SubmitResp["submission"] | null>(null);
   const [loadingData, setLoadingData] = useState(true);
 
   useEffect(() => {
@@ -31,7 +29,10 @@ export default function StudentTake() {
     if (!student) { setLoc("/student/login"); return; }
     if (!params?.id) return;
     api.get<Resp>(`/student/assignments/${params.id}`)
-      .then((r) => { setData(r); if (r.submission) setResult({ autoScore: r.submission.autoScore, maxAutoScore: r.submission.maxAutoScore, needsReviewCount: r.submission.needsReviewCount, feedback: r.submission.feedback }); })
+      .then((r) => {
+        setData(r);
+        if (r.submission) setLoc(`/student/submissions/${r.submission.id}`);
+      })
       .catch((e: unknown) => setError(e instanceof ApiError ? e.message : "Could not load"))
       .finally(() => setLoadingData(false));
   }, [student, loading, params?.id, setLoc]);
@@ -41,36 +42,16 @@ export default function StudentTake() {
     setBusy(true); setError(null);
     try {
       const r = await api.post<SubmitResp>(`/student/assignments/${params.id}/submit`, { answers });
-      setResult(r.submission);
+      setLoc(`/student/submissions/${r.submission.id}`);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Failed to submit");
-    } finally { setBusy(false); }
+      setBusy(false);
+    }
   };
 
   if (loading || loadingData) return <Shell><p className="text-muted-foreground">Loading.</p></Shell>;
   if (error && !data) return <Shell><p className="text-destructive">{error}</p></Shell>;
   if (!data) return <Shell><p>Not found.</p></Shell>;
-
-  if (result) {
-    const pct = result.maxAutoScore > 0 ? Math.round((result.autoScore / result.maxAutoScore) * 100) : null;
-    return (
-      <Shell>
-        <div className="bg-card border rounded-lg p-8 text-center">
-          <h1 className="font-serif text-3xl text-primary mb-2">{data.submission ? "Already submitted" : "Submitted"}</h1>
-          {pct !== null && (
-            <div className="my-4">
-              <div className="font-serif text-6xl text-primary">{pct}%</div>
-              <div className="text-sm text-muted-foreground mt-1">{result.autoScore} out of {result.maxAutoScore} auto-marked</div>
-            </div>
-          )}
-          {result.needsReviewCount > 0 && <p className="text-sm text-muted-foreground">{result.needsReviewCount} answers need your teacher to mark them.</p>}
-        </div>
-        <div className="mt-8 space-y-3">
-          {result.feedback.map((f) => <FeedbackRow key={f.number} f={f} />)}
-        </div>
-      </Shell>
-    );
-  }
 
   const items = data.resource.items ?? data.resource.questions ?? [];
   return (
@@ -122,22 +103,6 @@ function Shell({ children }: { children: React.ReactNode }) {
         <div className="max-w-3xl mx-auto px-6 py-4 font-serif text-xl text-primary">Paideia-Ren</div>
       </header>
       <main className="max-w-3xl mx-auto px-6 py-10">{children}</main>
-    </div>
-  );
-}
-
-function FeedbackRow({ f }: { f: { number: number; given: string; correct: string | null; state: string } }) {
-  const Icon = f.state === "correct" ? Check : f.state === "incorrect" ? X : HelpCircle;
-  const color = f.state === "correct" ? "text-green-700" : f.state === "incorrect" ? "text-destructive" : "text-muted-foreground";
-  return (
-    <div className="bg-card border rounded-md p-3 flex items-start gap-3 text-sm">
-      <Icon className={`h-4 w-4 mt-0.5 shrink-0 ${color}`} />
-      <div className="flex-1">
-        <div className="text-xs text-muted-foreground">Q{f.number}</div>
-        <div>You answered: <span className="font-medium">{f.given || "(blank)"}</span></div>
-        {f.state === "incorrect" && f.correct && <div className="text-xs text-muted-foreground mt-1">Correct answer: {f.correct}</div>}
-        {f.state === "needs_review" && <div className="text-xs text-muted-foreground mt-1">Your teacher will mark this.</div>}
-      </div>
     </div>
   );
 }

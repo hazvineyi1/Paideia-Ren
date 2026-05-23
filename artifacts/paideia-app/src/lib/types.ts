@@ -370,6 +370,26 @@ export interface Assignment {
   createdAt: string;
 }
 
+export type GradingStatus = "pending" | "grading" | "graded" | "failed";
+
+export interface FeedbackItem {
+  number: number;
+  given: string;
+  correct: string | null;
+  state: "correct" | "incorrect" | "partial" | "needs_review";
+  skill?: string;
+  aiComment?: string;
+  aiScore?: number;
+  aiMax?: number;
+}
+
+export interface AiSubmissionSummary {
+  overall: string;
+  strengths: string[];
+  gaps: string[];
+  recommendations: string[];
+}
+
 export interface Submission {
   id: string;
   assignmentId: string;
@@ -379,7 +399,10 @@ export interface Submission {
   autoScore: number;
   maxAutoScore: number;
   needsReviewCount: number;
-  feedback: Array<{ number: number; given: string; correct: string | null; state: "correct" | "incorrect" | "needs_review"; skill?: string }> | null;
+  feedback: FeedbackItem[] | null;
+  gradingStatus: GradingStatus;
+  gradedAt: string | null;
+  aiSummary: AiSubmissionSummary | null;
   submittedAt: string;
 }
 

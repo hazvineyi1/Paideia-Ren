@@ -29,6 +29,7 @@ import PublicTake from "@/pages/PublicTake";
 import StudentLogin from "@/pages/student/StudentLogin";
 import StudentDashboard from "@/pages/student/StudentDashboard";
 import StudentTake from "@/pages/student/StudentTake";
+import StudentResults from "@/pages/student/StudentResults";
 import Admin from "@/pages/Admin";
 import Library from "@/pages/Library";
 import Shared from "@/pages/Shared";
@@ -95,6 +96,7 @@ function AppRoutes() {
       <Route path="/take/:code" component={PublicTake} />
       <Route path="/student/login" component={StudentLogin} />
       <Route path="/student/assignments/:id" component={StudentTake} />
+      <Route path="/student/submissions/:id" component={StudentResults} />
       <Route path="/student" component={StudentDashboard} />
       <Route path="/dashboard">{() => <Protected component={Dashboard} />}</Route>
       <Route path="/plans/new">{() => <Protected component={PlanNew} />}</Route>

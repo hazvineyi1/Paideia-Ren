@@ -211,9 +211,18 @@ export const submissionsTable = pgTable("copilot_submissions", {
   maxAutoScore: integer("max_auto_score").notNull(),
   needsReviewCount: integer("needs_review_count").notNull().default(0),
   feedback: jsonb("feedback").$type<unknown>(),
+  gradingStatus: text("grading_status").notNull().default("pending"),
+  gradedAt: timestamp("graded_at"),
+  aiSummary: jsonb("ai_summary").$type<{
+    overall: string;
+    strengths: string[];
+    gaps: string[];
+    recommendations: string[];
+  } | null>(),
   submittedAt: timestamp("submitted_at").defaultNow().notNull(),
 }, (t) => ({
   assignIdx: index("copilot_submissions_assignment_idx").on(t.assignmentId),
+  gradingIdx: index("copilot_submissions_grading_idx").on(t.gradingStatus),
   studentIdx: index("copilot_submissions_student_idx").on(t.studentId),
   oneSubmissionPerStudent: uniqueIndex("copilot_submissions_unique_per_student")
     .on(t.assignmentId, t.studentId)

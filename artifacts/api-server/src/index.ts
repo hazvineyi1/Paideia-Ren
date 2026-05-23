@@ -1,6 +1,7 @@
 import app from "./app";
 import { logger } from "./lib/logger";
 import { getStripeSync } from "./lib/stripeClient";
+import { recoverStuckSubmissions } from "./lib/gradingQueue";
 
 async function initStripe(): Promise<void> {
   const databaseUrl = process.env["DATABASE_URL"];
@@ -26,6 +27,24 @@ async function initStripe(): Promise<void> {
 }
 
 void initStripe();
+
+void (async () => {
+  try {
+    const n = await recoverStuckSubmissions();
+    if (n > 0) logger.info({ requeued: n }, "Re-queued stuck submissions for grading");
+  } catch (err) {
+    logger.error({ err }, "Failed to recover stuck submissions");
+  }
+})();
+
+// Sweeper: every 60s look for submissions stuck >2min and re-enqueue them.
+// Pairs with the atomic claim in gradeSubmissionWithAi so duplicate enqueues are safe.
+const gradingSweeper = setInterval(() => {
+  void recoverStuckSubmissions().catch((err: unknown) => {
+    logger.error({ err }, "Grading sweeper run failed");
+  });
+}, 60_000);
+gradingSweeper.unref();
 
 const rawPort = process.env["PORT"];
 

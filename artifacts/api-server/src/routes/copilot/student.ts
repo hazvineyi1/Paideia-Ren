@@ -20,6 +20,7 @@ import {
 } from "../../lib/auth.js";
 import { requireStudent } from "../../middlewares/auth.js";
 import { gradeQuiz, gradeWorksheet } from "../../lib/grading.js";
+import { enqueueGrading } from "../../lib/gradingQueue.js";
 
 const router: IRouter = Router();
 
@@ -205,6 +206,7 @@ router.post("/assignments/:id/submit", requireStudent, async (req, res) => {
     res.status(500).json({ error: "Could not save submission" });
     return;
   }
+  enqueueGrading(submission.id);
   res.json({
     submission: {
       id: submission.id,
@@ -212,7 +214,44 @@ router.post("/assignments/:id/submit", requireStudent, async (req, res) => {
       maxAutoScore: submission.maxAutoScore,
       needsReviewCount: submission.needsReviewCount,
       feedback: graded.feedback,
+      gradingStatus: submission.gradingStatus,
     },
+  });
+});
+
+router.get("/submissions/:id", requireStudent, async (req, res) => {
+  const id = req.params["id"] as string;
+  const rows = await db
+    .select()
+    .from(submissionsTable)
+    .where(and(eq(submissionsTable.id, id), eq(submissionsTable.studentId, req.student!.id)))
+    .limit(1);
+  const sub = rows[0];
+  if (!sub) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+  const aRows = await db
+    .select({
+      id: assignmentsTable.id,
+      title: assignmentsTable.title,
+      resourceKind: assignmentsTable.resourceKind,
+    })
+    .from(assignmentsTable)
+    .where(eq(assignmentsTable.id, sub.assignmentId))
+    .limit(1);
+  res.json({
+    submission: {
+      id: sub.id,
+      autoScore: sub.autoScore,
+      maxAutoScore: sub.maxAutoScore,
+      needsReviewCount: sub.needsReviewCount,
+      feedback: sub.feedback,
+      gradingStatus: sub.gradingStatus,
+      gradedAt: sub.gradedAt,
+      submittedAt: sub.submittedAt,
+    },
+    assignment: aRows[0] ?? null,
   });
 });
 
