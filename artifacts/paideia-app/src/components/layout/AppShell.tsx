@@ -109,7 +109,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               </div>
               <div className="text-muted-foreground">
                 {usage.remaining === 0
-                  ? "Upgrade for unlimited"
+                  ? (usage.paidPlansEnabled ? "Upgrade for unlimited" : (usage.onWaitlist ? "You're on the waitlist" : "Join the waitlist"))
                   : `${usage.remaining} left this month`}
               </div>
             </Link>

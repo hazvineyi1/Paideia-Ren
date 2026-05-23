@@ -18,6 +18,7 @@ import type {
   AdminDigest,
   PendingTeacher,
   PilotStatus,
+  WaitlistEntry,
 } from "@/lib/types";
 
 function Stat({ label, value, hint }: { label: string; value: number | string; hint?: string }) {
@@ -75,6 +76,7 @@ export default function Admin() {
   const [pilots, setPilots] = useState<AdminPilots | null>(null);
   const [pilotFilter, setPilotFilter] = useState<string>("all");
   const [pending, setPending] = useState<PendingTeacher[]>([]);
+  const [waitlist, setWaitlist] = useState<WaitlistEntry[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -97,8 +99,9 @@ export default function Admin() {
       api.get<AdminAiUsage>("/admin/ai-usage"),
       api.get<AdminPilots>("/admin/pilots"),
       api.get<{ pending: PendingTeacher[] }>("/admin/pending-teachers"),
+      api.get<{ waitlist: WaitlistEntry[] }>("/admin/waitlist"),
     ])
-      .then(([s, d, e, p, a, pl, pt]) => {
+      .then(([s, d, e, p, a, pl, pt, wl]) => {
         setStats(s);
         setDigest(d);
         setEngagement(e);
@@ -106,6 +109,7 @@ export default function Admin() {
         setAiUsage(a);
         setPilots(pl);
         setPending(pt.pending);
+        setWaitlist(wl.waitlist);
       })
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false));
@@ -140,6 +144,21 @@ export default function Admin() {
   async function mintResetLink(id: string): Promise<{ token: string; email: string; expiresAt: string }> {
     return api.post<{ token: string; email: string; expiresAt: string }>(`/admin/teachers/${id}/reset-link`);
   }
+
+  async function reloadWaitlist() {
+    const r = await api.get<{ waitlist: WaitlistEntry[] }>("/admin/waitlist");
+    setWaitlist(r.waitlist);
+  }
+  async function markWaitlistFulfilled(id: string) {
+    await api.post(`/admin/waitlist/${id}/fulfilled`);
+    await reloadWaitlist();
+  }
+  async function unmarkWaitlistFulfilled(id: string) {
+    await api.del(`/admin/waitlist/${id}/fulfilled`);
+    await reloadWaitlist();
+  }
+
+  const openWaitlistCount = waitlist.filter((w) => !w.fulfilledAt).length;
 
   return (
     <AppShell>
@@ -182,6 +201,9 @@ export default function Admin() {
               <TabsTrigger value="approvals" data-track="admin_tab" data-track-tab="approvals">
                 Approvals{pending.length > 0 ? ` (${pending.length})` : ""}
               </TabsTrigger>
+              <TabsTrigger value="waitlist" data-track="admin_tab" data-track-tab="waitlist">
+                Waitlist{openWaitlistCount > 0 ? ` (${openWaitlistCount})` : ""}
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="digest" className="mt-6">
@@ -208,6 +230,14 @@ export default function Admin() {
               <ApprovalsTab pending={pending} onApprove={approveTeacher} onSuspend={suspendTeacher} onResetLink={mintResetLink} />
             </TabsContent>
 
+            <TabsContent value="waitlist" className="mt-6">
+              <WaitlistTab
+                entries={waitlist}
+                onFulfilled={markWaitlistFulfilled}
+                onUnfulfilled={unmarkWaitlistFulfilled}
+              />
+            </TabsContent>
+
             <TabsContent value="pilots" className="mt-6">
               {pilots ? (
                 <PilotsTab
@@ -225,6 +255,92 @@ export default function Admin() {
         ) : null}
       </div>
     </AppShell>
+  );
+}
+
+function WaitlistTab({
+  entries,
+  onFulfilled,
+  onUnfulfilled,
+}: {
+  entries: WaitlistEntry[];
+  onFulfilled: (id: string) => Promise<void>;
+  onUnfulfilled: (id: string) => Promise<void>;
+}) {
+  const open = entries.filter((e) => !e.fulfilledAt);
+  const done = entries.filter((e) => e.fulfilledAt);
+
+  return (
+    <div className="space-y-8">
+      <div>
+        <h2 className="font-serif text-xl text-primary">Paid plan waitlist</h2>
+        <p className="text-sm text-muted-foreground">
+          Teachers asking to be notified when paid plans go live. Mark a row as contacted once you've reached out.
+        </p>
+      </div>
+
+      <section>
+        <h3 className="font-medium text-sm mb-3">Open ({open.length})</h3>
+        {open.length === 0 ? (
+          <div className="text-sm text-muted-foreground border rounded-md p-4 bg-card">No one on the waitlist yet.</div>
+        ) : (
+          <div className="space-y-2">
+            {open.map((e) => (
+              <WaitlistRow key={e.id} entry={e} onFulfilled={onFulfilled} onUnfulfilled={onUnfulfilled} />
+            ))}
+          </div>
+        )}
+      </section>
+
+      {done.length > 0 ? (
+        <section>
+          <h3 className="font-medium text-sm mb-3 text-muted-foreground">Contacted ({done.length})</h3>
+          <div className="space-y-2">
+            {done.map((e) => (
+              <WaitlistRow key={e.id} entry={e} onFulfilled={onFulfilled} onUnfulfilled={onUnfulfilled} />
+            ))}
+          </div>
+        </section>
+      ) : null}
+    </div>
+  );
+}
+
+function WaitlistRow({
+  entry,
+  onFulfilled,
+  onUnfulfilled,
+}: {
+  entry: WaitlistEntry;
+  onFulfilled: (id: string) => Promise<void>;
+  onUnfulfilled: (id: string) => Promise<void>;
+}) {
+  const fulfilled = !!entry.fulfilledAt;
+  return (
+    <div className={`border rounded-lg p-4 bg-card flex flex-col md:flex-row md:items-start gap-3 ${fulfilled ? "opacity-60" : ""}`}>
+      <div className="flex-1 min-w-0">
+        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+          <span className="font-medium">{entry.teacherName}</span>
+          <a href={`mailto:${entry.email}`} className="text-sm text-primary underline truncate">{entry.email}</a>
+          {entry.schoolName ? <span className="text-xs text-muted-foreground">· {entry.schoolName}</span> : null}
+          {entry.country ? <span className="text-xs text-muted-foreground">· {entry.country}</span> : null}
+        </div>
+        {entry.note ? (
+          <p className="text-sm text-muted-foreground mt-2 whitespace-pre-wrap">"{entry.note}"</p>
+        ) : null}
+        <div className="text-xs text-muted-foreground mt-2">
+          Joined {new Date(entry.createdAt).toLocaleString()}
+          {entry.fulfilledAt ? ` · contacted ${new Date(entry.fulfilledAt).toLocaleString()}` : ""}
+        </div>
+      </div>
+      <div className="shrink-0">
+        {fulfilled ? (
+          <Button variant="outline" size="sm" onClick={() => onUnfulfilled(entry.id)}>Reopen</Button>
+        ) : (
+          <Button size="sm" onClick={() => onFulfilled(entry.id)}>Mark contacted</Button>
+        )}
+      </div>
+    </div>
   );
 }
 

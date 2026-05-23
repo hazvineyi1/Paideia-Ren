@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { db, teachersTable } from "@workspace/db";
+import { db, teachersTable, paidPlanWaitlistTable } from "@workspace/db";
 import { eq, sql } from "drizzle-orm";
 import { requireAuth, requireActiveTeacher } from "../../middlewares/auth.js";
 import { getUsage } from "../../middlewares/quota.js";
@@ -8,6 +8,10 @@ import { syncTeacherFromCustomer } from "../../lib/stripeSync.js";
 
 const router: IRouter = Router();
 router.use(requireAuth, requireActiveTeacher);
+
+function paidPlansEnabled(): boolean {
+  return (process.env["PAID_PLANS_ENABLED"] ?? "false").toLowerCase() === "true";
+}
 
 function publicBaseUrl(): string {
   const domain = process.env["REPLIT_DOMAINS"]?.split(",")[0];
@@ -55,9 +59,11 @@ async function ensureCustomer(teacherId: string, email: string, name: string): P
 
 router.get("/usage", async (req, res) => {
   const t = req.teacher!;
+  const paidEnabled = paidPlansEnabled();
+  let usage;
   // Refresh teacher's stripe state opportunistically so the badge updates
   // immediately after a checkout return, even before the webhook fires.
-  if (t.stripeCustomerId) {
+  if (paidEnabled && t.stripeCustomerId) {
     await syncTeacherFromCustomer(t.stripeCustomerId);
     const fresh = await db
       .select()
@@ -65,14 +71,54 @@ router.get("/usage", async (req, res) => {
       .where(eq(teachersTable.id, t.id))
       .limit(1);
     const updated = fresh[0] ?? t;
-    res.json(await getUsage(updated.id, updated.subscriptionStatus, updated.subscriptionCurrentPeriodEnd, updated.email));
-    return;
+    usage = await getUsage(updated.id, updated.subscriptionStatus, updated.subscriptionCurrentPeriodEnd, updated.email);
+  } else {
+    usage = await getUsage(t.id, t.subscriptionStatus, t.subscriptionCurrentPeriodEnd, t.email);
   }
-  res.json(await getUsage(t.id, t.subscriptionStatus, t.subscriptionCurrentPeriodEnd, t.email));
+  let onWaitlist = false;
+  if (!paidEnabled) {
+    const rows = await db
+      .select({ id: paidPlanWaitlistTable.id })
+      .from(paidPlanWaitlistTable)
+      .where(eq(paidPlanWaitlistTable.teacherId, t.id))
+      .limit(1);
+    onWaitlist = rows.length > 0;
+  }
+  res.json({ ...usage, paidPlansEnabled: paidEnabled, onWaitlist });
+});
+
+router.post("/waitlist", async (req, res) => {
+  const t = req.teacher!;
+  const note = typeof req.body?.note === "string" ? req.body.note.slice(0, 500) : null;
+  try {
+    await db
+      .insert(paidPlanWaitlistTable)
+      .values({ teacherId: t.id, email: t.email, note })
+      .onConflictDoUpdate({
+        target: paidPlanWaitlistTable.teacherId,
+        set: { note, email: t.email },
+      });
+    res.json({ ok: true, onWaitlist: true });
+  } catch (err) {
+    res.status(500).json({ error: err instanceof Error ? err.message : "Could not join waitlist" });
+  }
+});
+
+router.delete("/waitlist", async (req, res) => {
+  const t = req.teacher!;
+  await db.delete(paidPlanWaitlistTable).where(eq(paidPlanWaitlistTable.teacherId, t.id));
+  res.json({ ok: true, onWaitlist: false });
 });
 
 router.post("/checkout", async (req, res) => {
   const t = req.teacher!;
+  if (!paidPlansEnabled()) {
+    res.status(503).json({
+      error: "Paid plans are not open yet. Join the waitlist and we'll let you know when they open.",
+      code: "paid_plans_disabled",
+    });
+    return;
+  }
   try {
     const priceId = await findActivePriceId();
     if (!priceId) {

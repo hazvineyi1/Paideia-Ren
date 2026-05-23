@@ -23,6 +23,8 @@ export interface Usage {
   remaining: number | null;
   subscriptionStatus: string;
   periodEnd: string | null;
+  paidPlansEnabled: boolean;
+  onWaitlist: boolean;
 }
 
 export interface ClassProfile {
@@ -56,6 +58,19 @@ export interface SharedItem {
   viewedAt: string | null;
   fromName: string;
   fromEmail: string;
+}
+
+export interface WaitlistEntry {
+  id: string;
+  teacherId: string;
+  teacherName: string;
+  email: string;
+  schoolName: string | null;
+  country: string | null;
+  region: string;
+  note: string | null;
+  createdAt: string;
+  fulfilledAt: string | null;
 }
 
 export interface PendingTeacher {

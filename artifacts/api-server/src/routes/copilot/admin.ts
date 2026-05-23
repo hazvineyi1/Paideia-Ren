@@ -651,10 +651,52 @@ router.get("/ai-usage", async (_req, res) => {
 router.get("/inbox-counts", async (_req, res) => {
   const [t] = await db.execute(sql`SELECT COUNT(*)::int AS c FROM copilot_teachers WHERE status = 'pending'`).then((r) => r.rows as Row[]);
   const [p] = await db.execute(sql`SELECT COUNT(*)::int AS c FROM copilot_pilot_requests WHERE status = 'new'`).then((r) => r.rows as Row[]);
+  const [w] = await db.execute(sql`SELECT COUNT(*)::int AS c FROM copilot_paid_plan_waitlist WHERE fulfilled_at IS NULL`).then((r) => r.rows as Row[]);
   res.json({
     pendingTeachers: Number(t?.["c"] ?? 0),
     newPilots: Number(p?.["c"] ?? 0),
+    waitlist: Number(w?.["c"] ?? 0),
   });
+});
+
+// Paid plan waitlist
+router.get("/waitlist", async (_req, res) => {
+  const rows = (await db.execute(sql`
+    SELECT w.id, w.teacher_id, w.email, w.note, w.created_at, w.fulfilled_at,
+           t.name AS teacher_name, t.school_name, t.country, t.region
+    FROM copilot_paid_plan_waitlist w
+    JOIN copilot_teachers t ON t.id = w.teacher_id
+    ORDER BY w.created_at DESC
+    LIMIT 500
+  `)).rows as Row[];
+  res.json({
+    waitlist: rows.map((r) => ({
+      id: String(r["id"]),
+      teacherId: String(r["teacher_id"]),
+      teacherName: String(r["teacher_name"]),
+      email: String(r["email"]),
+      schoolName: r["school_name"] ? String(r["school_name"]) : null,
+      country: r["country"] ? String(r["country"]) : null,
+      region: String(r["region"]),
+      note: r["note"] ? String(r["note"]) : null,
+      createdAt: new Date(r["created_at"] as string | Date).toISOString(),
+      fulfilledAt: r["fulfilled_at"] ? new Date(r["fulfilled_at"] as string | Date).toISOString() : null,
+    })),
+  });
+});
+
+router.post("/waitlist/:id/fulfilled", async (req, res) => {
+  const id = req.params["id"];
+  if (!id) { res.status(400).json({ error: "Missing id" }); return; }
+  await db.execute(sql`UPDATE copilot_paid_plan_waitlist SET fulfilled_at = NOW() WHERE id = ${id}`);
+  res.json({ ok: true });
+});
+
+router.delete("/waitlist/:id/fulfilled", async (req, res) => {
+  const id = req.params["id"];
+  if (!id) { res.status(400).json({ error: "Missing id" }); return; }
+  await db.execute(sql`UPDATE copilot_paid_plan_waitlist SET fulfilled_at = NULL WHERE id = ${id}`);
+  res.json({ ok: true });
 });
 
 // Pending teachers awaiting founder approval

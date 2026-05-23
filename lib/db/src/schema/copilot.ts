@@ -338,3 +338,17 @@ export type Assignment = typeof assignmentsTable.$inferSelect;
 export type Submission = typeof submissionsTable.$inferSelect;
 export type ClassProfile = typeof classProfilesTable.$inferSelect;
 export type ResourceShare = typeof resourceSharesTable.$inferSelect;
+
+export const paidPlanWaitlistTable = pgTable("copilot_paid_plan_waitlist", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  teacherId: uuid("teacher_id").notNull().references(() => teachersTable.id, { onDelete: "cascade" }),
+  email: text("email").notNull(),
+  note: text("note"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  fulfilledAt: timestamp("fulfilled_at"),
+}, (t) => ({
+  teacherUniq: uniqueIndex("copilot_paid_plan_waitlist_teacher_uniq").on(t.teacherId),
+  createdIdx: index("copilot_paid_plan_waitlist_created_idx").on(t.createdAt),
+}));
+
+export type PaidPlanWaitlistEntry = typeof paidPlanWaitlistTable.$inferSelect;

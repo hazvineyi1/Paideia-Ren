@@ -2,10 +2,11 @@ import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { AppShell } from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { api, ApiError } from "@/lib/api";
 import { useUsage } from "@/hooks/use-usage";
 import { useAuth } from "@/hooks/use-auth";
-import { Check, Sparkles } from "lucide-react";
+import { Check, Sparkles, MailCheck } from "lucide-react";
 
 export default function Upgrade() {
   const { usage, refresh } = useUsage();
@@ -13,6 +14,7 @@ export default function Upgrade() {
   const [, setLoc] = useLocation();
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [note, setNote] = useState("");
   const checkoutStatus = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("checkout") : null;
 
   useEffect(() => {
@@ -44,25 +46,54 @@ export default function Upgrade() {
     }
   }
 
+  async function joinWaitlist() {
+    setError(null);
+    setBusy(true);
+    try {
+      await api.post("/billing/waitlist", { note: note.trim() || undefined });
+      await refresh();
+      setBusy(false);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Could not join the waitlist");
+      setBusy(false);
+    }
+  }
+
+  async function leaveWaitlist() {
+    setBusy(true);
+    try {
+      await api.del("/billing/waitlist");
+      await refresh();
+    } finally {
+      setBusy(false);
+    }
+  }
+
   const subscribed = usage?.subscribed === true;
+  const paidOpen = usage?.paidPlansEnabled === true;
+  const onWaitlist = usage?.onWaitlist === true;
 
   return (
     <AppShell>
       <header className="mb-8 flex items-start gap-3">
         <Sparkles className="h-7 w-7 text-accent mt-1" />
         <div>
-          <h1 className="font-serif text-4xl text-primary mb-2">Upgrade Paideia-Ren</h1>
+          <h1 className="font-serif text-4xl text-primary mb-2">
+            {paidOpen ? "Upgrade Paideia-Ren" : "Unlimited is coming soon"}
+          </h1>
           <p className="text-muted-foreground">
-            Free teachers get 4 AI generations per calendar month across lesson plans, worksheets, quizzes, and parent updates. Upgrade for unlimited generations.
+            {paidOpen
+              ? "Free teachers get 4 AI generations per calendar month across lesson plans, worksheets, quizzes, and parent updates. Upgrade for unlimited generations."
+              : "Free teachers get 4 AI generations per calendar month. Paid plans aren't open yet. Join the waitlist and we'll let you know the moment they go live."}
           </p>
         </div>
       </header>
 
-      {checkoutStatus === "success" ? (
+      {paidOpen && checkoutStatus === "success" ? (
         <div className="mb-6 rounded-lg border-2 border-primary bg-primary/5 p-4 text-sm">
           Thank you. Your subscription is being activated. It may take a few seconds to reflect here.
         </div>
-      ) : checkoutStatus === "cancelled" ? (
+      ) : paidOpen && checkoutStatus === "cancelled" ? (
         <div className="mb-6 rounded-lg border bg-secondary/30 p-4 text-sm">
           Checkout was cancelled. You can try again any time.
         </div>
@@ -88,11 +119,13 @@ export default function Upgrade() {
           <ul className="space-y-2 text-sm">
             <li className="flex gap-2"><Check className="h-4 w-4 text-primary mt-0.5" /> 4 AI generations per month</li>
             <li className="flex gap-2"><Check className="h-4 w-4 text-primary mt-0.5" /> Library, sharing, and class profiles</li>
-            <li className="flex gap-2"><Check className="h-4 w-4 text-primary mt-0.5" /> Student quizzes and exit tickets</li>
+            <li className="flex gap-2"><Check className="h-4 w-4 text-primary mt-0.5" /> Print or save any resource as PDF</li>
           </ul>
         </div>
         <div className="rounded-lg border-2 border-primary bg-card p-6 relative">
-          <span className="absolute -top-3 left-6 bg-accent text-white text-xs font-semibold px-2 py-1 rounded">Recommended</span>
+          <span className="absolute -top-3 left-6 bg-accent text-white text-xs font-semibold px-2 py-1 rounded">
+            {paidOpen ? "Recommended" : "Coming soon"}
+          </span>
           <div className="font-serif text-2xl text-primary mb-1">Unlimited</div>
           <div className="text-3xl font-semibold mb-4">$9<span className="text-base font-normal text-muted-foreground">/month</span></div>
           <ul className="space-y-2 text-sm mb-6">
@@ -100,6 +133,7 @@ export default function Upgrade() {
             <li className="flex gap-2"><Check className="h-4 w-4 text-primary mt-0.5" /> Everything in Free</li>
             <li className="flex gap-2"><Check className="h-4 w-4 text-primary mt-0.5" /> Priority support from the founder</li>
           </ul>
+
           {subscribed ? (
             <div className="space-y-2">
               <Button className="w-full" onClick={openPortal} disabled={busy}>
@@ -107,10 +141,41 @@ export default function Upgrade() {
               </Button>
               <Button variant="outline" className="w-full" onClick={() => setLoc("/dashboard")}>Back to dashboard</Button>
             </div>
-          ) : (
+          ) : paidOpen ? (
             <Button className="w-full" onClick={startCheckout} disabled={busy}>
               {busy ? "Starting checkout..." : "Upgrade for $9 / month"}
             </Button>
+          ) : onWaitlist ? (
+            <div className="space-y-2">
+              <div className="flex items-start gap-2 p-3 rounded-md bg-primary/5 border border-primary/20 text-sm">
+                <MailCheck className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                <div>
+                  <div className="font-medium text-primary">You're on the waitlist</div>
+                  <div className="text-muted-foreground text-xs mt-0.5">
+                    We'll get in touch the moment paid plans open. Thank you for the support.
+                  </div>
+                </div>
+              </div>
+              <Button variant="ghost" size="sm" className="w-full" onClick={leaveWaitlist} disabled={busy}>
+                {busy ? "Removing..." : "Leave the waitlist"}
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Anything you'd like the founder to know? (optional)</label>
+                <Textarea
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  placeholder="e.g. I plan four classes per week and run out of generations by Wednesday."
+                  rows={3}
+                  maxLength={500}
+                />
+              </div>
+              <Button className="w-full" onClick={joinWaitlist} disabled={busy}>
+                {busy ? "Adding you..." : "Notify me when paid plans open"}
+              </Button>
+            </div>
           )}
         </div>
       </div>

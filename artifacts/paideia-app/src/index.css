@@ -97,7 +97,27 @@ body {
 
 .no-print { }
 @media print {
+  @page { margin: 18mm 16mm 22mm 16mm; }
   .no-print { display: none !important; }
-  body { background: white; }
-  .print-page { box-shadow: none !important; border: none !important; }
+  body { background: white; color: #111; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .print-page {
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+  }
+  .print-page::before {
+    content: "Paideia-Ren · Classroom Companion";
+    display: block;
+    font-family: var(--font-serif);
+    color: hsl(229 49% 24%);
+    font-size: 11pt;
+    letter-spacing: 0.04em;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 6pt;
+    margin-bottom: 14pt;
+  }
+  .print-page h1, .print-page h2, .print-page h3 {
+    page-break-after: avoid;
+  }
+  .print-page p, .print-page li { page-break-inside: avoid; }
 }
