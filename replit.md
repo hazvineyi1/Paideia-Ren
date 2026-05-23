@@ -12,7 +12,14 @@ quiz, and parent-update copilot for teachers.
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
 - Required env: `DATABASE_URL`, `OPENAI_API_KEY`, `ADMIN_EMAILS`
-  (comma-separated founder emails — these accounts get the `/admin` portal)
+  (comma-separated founder emails — these accounts get the `/admin` portal
+  and bypass the free-tier generation quota)
+- Stripe is wired via the Replit Stripe connector (no env keys needed in
+  dev). To seed the Unlimited subscription product in Stripe, run:
+  `pnpm --filter @workspace/scripts exec tsx src/seed-products.ts`
+  Webhooks are auto-registered on api-server startup via
+  `stripe-replit-sync`. When publishing, paste the live Stripe keys
+  (`pk_live_…`, `sk_live_…`) in the Publish pane.
 
 ## Stack
 
@@ -38,6 +45,17 @@ quiz, and parent-update copilot for teachers.
   inside the founder admin portal.
 - Share-a-resource is by email. Recipients claim a copy from
   `/shared`, which duplicates the resource into their library.
+- Free tier is 4 AI generations per calendar month, combined across
+  lesson plans, worksheets, quizzes, and parent updates. Subscribed
+  teachers and admin emails get unlimited. Counted server-side in
+  `middlewares/quota.ts`; over-limit POSTs return HTTP 402 and the
+  frontend auto-redirects to `/app/upgrade`. The quota check is
+  read-then-act, so a determined teacher could squeeze one extra
+  generation with simultaneous double-submits; acceptable bound.
+- Subscription state lives on `copilot_teachers.subscription_status`
+  and `subscription_current_period_end`, kept in sync by the Stripe
+  webhook + `lib/stripeSync.ts`, which mirrors `stripe.subscriptions`
+  back onto the teacher row.
 - Class profiles auto-fill subject/year/notes into all four "New X" forms.
 - Per-IP in-memory rate limiting on signup, login, password reset, and
   pilot submission (see `middlewares/rateLimit.ts`).

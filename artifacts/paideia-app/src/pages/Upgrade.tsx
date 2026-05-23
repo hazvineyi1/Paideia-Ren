@@ -4,15 +4,33 @@ import { AppShell } from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/button";
 import { api, ApiError } from "@/lib/api";
 import { useUsage } from "@/hooks/use-usage";
+import { useAuth } from "@/hooks/use-auth";
 import { Check, Sparkles } from "lucide-react";
 
 export default function Upgrade() {
   const { usage, refresh } = useUsage();
+  const { refresh: refreshAuth } = useAuth();
   const [, setLoc] = useLocation();
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const checkoutStatus = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("checkout") : null;
 
-  useEffect(() => { void refresh(); }, [refresh]);
+  useEffect(() => {
+    void refresh();
+    void refreshAuth();
+  }, [refresh, refreshAuth]);
+
+  async function openPortal() {
+    setError(null);
+    setBusy(true);
+    try {
+      const r = await api.post<{ url: string }>("/billing/portal");
+      window.location.href = r.url;
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Could not open billing portal");
+      setBusy(false);
+    }
+  }
 
   async function startCheckout() {
     setError(null);
@@ -39,6 +57,16 @@ export default function Upgrade() {
           </p>
         </div>
       </header>
+
+      {checkoutStatus === "success" ? (
+        <div className="mb-6 rounded-lg border-2 border-primary bg-primary/5 p-4 text-sm">
+          Thank you. Your subscription is being activated. It may take a few seconds to reflect here.
+        </div>
+      ) : checkoutStatus === "cancelled" ? (
+        <div className="mb-6 rounded-lg border bg-secondary/30 p-4 text-sm">
+          Checkout was cancelled. You can try again any time.
+        </div>
+      ) : null}
 
       {usage ? (
         <div className="mb-6 rounded-lg border bg-card p-4 text-sm">
@@ -73,7 +101,12 @@ export default function Upgrade() {
             <li className="flex gap-2"><Check className="h-4 w-4 text-primary mt-0.5" /> Priority support from the founder</li>
           </ul>
           {subscribed ? (
-            <Button variant="outline" className="w-full" onClick={() => setLoc("/dashboard")}>Back to dashboard</Button>
+            <div className="space-y-2">
+              <Button className="w-full" onClick={openPortal} disabled={busy}>
+                {busy ? "Opening..." : "Manage billing"}
+              </Button>
+              <Button variant="outline" className="w-full" onClick={() => setLoc("/dashboard")}>Back to dashboard</Button>
+            </div>
           ) : (
             <Button className="w-full" onClick={startCheckout} disabled={busy}>
               {busy ? "Starting checkout..." : "Upgrade for $9 / month"}

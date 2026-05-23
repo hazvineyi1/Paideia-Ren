@@ -15,6 +15,14 @@ function isSubscribed(status: string | undefined, periodEnd: Date | null | undef
   return periodEnd.getTime() > Date.now();
 }
 
+function isAdminEmail(email: string): boolean {
+  const list = (process.env["ADMIN_EMAILS"] ?? "")
+    .split(",")
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
+  return list.includes(email.toLowerCase());
+}
+
 function monthStart(): Date {
   const d = new Date();
   return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1));
@@ -34,8 +42,8 @@ export async function countMonthlyGenerations(teacherId: string): Promise<number
   return results.reduce((sum, r) => sum + (r[0]?.c ?? 0), 0);
 }
 
-export async function getUsage(teacherId: string, subscriptionStatus: string, periodEnd: Date | null) {
-  const subscribed = isSubscribed(subscriptionStatus, periodEnd);
+export async function getUsage(teacherId: string, subscriptionStatus: string, periodEnd: Date | null, email?: string) {
+  const subscribed = isSubscribed(subscriptionStatus, periodEnd) || (email ? isAdminEmail(email) : false);
   const used = subscribed ? 0 : await countMonthlyGenerations(teacherId);
   return {
     subscribed,
@@ -53,7 +61,7 @@ export function requireQuota(
   next: NextFunction,
 ): void {
   const teacher = req.teacher!;
-  if (isSubscribed(teacher.subscriptionStatus, teacher.subscriptionCurrentPeriodEnd)) {
+  if (isSubscribed(teacher.subscriptionStatus, teacher.subscriptionCurrentPeriodEnd) || isAdminEmail(teacher.email)) {
     next();
     return;
   }

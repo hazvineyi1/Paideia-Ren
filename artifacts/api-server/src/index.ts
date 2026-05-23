@@ -1,5 +1,31 @@
 import app from "./app";
 import { logger } from "./lib/logger";
+import { getStripeSync } from "./lib/stripeClient";
+
+async function initStripe(): Promise<void> {
+  const databaseUrl = process.env["DATABASE_URL"];
+  if (!databaseUrl) {
+    logger.warn("DATABASE_URL not set; skipping Stripe init");
+    return;
+  }
+  try {
+    const { runMigrations } = await import("stripe-replit-sync");
+    await runMigrations({ databaseUrl });
+    const sync = await getStripeSync();
+    const replitDomain = process.env["REPLIT_DOMAINS"]?.split(",")[0];
+    if (replitDomain) {
+      const webhookUrl = `https://${replitDomain}/api/stripe/webhook`;
+      await sync.findOrCreateManagedWebhook(webhookUrl);
+      logger.info({ webhookUrl }, "Stripe managed webhook ready");
+    }
+    await sync.syncBackfill();
+    logger.info("Stripe sync complete");
+  } catch (err) {
+    logger.error({ err }, "Stripe initialisation failed");
+  }
+}
+
+void initStripe();
 
 const rawPort = process.env["PORT"];
 
