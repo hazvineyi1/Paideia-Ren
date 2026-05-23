@@ -17,7 +17,7 @@ export const REGIONS: RegionInfo[] = [
     description: "Common Core / state standards.",
     curriculumLabel: "Common Core and US state standards",
     conventionsHint:
-      "Use US spelling, US-style examples, and reference Common Core or relevant state standards where applicable. Use grade-level vocabulary (e.g. Grade 7).",
+      "Use US spelling and grade-level vocabulary (e.g. Grade 7), and reference Common Core or relevant state standards where applicable. US-style examples are welcome, but rotate student names, settings, and cultural references across the full diversity of US life (African American, Latino, Asian American, Native American, immigrant, urban and rural), and include international perspectives so students see themselves and the wider world.",
     subjects: [
       "Mathematics",
       "English Language Arts",
@@ -64,7 +64,7 @@ export const REGIONS: RegionInfo[] = [
     description: "National Curriculum / GCSE / A-Level.",
     curriculumLabel: "UK National Curriculum, GCSE, and A-Level",
     conventionsHint:
-      "Use UK spelling, UK-style examples, and reference Key Stages, GCSE, or A-Level specifications where appropriate. Use 'maths' not 'math'.",
+      "Use UK spelling and 'maths' not 'math', and reference Key Stages, GCSE, or A-Level specifications where appropriate. Reflect the full diversity of UK classrooms in names and contexts (including Black British, South Asian, East Asian, Eastern European, and Traveller heritages), and include non-UK examples so the resource does not present Britain as the centre of the world.",
     subjects: [
       "Mathematics",
       "English Language",
@@ -114,7 +114,7 @@ export const REGIONS: RegionInfo[] = [
     curriculumLabel:
       "International Baccalaureate and national European curricula",
     conventionsHint:
-      "Use British/international English. Default to IB conceptual framing where appropriate. Cite typical European curriculum stages where relevant.",
+      "Use British/international English. Default to IB conceptual framing where appropriate and cite typical European curriculum stages where relevant. Reflect the full diversity of European classrooms and treat European history as part of a global story, not its centre. Include examples and contributors from Africa, Asia, the Americas, and the Pacific as a matter of course.",
     subjects: [
       "Mathematics",
       "Language A (Literature)",
@@ -159,7 +159,7 @@ export const REGIONS: RegionInfo[] = [
     curriculumLabel:
       "National curricula across African states (e.g. CBC in Kenya, NERDC in Nigeria, CAPS in South Africa)",
     conventionsHint:
-      "Use clear international English. Where relevant, draw on local context, names, and examples. Reference local curriculum frameworks (CBC, CAPS, NERDC) where the teacher indicates.",
+      "Use clear international English. Default to African contexts, names, places, currencies (KES, NGN, ZAR, GHS, TZS, UGX, XOF), foods, and everyday scenarios across the continent (Kenya, Nigeria, South Africa, Ghana, Tanzania, Uganda, Senegal, Ethiopia, Egypt, Morocco, Zimbabwe, Rwanda, and others), not only one country. Reference local curriculum frameworks (CBC, CAPS, NERDC, WAEC, KCSE, ECZ) where the teacher indicates. Treat African contributions to mathematics, science, history, philosophy, literature, and the arts (e.g. Ishango bone, Yoruba numeration, Great Zimbabwe, Lalibela, Timbuktu manuscripts, Wangari Maathai, Chinua Achebe, Mariama Bâ, Ngũgĩ wa Thiong'o, Cheikh Anta Diop, Wole Soyinka) as central rather than exceptional. Do not romanticise colonialism, and where colonial history is relevant, name the peoples and resistance movements involved.",
     subjects: [
       "Mathematics",
       "English",
@@ -208,7 +208,7 @@ export const REGIONS: RegionInfo[] = [
     curriculumLabel:
       "National curricula across Asia (e.g. CBSE/ICSE in India, MOE Singapore, MEXT Japan, KSSM Malaysia)",
     conventionsHint:
-      "Use clear international English. Where relevant, draw on local context, names, and examples. Reference the local curriculum framework where the teacher indicates.",
+      "Use clear international English. Default to Asian contexts, names, places, currencies (INR, CNY, JPY, KRW, SGD, MYR, IDR, PHP, THB, VND, PKR, BDT), foods, festivals, and everyday scenarios across the region (India, China, Japan, Korea, Singapore, Malaysia, Indonesia, Philippines, Thailand, Vietnam, Pakistan, Bangladesh, Sri Lanka, Nepal, Mongolia, Central Asia, and others), not only one country. Reference the local curriculum framework where the teacher indicates. Treat Asian contributions to mathematics, science, philosophy, literature, and the arts (e.g. Indian origins of zero and algebra, Chinese astronomy and printing, Islamic Golden Age science, Korean han'gŭl, Japanese mathematicians like Seki Takakazu, writers like Rabindranath Tagore, Mo Yan, Arundhati Roy, Han Kang) as central rather than exceptional. Be respectful and accurate around religion, caste, and ethnicity.",
     subjects: [
       "Mathematics",
       "English",
