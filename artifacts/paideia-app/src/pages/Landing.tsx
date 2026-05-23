@@ -48,7 +48,7 @@ export default function Landing() {
           Your planning, drafting, and assessment partner.
         </h1>
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-10">
-          Built for teachers in classrooms across the US, UK, Europe, Africa, and Asia. Generate lesson plans, worksheets, parent updates, and quizzes that respect your curriculum and your time.
+          Built for teachers, lecturers, and trainers across primary, secondary, higher education, adult learning, and vocational training in the US, UK, Europe, Africa, and Asia. Generate lesson plans, worksheets, learner updates, and quizzes that respect your curriculum and your time.
         </p>
         <div className="flex items-center justify-center gap-4">
           <Button size="lg" className="px-8" onClick={go("/signup")}>Start for free</Button>

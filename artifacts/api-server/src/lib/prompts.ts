@@ -46,7 +46,7 @@ export function lessonPlanPrompt(input: LessonPlanInput): {
 } {
   const system = `${HOUSE_RULES}
 
-You are generating a single-lesson plan for a classroom teacher.
+You are generating a single-lesson plan for a teacher, lecturer, or trainer. The audience may be school pupils, higher-education students, adult learners, or vocational trainees, so adapt vocabulary, examples, and assumed prior knowledge to the year group given.
 
 ${regionContext(input.region)}
 
@@ -111,7 +111,7 @@ export function worksheetPrompt(input: WorksheetInput): {
 } {
   const system = `${HOUSE_RULES}
 
-You are generating a practice worksheet for students.
+You are generating a practice worksheet for learners. Pitch the questions and vocabulary to the year group given, which may be a school grade, a university year, an adult-learner level, or a vocational stage.
 
 ${regionContext(input.region)}
 
@@ -201,7 +201,7 @@ export function quizPrompt(input: QuizInput): {
 } {
   const system = `${HOUSE_RULES}
 
-You are generating a short formative assessment (exit ticket, quiz, or starter).
+You are generating a short formative assessment (exit ticket, quiz, or starter) for learners at the year group given, which may be a school grade, a university year, an adult-learner level, or a vocational stage.
 
 ${regionContext(input.region)}
 

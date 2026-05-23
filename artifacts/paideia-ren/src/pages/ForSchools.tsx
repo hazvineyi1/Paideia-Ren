@@ -100,7 +100,7 @@ export default function ForSchools() {
         </motion.h1>
         <motion.p {...fadeUp} transition={{ duration: 0.7, delay: 0.2 }}
           className="text-[17px] text-foreground/80 leading-[1.75]">
-          Curriculum-aligned, teacher-augmenting, and designed for the realities of real classrooms from Boston to London to Berlin.
+          Curriculum-aligned, educator-augmenting, and designed for the realities of real classrooms, lecture halls, and training rooms from Boston to London to Berlin. Schools, colleges, universities, and training providers all welcome.
         </motion.p>
       </section>
 
