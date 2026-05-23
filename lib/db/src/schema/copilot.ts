@@ -26,8 +26,14 @@ export const teachersTable = pgTable("copilot_teachers", {
   onboardedAt: timestamp("onboarded_at"),
   approvedAt: timestamp("approved_at"),
   approvedBy: uuid("approved_by"),
+  subscriptionStatus: text("subscription_status").notNull().default("free"),
+  stripeCustomerId: text("stripe_customer_id"),
+  stripeSubscriptionId: text("stripe_subscription_id"),
+  subscriptionCurrentPeriodEnd: timestamp("subscription_current_period_end"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
+export const FREE_MONTHLY_GENERATIONS = 4;
 
 export const passwordResetsTable = pgTable("copilot_password_resets", {
   id: uuid("id").primaryKey().defaultRandom(),

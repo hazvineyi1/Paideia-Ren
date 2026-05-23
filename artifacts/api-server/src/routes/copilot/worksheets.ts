@@ -3,6 +3,7 @@ import { z } from "zod";
 import { db, worksheetsTable } from "@workspace/db";
 import { and, desc, eq } from "drizzle-orm";
 import { requireAuth, requireActiveTeacher } from "../../middlewares/auth.js";
+import { requireQuota } from "../../middlewares/quota.js";
 import { REGION_IDS } from "../../lib/catalog.js";
 import { generateJSON } from "../../lib/openai.js";
 import { logEvent } from "../../lib/eventLog.js";
@@ -26,7 +27,7 @@ interface WorksheetContent {
   [k: string]: unknown;
 }
 
-router.post("/", async (req, res) => {
+router.post("/", requireQuota, async (req, res) => {
   const parsed = createSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Invalid input" });

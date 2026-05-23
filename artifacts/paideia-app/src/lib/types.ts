@@ -11,7 +11,18 @@ export interface Teacher {
   status: "pending" | "active" | "suspended";
   onboardedAt: string | null;
   approvedAt: string | null;
+  subscriptionStatus: "free" | "active" | "trialing" | "past_due" | "canceled";
+  subscriptionCurrentPeriodEnd: string | null;
   createdAt: string;
+}
+
+export interface Usage {
+  subscribed: boolean;
+  used: number;
+  limit: number;
+  remaining: number | null;
+  subscriptionStatus: string;
+  periodEnd: string | null;
 }
 
 export interface ClassProfile {

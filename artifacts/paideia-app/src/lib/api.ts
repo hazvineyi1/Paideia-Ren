@@ -26,6 +26,10 @@ async function request<T>(
       (data && typeof data === "object" && "error" in data && typeof (data as { error: unknown }).error === "string"
         ? (data as { error: string }).error
         : null) ?? `Request failed (${res.status})`;
+    if (res.status === 402 && typeof window !== "undefined" && !window.location.pathname.endsWith("/upgrade")) {
+      const base = (import.meta.env.BASE_URL ?? "/").replace(/\/$/, "");
+      window.location.assign(`${base}/upgrade`);
+    }
     throw new ApiError(message, res.status, data);
   }
   return data as T;

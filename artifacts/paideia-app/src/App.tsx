@@ -35,6 +35,8 @@ import Shared from "@/pages/Shared";
 import AwaitingApproval from "@/pages/AwaitingApproval";
 import Onboarding from "@/pages/Onboarding";
 import ResetPassword from "@/pages/ResetPassword";
+import Upgrade from "@/pages/Upgrade";
+import { UsageProvider } from "@/hooks/use-usage";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
@@ -113,6 +115,7 @@ function AppRoutes() {
       <Route path="/admin">{() => <Protected component={Admin} />}</Route>
       <Route path="/library">{() => <Protected component={Library} />}</Route>
       <Route path="/shared">{() => <Protected component={Shared} />}</Route>
+      <Route path="/upgrade">{() => <Protected component={Upgrade} />}</Route>
       <Route component={NotFound} />
     </Switch>
   );
@@ -123,6 +126,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <AuthProvider>
+          <UsageProvider>
           <StudentAuthProvider>
             <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
               <AnalyticsTracker />
@@ -130,6 +134,7 @@ function App() {
             </WouterRouter>
             <Toaster />
           </StudentAuthProvider>
+          </UsageProvider>
         </AuthProvider>
       </TooltipProvider>
     </QueryClientProvider>

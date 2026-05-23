@@ -16,6 +16,7 @@ import adminRouter from "./admin.js";
 import profilesRouter from "./profiles.js";
 import libraryRouter from "./library.js";
 import resourceSharesRouter from "./resource-shares.js";
+import billingRouter from "./billing.js";
 
 const router: IRouter = Router();
 
@@ -36,5 +37,6 @@ router.use("/admin", adminRouter);
 router.use("/profiles", profilesRouter);
 router.use("/library", libraryRouter);
 router.use("/resource-shares", resourceSharesRouter);
+router.use("/billing", billingRouter);
 
 export default router;

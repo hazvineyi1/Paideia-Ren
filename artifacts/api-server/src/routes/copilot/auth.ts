@@ -266,6 +266,7 @@ function serialiseTeacher(t: typeof teachersTable.$inferSelect) {
     isAdmin: adminEmails().has(t.email.toLowerCase()),
     onboardedAt: t.onboardedAt ? t.onboardedAt.toISOString() : null,
     approvedAt: t.approvedAt ? t.approvedAt.toISOString() : null,
+    subscriptionCurrentPeriodEnd: t.subscriptionCurrentPeriodEnd ? t.subscriptionCurrentPeriodEnd.toISOString() : null,
     createdAt: t.createdAt.toISOString(),
   };
 }
