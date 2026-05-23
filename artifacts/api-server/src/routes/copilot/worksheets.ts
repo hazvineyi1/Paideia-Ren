@@ -101,6 +101,70 @@ router.get("/:id", async (req, res) => {
   res.json({ worksheet: rows[0] });
 });
 
+const worksheetQuestionSchema = z
+  .object({
+    number: z.number().int().min(1),
+    prompt: z.string().min(1).max(2000),
+    type: z.enum(["short", "multiple_choice", "long", "calculation"]),
+    options: z.array(z.string().max(500)).max(10).nullable(),
+    answer: z.string().max(2000),
+    workingOrRubric: z.string().max(2000).default(""),
+  })
+  .superRefine((q, ctx) => {
+    if (q.type === "multiple_choice") {
+      const opts = (q.options ?? []).map((o) => o.trim()).filter(Boolean);
+      if (opts.length < 2) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["options"], message: "Multiple choice needs at least 2 options." });
+      }
+      if (!q.answer.trim()) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["answer"], message: "Multiple choice requires an answer." });
+      }
+    } else if (q.options !== null) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["options"], message: "Options must be null for non multiple-choice questions." });
+    }
+  });
+
+const worksheetContentSchema = z.object({
+  title: z.string().min(1).max(300),
+  instructions: z.string().max(2000).default(""),
+  questions: z.array(worksheetQuestionSchema).min(1).max(50),
+  teacherNotes: z.string().max(2000).default(""),
+});
+
+const updateWorksheetSchema = z.object({
+  title: z.string().min(1).max(300).optional(),
+  content: worksheetContentSchema,
+});
+
+router.patch("/:id", async (req, res) => {
+  const id = req.params["id"];
+  if (!id) {
+    res.status(400).json({ error: "Missing id" });
+    return;
+  }
+  const parsed = updateWorksheetSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Invalid input" });
+    return;
+  }
+  // Renumber to keep the questions array clean and consecutive.
+  const content = {
+    ...parsed.data.content,
+    questions: parsed.data.content.questions.map((q, i) => ({ ...q, number: i + 1 })),
+  };
+  const title = parsed.data.title ?? content.title;
+  const result = await db
+    .update(worksheetsTable)
+    .set({ title, content, questionCount: content.questions.length })
+    .where(and(eq(worksheetsTable.id, id), eq(worksheetsTable.teacherId, req.teacher!.id)))
+    .returning();
+  if (!result[0]) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+  res.json({ worksheet: result[0] });
+});
+
 router.delete("/:id", async (req, res) => {
   const id = req.params["id"];
   if (!id) {

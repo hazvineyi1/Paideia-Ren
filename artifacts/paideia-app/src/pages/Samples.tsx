@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { Link, useRoute } from "wouter";
+import { Link, useRoute, useLocation } from "wouter";
 import { AppShell } from "@/components/layout/AppShell";
-import { api } from "@/lib/api";
+import { api, ApiError } from "@/lib/api";
 import { useCatalog } from "@/hooks/use-catalog";
 import type { Sample, LessonPlanContent, WorksheetContent, ParentDraftContent, QuizContent } from "@/lib/types";
 import { LessonPlanView, WorksheetView, ParentDraftView, QuizView } from "@/components/Renderers";
@@ -86,9 +86,11 @@ export function SamplesList() {
 
 export function SampleViewer() {
   const [, params] = useRoute<{ id: string }>("/samples/:id");
+  const [, setLoc] = useLocation();
   const id = params?.id;
   const [s, setS] = useState<Sample | null>(null);
   const [loading, setLoading] = useState(true);
+  const [copying, setCopying] = useState(false);
   useEffect(() => {
     if (!id) return;
     void api.get<{ sample: Sample }>(`/samples/${id}`)
@@ -98,6 +100,24 @@ export function SampleViewer() {
 
   if (loading) return <AppShell><p className="text-muted-foreground">Loading.</p></AppShell>;
   if (!s) return <AppShell><p>Sample not found.</p></AppShell>;
+
+  const canCopy = s.kind === "worksheet" || s.kind === "quiz";
+
+  const onCopy = async () => {
+    if (!canCopy) return;
+    setCopying(true);
+    try {
+      const r = await api.post<{ kind: "worksheet" | "quiz"; id: string }>(`/samples/${s.id}/copy`);
+      const path = r.kind === "worksheet" ? `/worksheets/${r.id}?edit=1` : `/quizzes/${r.id}?edit=1`;
+      setLoc(path);
+    } catch (err) {
+      if (!(err instanceof ApiError && err.status === 402)) {
+        alert(err instanceof ApiError ? err.message : "Could not copy this sample.");
+      }
+    } finally {
+      setCopying(false);
+    }
+  };
 
   return (
     <AppShell>
@@ -115,11 +135,21 @@ export function SampleViewer() {
         {s.kind === "parent_draft" && <ParentDraftView c={s.content as ParentDraftContent} />}
         {s.kind === "quiz" && <QuizView c={s.content as QuizContent} />}
       </div>
-      <div className="mt-6 text-center">
+      <div className="mt-6 flex flex-wrap justify-center gap-3">
+        {canCopy && (
+          <Button onClick={onCopy} disabled={copying}>
+            {copying ? "Copying…" : "Copy to my library and edit"}
+          </Button>
+        )}
         <Link href={s.kind === "worksheet" ? "/worksheets/new" : s.kind === "quiz" ? "/quizzes/new" : s.kind === "parent_draft" ? "/parent-drafts/new" : "/plans/new"}>
-          <Button>Make my own</Button>
+          <Button variant={canCopy ? "outline" : "default"}>Make my own from scratch</Button>
         </Link>
       </div>
+      {canCopy && (
+        <p className="text-xs text-muted-foreground text-center mt-2">
+          Copying this sample creates an editable copy in your library that you can adapt and assign digitally.
+        </p>
+      )}
     </AppShell>
   );
 }
