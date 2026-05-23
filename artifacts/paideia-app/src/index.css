@@ -106,7 +106,7 @@ body {
     padding: 0 !important;
   }
   .print-page::before {
-    content: "Paideia-Ren · Classroom Companion";
+    content: "Paideia-Ren · Teaching Companion";
     display: block;
     font-family: var(--font-serif);
     color: hsl(229 49% 24%);

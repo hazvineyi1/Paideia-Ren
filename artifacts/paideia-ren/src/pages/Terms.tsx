@@ -16,7 +16,7 @@ export default function Terms() {
 
           <section>
             <h2 className="font-serif text-2xl text-primary mb-3">2. What the service is</h2>
-            <p>Classroom Companion helps teachers draft lesson plans, worksheets, quizzes and parent updates, and lets them manage classes and assignments. It is a tool that augments a teacher; it does not replace teacher judgement.</p>
+            <p>Teaching Companion helps teachers draft lesson plans, worksheets, quizzes and parent updates, and lets them manage classes and assignments. It is a tool that augments a teacher; it does not replace teacher judgement.</p>
           </section>
 
           <section>

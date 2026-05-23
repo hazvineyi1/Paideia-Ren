@@ -1,4 +1,4 @@
-# Paideia-Ren Classroom Companion
+# Paideia-Ren Teaching Companion
 
 Marketing site (`paideia-ren`), teacher app (`paideia-app`), and shared API
 (`api-server`) for an African-curriculum-first lesson planning, worksheet,

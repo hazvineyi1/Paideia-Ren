@@ -52,7 +52,7 @@ const diagnosticQuestions = [
 
 const features = [
   { icon: Activity, title: "Adaptive Content Engine", description: "Real-time modality-responsive content delivery across every subject and grade level." },
-  { icon: Users, title: "Classroom Companion", description: "Rich classroom dashboards, intervention signals, and suggested next steps, in the teacher's language." },
+  { icon: Users, title: "Teaching Companion", description: "Rich classroom dashboards, intervention signals, and suggested next steps, in the teacher's language." },
   { icon: CheckCircle2, title: "Cohort & Community Layer", description: "Peer learning cohorts, dialogical discussion prompts, and collaborative problem-solving tools." },
   { icon: Globe, title: "Built for Real Schools", description: "Designed alongside teachers in the United States, United Kingdom, and Europe. Plain English at launch." },
   { icon: Monitor, title: "Modern Browser Support", description: "Runs on Chromebooks, iPads, and standard desktops used in classrooms and at home. No installation required." },
@@ -179,7 +179,7 @@ export default function Platform() {
                     <div className="bg-secondary p-6 mb-8">
                       <p className="text-[13px] font-semibold uppercase tracking-widest text-muted-foreground mb-3">Your profile signals to the teacher</p>
                       <p className="text-[15px] text-foreground/80 leading-[1.6]">
-                        Your classroom teacher sees a flag: this learner is {dominantStyle?.toLowerCase()}-dominant. The Classroom Companion suggests three in-class strategies. No other student's data is visible to you.
+                        Your classroom teacher sees a flag: this learner is {dominantStyle?.toLowerCase()}-dominant. The Teaching Companion suggests three in-class strategies. No other student's data is visible to you.
                       </p>
                     </div>
                     <button onClick={resetDemo} data-testid="demo-reset"

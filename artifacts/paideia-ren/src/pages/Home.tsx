@@ -96,7 +96,7 @@ export default function Home() {
                 </div>
                 <h3 className="font-serif text-2xl text-primary mb-4">For Educators & Learners</h3>
                 <p className="text-foreground/80 mb-8 flex-1">
-                  Your Classroom Companion, designed to hold students in their zone of proximal development.
+                  Your Teaching Companion, designed to hold students in their zone of proximal development.
                 </p>
                 <Link href="/for-educators" className="flex items-center gap-2 text-primary font-medium hover:text-terracotta transition-colors mt-auto">
                   Join the network <ArrowRight size={16} />

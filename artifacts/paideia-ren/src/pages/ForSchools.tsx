@@ -43,6 +43,12 @@ const tiers = [
     featured: true,
   },
   {
+    name: "Higher Ed & Training Providers",
+    description: "Per-learner SaaS",
+    features: ["Universities, colleges, and training organisations", "Per-learner pricing, billed annually", "Faculty and trainer onboarding", "Programme and module alignment", "Cohort and outcomes analytics"],
+    cta: "Talk to us",
+  },
+  {
     name: "District & State Partnership",
     description: "Custom, multi-year",
     features: ["State, network, or trust-wide deployment", "Capacity-building program", "Multi-year technical support", "Curriculum integration across standards", "Co-branded research outputs"],
@@ -150,7 +156,7 @@ export default function ForSchools() {
       <section className="py-[120px] bg-secondary">
         <div className="max-w-[1200px] mx-auto px-6">
           <motion.h2 {...fadeUp} className="font-serif text-3xl md:text-[40px] text-primary mb-16 text-center">Partnership tiers.</motion.h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {tiers.map((tier, i) => (
               <motion.div key={tier.name} initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }} transition={{ duration: 0.6, delay: i * 0.1 }}
@@ -213,7 +219,7 @@ export default function ForSchools() {
           <motion.h2 {...fadeUp} className="font-serif text-3xl md:text-[40px] text-primary mb-12 leading-[1.2]">Frequently asked.</motion.h2>
           <div className="divide-y border-y">
             {[
-              { q: "What does a pilot actually look like?", a: "Two to six teachers from your school use Classroom Companion for one term. We onboard each teacher personally, meet every two weeks, and share a written outcomes summary at the end of the term." },
+              { q: "What does a pilot actually look like?", a: "Two to six teachers from your school use Teaching Companion for one term. We onboard each teacher personally, meet every two weeks, and share a written outcomes summary at the end of the term." },
               { q: "What does it cost to run a pilot?", a: "Pilots are run at no charge during this phase of the work. We ask in return for honest feedback, an end-of-term debrief, and permission to anonymise outcome data." },
               { q: "Do you replace teachers?", a: "No. The product is teacher-augmenting by design. It drafts lesson plans, worksheets, quizzes and parent updates that the teacher reviews, edits and owns. The teacher is always in the loop." },
               { q: "How is student data handled?", a: "We minimise child data by default. Rosters live under the teacher's account, are never sold, and are never used to train models. Read our Privacy Policy for the full detail." },
