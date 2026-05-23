@@ -9,65 +9,69 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-export function LessonPlanView({ c }: { c: LessonPlanContent }) {
+export function LessonPlanView({ c, studentView = false }: { c: LessonPlanContent; studentView?: boolean }) {
   return (
     <div>
       {c.summary && <p className="text-muted-foreground italic mb-8">{c.summary}</p>}
 
-      <Section title="Learning objectives">
+      <Section title={studentView ? "What we are learning" : "Learning objectives"}>
         <ul className="list-disc pl-5 space-y-1">{c.learningObjectives?.map((o, i) => <li key={i}>{o}</li>)}</ul>
       </Section>
 
       {c.successCriteria?.length > 0 && (
-        <Section title="Success criteria">
+        <Section title={studentView ? "How I will know I have got it" : "Success criteria"}>
           <ul className="list-disc pl-5 space-y-1">{c.successCriteria.map((o, i) => <li key={i}>{o}</li>)}</ul>
         </Section>
       )}
 
-      <Section title={`Starter · ${c.starter?.durationMinutes ?? "?"} min`}>
+      <Section title={studentView ? "Warm up" : `Starter · ${c.starter?.durationMinutes ?? "?"} min`}>
         <p>{c.starter?.activity}</p>
       </Section>
 
-      <Section title={`Main task · ${c.mainTask?.durationMinutes ?? "?"} min`}>
+      <Section title={studentView ? "Today's work" : `Main task · ${c.mainTask?.durationMinutes ?? "?"} min`}>
         <div className="space-y-4">
           <div className="bg-secondary/50 rounded-md p-4">
             <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1">Core</div>
             <p>{c.mainTask?.core}</p>
           </div>
           <div className="bg-secondary/50 rounded-md p-4">
-            <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1">Support</div>
+            <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1">{studentView ? "If you need a hand" : "Support"}</div>
             <p>{c.mainTask?.support}</p>
           </div>
           <div className="bg-secondary/50 rounded-md p-4">
-            <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1">Stretch</div>
+            <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1">{studentView ? "Ready for more" : "Stretch"}</div>
             <p>{c.mainTask?.stretch}</p>
           </div>
         </div>
       </Section>
 
-      <Section title={`Mini-plenary · ${c.miniPlenary?.durationMinutes ?? "?"} min`}>
-        <p>{c.miniPlenary?.activity}</p>
-      </Section>
+      {!studentView && (
+        <Section title={`Mini-plenary · ${c.miniPlenary?.durationMinutes ?? "?"} min`}>
+          <p>{c.miniPlenary?.activity}</p>
+        </Section>
+      )}
 
-      <Section title="Exit ticket">
+      <Section title={studentView ? "Before you leave" : "Exit ticket"}>
         <p className="font-medium mb-2">{c.exitTicket?.prompt}</p>
-        <p className="text-sm text-muted-foreground"><span className="font-medium">Expected response: </span>{c.exitTicket?.expectedResponse}</p>
+        {!studentView && (
+          <p className="text-sm text-muted-foreground"><span className="font-medium">Expected response: </span>{c.exitTicket?.expectedResponse}</p>
+        )}
       </Section>
 
-      {c.commonMisconceptions?.length > 0 && (
+      {!studentView && c.commonMisconceptions?.length > 0 && (
         <Section title="Common misconceptions">
           <ul className="list-disc pl-5 space-y-1">{c.commonMisconceptions.map((m, i) => <li key={i}>{m}</li>)}</ul>
         </Section>
       )}
 
-      {c.resourcesNeeded?.length > 0 && (
+      {!studentView && c.resourcesNeeded?.length > 0 && (
         <Section title="Resources needed">
           <ul className="list-disc pl-5 space-y-1">{c.resourcesNeeded.map((r, i) => <li key={i}>{r}</li>)}</ul>
         </Section>
       )}
 
       {c.homeworkSuggestion && (
-        <Section title="Homework suggestion">
+        <Section title={studentView ? "Homework" : "Homework suggestion"}>
           <p>{c.homeworkSuggestion}</p>
         </Section>
       )}
@@ -75,7 +79,7 @@ export function LessonPlanView({ c }: { c: LessonPlanContent }) {
   );
 }
 
-export function WorksheetView({ c }: { c: WorksheetContent }) {
+export function WorksheetView({ c, studentView = false }: { c: WorksheetContent; studentView?: boolean }) {
   return (
     <div>
       {c.instructions && (
@@ -96,17 +100,23 @@ export function WorksheetView({ c }: { c: WorksheetContent }) {
                 {q.options.map((opt, i) => <li key={i}>· {opt}</li>)}
               </ul>
             )}
-            <details className="mt-2 text-sm">
-              <summary className="cursor-pointer text-primary">Show answer</summary>
-              <div className="mt-2 pl-3 border-l border-accent">
-                <p className="font-medium">Answer: {q.answer}</p>
-                {q.workingOrRubric && <p className="text-muted-foreground mt-1">{q.workingOrRubric}</p>}
+            {studentView ? (
+              <div className="mt-3 border-t border-dashed border-muted-foreground/30 pt-3 min-h-[3rem]">
+                <span className="text-xs uppercase tracking-wider text-muted-foreground">Your answer</span>
               </div>
-            </details>
+            ) : (
+              <details className="mt-2 text-sm">
+                <summary className="cursor-pointer text-primary">Show answer</summary>
+                <div className="mt-2 pl-3 border-l border-accent">
+                  <p className="font-medium">Answer: {q.answer}</p>
+                  {q.workingOrRubric && <p className="text-muted-foreground mt-1">{q.workingOrRubric}</p>}
+                </div>
+              </details>
+            )}
           </li>
         ))}
       </ol>
-      {c.teacherNotes && (
+      {!studentView && c.teacherNotes && (
         <div className="mt-8 bg-secondary/50 border rounded-md p-4">
           <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1">Teacher notes</div>
           <p className="text-sm">{c.teacherNotes}</p>
@@ -129,7 +139,7 @@ export function ParentDraftView({ c }: { c: ParentDraftContent }) {
   );
 }
 
-export function QuizView({ c }: { c: QuizContent }) {
+export function QuizView({ c, studentView = false }: { c: QuizContent; studentView?: boolean }) {
   return (
     <div>
       <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1">{c.format}</div>
@@ -144,20 +154,30 @@ export function QuizView({ c }: { c: QuizContent }) {
             <div className="flex items-baseline gap-2 mb-2">
               <span className="font-serif text-lg text-primary">{q.number}.</span>
               <span className="font-medium">{q.prompt}</span>
-              <span className="ml-auto text-xs uppercase tracking-wider text-muted-foreground">{q.difficulty}</span>
+              {!studentView && (
+                <span className="ml-auto text-xs uppercase tracking-wider text-muted-foreground">{q.difficulty}</span>
+              )}
             </div>
             {q.type === "multiple_choice" && q.options && (
               <ul className="ml-4 mb-2 space-y-1 text-sm">
                 {q.options.map((opt, i) => <li key={i}>· {opt}</li>)}
               </ul>
             )}
-            <details className="mt-2 text-sm">
-              <summary className="cursor-pointer text-primary">Show answer</summary>
-              <div className="mt-2 pl-3 border-l border-accent">
-                <p className="font-medium">Correct: {q.correctAnswer}</p>
-                <p className="text-muted-foreground mt-1 text-xs">Skill: {q.skillAssessed}</p>
-              </div>
-            </details>
+            {studentView ? (
+              q.type === "multiple_choice" ? null : (
+                <div className="mt-3 border-t border-dashed border-muted-foreground/30 pt-3 min-h-[2.5rem]">
+                  <span className="text-xs uppercase tracking-wider text-muted-foreground">Your answer</span>
+                </div>
+              )
+            ) : (
+              <details className="mt-2 text-sm">
+                <summary className="cursor-pointer text-primary">Show answer</summary>
+                <div className="mt-2 pl-3 border-l border-accent">
+                  <p className="font-medium">Correct: {q.correctAnswer}</p>
+                  <p className="text-muted-foreground mt-1 text-xs">Skill: {q.skillAssessed}</p>
+                </div>
+              </details>
+            )}
           </li>
         ))}
       </ol>

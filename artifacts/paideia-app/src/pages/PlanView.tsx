@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 import type { LessonPlan } from "@/lib/types";
 import { LessonPlanView } from "@/components/Renderers";
-import { Printer, Trash2, ClipboardList, HelpCircle, Share2 } from "lucide-react";
+import { Printer, Trash2, ClipboardList, HelpCircle, Share2, Eye, EyeOff } from "lucide-react";
 import { Link } from "wouter";
 import { ShareResourceDialog } from "@/components/ShareResourceDialog";
 
@@ -15,6 +15,7 @@ export default function PlanView() {
   const [plan, setPlan] = useState<LessonPlan | null>(null);
   const [loading, setLoading] = useState(true);
   const [shareOpen, setShareOpen] = useState(false);
+  const [studentView, setStudentView] = useState(false);
 
   useEffect(() => {
     if (!params?.id) return;
@@ -38,11 +39,15 @@ export default function PlanView() {
       <header className="mb-8 flex items-start justify-between gap-4 no-print">
         <div>
           <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1">
-            Lesson plan · {plan.subject} · {plan.yearGroup} · {plan.durationMinutes} min
+            Lesson plan · {plan.subject} · {plan.yearGroup} · {plan.durationMinutes} min{studentView ? " · student view" : ""}
           </div>
           <h1 className="font-serif text-4xl text-primary">{plan.title}</h1>
         </div>
         <div className="flex gap-2 shrink-0">
+          <Button variant={studentView ? "default" : "outline"} size="sm" aria-pressed={studentView} aria-label={studentView ? "Currently in student view, switch to teacher view" : "Currently in teacher view, switch to student view"} onClick={() => setStudentView((v) => !v)}>
+            {studentView ? <EyeOff className="h-4 w-4 mr-1" /> : <Eye className="h-4 w-4 mr-1" />}
+            {studentView ? "Teacher view" : "Student view"}
+          </Button>
           <Button variant="outline" size="sm" onClick={() => window.print()}><Printer className="h-4 w-4 mr-1" />Print</Button>
           <Button variant="outline" size="sm" onClick={() => setShareOpen(true)}><Share2 className="h-4 w-4 mr-1" />Share</Button>
           <Button variant="ghost" size="sm" onClick={onDelete}><Trash2 className="h-4 w-4 mr-1" />Delete</Button>
@@ -50,7 +55,7 @@ export default function PlanView() {
       </header>
       <ShareResourceDialog open={shareOpen} onOpenChange={setShareOpen} resourceType="plan" resourceId={plan.id} resourceTitle={plan.title} />
       <div className="bg-card border rounded-lg p-8 print-page">
-        <LessonPlanView c={plan.content} />
+        <LessonPlanView c={plan.content} studentView={studentView} />
       </div>
       <section className="mt-8 bg-secondary/40 border rounded-lg p-6 no-print">
         <h2 className="font-serif text-xl text-primary mb-1">Carry this into your next resource</h2>
