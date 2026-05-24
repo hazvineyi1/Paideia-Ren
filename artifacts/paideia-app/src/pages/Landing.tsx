@@ -54,6 +54,9 @@ export default function Landing() {
           <Button size="lg" className="px-8" onClick={go("/signup")}>Start for free</Button>
           <Button size="lg" variant="outline" onClick={go("/login")}>Sign in</Button>
         </div>
+        <div className="mt-4">
+          <Button size="lg" variant="ghost" className="text-primary underline-offset-4 hover:underline" onClick={go("/samples/public")}>Browse free samples</Button>
+        </div>
         <p className="text-xs text-muted-foreground mt-6">No credit card. No student data. English at launch.</p>
       </section>
 

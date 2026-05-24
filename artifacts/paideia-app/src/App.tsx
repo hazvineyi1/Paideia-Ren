@@ -20,6 +20,7 @@ import ParentDraftView from "@/pages/ParentDraftView";
 import QuizNew from "@/pages/QuizNew";
 import QuizView from "@/pages/QuizView";
 import { SamplesList, SampleViewer } from "@/pages/Samples";
+import { PublicSamplesList, PublicSampleViewer } from "@/pages/PublicSamples";
 import Settings from "@/pages/Settings";
 import Classes from "@/pages/Classes";
 import ClassView from "@/pages/ClassView";
@@ -86,6 +87,8 @@ function AppRoutes() {
       <Route path="/signup" component={Signup} />
       <Route path="/reset-password" component={ResetPassword} />
       <Route path="/onboarding">{() => <Protected component={Onboarding} allowUnonboarded />}</Route>
+      <Route path="/samples/public/:id" component={PublicSampleViewer} />
+      <Route path="/samples/public" component={PublicSamplesList} />
       <Route path="/take/:code" component={PublicTake} />
       <Route path="/student/login" component={StudentLogin} />
       <Route path="/student/assignments/:id" component={StudentTake} />
