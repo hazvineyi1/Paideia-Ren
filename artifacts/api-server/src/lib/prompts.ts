@@ -38,6 +38,7 @@ export interface LessonPlanInput {
   durationMinutes: number;
   groupContext?: string;
   studentProfile?: StudentProfileSummary;
+  classLearningProfile?: LearningProfile;
 }
 
 export function lessonPlanPrompt(input: LessonPlanInput): {
@@ -83,16 +84,35 @@ ${sp.strongSkills.length ? `Skills the student is confident with: ${sp.strongSki
 Tailor the lesson to this evidence. The "support" tier of the main task should directly target the struggling skills. The "stretch" tier should build on confident areas. Use the misconceptions field to call out errors this student has actually made when relevant.`
     : "";
 
+  function learningBlock(p?: LearningProfile) {
+    if (!p) return "";
+    const dominant = Object.entries(p).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "mixed";
+    return `
+
+This class's learning-style profile (from a VARK diagnostic): Visual ${p.visual}%, Auditory ${p.auditory}%, Reading/Writing ${p.reading}%, Kinesthetic ${p.kinesthetic}%. The dominant style is ${dominant}. Adapt the lesson plan accordingly:
+- If visual is high, include visual starters (diagrams, charts, videos), visual mind-mapping in the main task, and visual exit tickets (draw, label, map).
+- If auditory is high, include discussion-based starters, verbal-reasoning main tasks, and oral-exit tickets (explain, debate, present).
+- If reading/writing is high, include text-based starters, reading and note-taking main tasks, and written-exit tickets (summarise, written response).
+- If kinesthetic is high, include hands-on starters, physical or real-world scenario main tasks, and practical exit tickets (build, measure, demonstrate).`;
+  }
+
   const user = `Subject: ${input.subject}
 Year group: ${input.yearGroup}
 Topic: ${input.topic}
 Lesson duration: ${input.durationMinutes} minutes
 ${input.priorKnowledge ? `Prior knowledge: ${input.priorKnowledge}` : ""}
-${input.groupContext ? `About this class: ${input.groupContext}` : ""}${studentBlock}
+${input.groupContext ? `About this class: ${input.groupContext}` : ""}${studentBlock}${learningBlock(input.classLearningProfile)}
 
 Plan one focused lesson. The starter, main task, mini-plenary and exit ticket durations should sum to roughly the lesson duration. The main task must offer three tiers: support, core, and stretch. Misconceptions should be specific to this topic.`;
 
   return { system, user };
+}
+
+export interface LearningProfile {
+  visual: number;
+  auditory: number;
+  reading: number;
+  kinesthetic: number;
 }
 
 export interface WorksheetInput {
@@ -103,6 +123,7 @@ export interface WorksheetInput {
   difficulty: string;
   questionCount: number;
   notes?: string;
+  classLearningProfile?: LearningProfile;
 }
 
 export function worksheetPrompt(input: WorksheetInput): {
@@ -132,12 +153,24 @@ Return JSON with this exact shape:
   "teacherNotes": string
 }`;
 
+  function learningBlock(p?: LearningProfile) {
+    if (!p) return "";
+    const dominant = Object.entries(p).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "mixed";
+    return `
+
+This class's learning-style profile (from a VARK diagnostic): Visual ${p.visual}%, Auditory ${p.auditory}%, Reading/Writing ${p.reading}%, Kinesthetic ${p.kinesthetic}%. The dominant style is ${dominant}. Adapt the worksheet accordingly:
+- If visual is high, include diagrams, charts, spatial layouts, and annotate visual steps.
+- If auditory is high, frame questions as verbal reasoning and include "explain out loud" prompts.
+- If reading/writing is high, provide longer text-based prompts and ask for written explanations.
+- If kinesthetic is high, include hands-on, physical, or real-world scenario questions where possible.`;
+  }
+
   const user = `Subject: ${input.subject}
 Year group: ${input.yearGroup}
 Topic: ${input.topic}
 Difficulty: ${input.difficulty}
 Number of questions: ${input.questionCount}
-${input.notes ? `Additional notes: ${input.notes}` : ""}
+${input.notes ? `Additional notes: ${input.notes}` : ""}${learningBlock(input.classLearningProfile)}
 
 Produce exactly ${input.questionCount} questions, numbered sequentially. Mix question types where appropriate. Each question must include a worked answer or rubric. The instructions should be one or two sentences a student can read.`;
 
@@ -193,6 +226,7 @@ export interface QuizInput {
   format: string;
   questionCount: number;
   notes?: string;
+  classLearningProfile?: LearningProfile;
 }
 
 export function quizPrompt(input: QuizInput): {
@@ -223,12 +257,24 @@ Return JSON with this exact shape:
   ]
 }`;
 
+  function learningBlock(p?: LearningProfile) {
+    if (!p) return "";
+    const dominant = Object.entries(p).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "mixed";
+    return `
+
+This class's learning-style profile (from a VARK diagnostic): Visual ${p.visual}%, Auditory ${p.auditory}%, Reading/Writing ${p.reading}%, Kinesthetic ${p.kinesthetic}%. The dominant style is ${dominant}. Adapt the quiz accordingly:
+- If visual is high, include diagram-based or chart-reading questions.
+- If auditory is high, include verbal-reasoning and listen-then-respond items.
+- If reading/writing is high, include text-heavy prompts and written-explanation items.
+- If kinesthetic is high, include scenario-based and hands-on reasoning questions.`;
+  }
+
   const user = `Subject: ${input.subject}
 Year group: ${input.yearGroup}
 Topic: ${input.topic}
 Format: ${input.format}
 Number of items: ${input.questionCount}
-${input.notes ? `Additional notes: ${input.notes}` : ""}
+${input.notes ? `Additional notes: ${input.notes}` : ""}${learningBlock(input.classLearningProfile)}
 
 Produce exactly ${input.questionCount} items. Spread difficulty across easy, medium, and hard. Each item must name the specific skill or concept it assesses.`;
 

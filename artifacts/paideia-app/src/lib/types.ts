@@ -353,6 +353,8 @@ export interface Student {
   lastInitial: string;
   email: string | null;
   joinCode: string;
+  learningStyle: Record<string, number> | null;
+  diagnosticTakenAt: string | null;
   createdAt: string;
 }
 

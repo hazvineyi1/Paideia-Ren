@@ -113,6 +113,36 @@ router.delete("/:id", async (req, res) => {
   res.json({ ok: true });
 });
 
+router.get("/:id/learning-profile", async (req, res) => {
+  const id = req.params["id"] as string;
+  const cls = await db
+    .select()
+    .from(classesTable)
+    .where(and(eq(classesTable.id, id), eq(classesTable.teacherId, req.teacher!.id)))
+    .limit(1);
+  if (!cls[0]) { res.status(404).json({ error: "Not found" }); return; }
+  const students = await db
+    .select()
+    .from(studentsTable)
+    .where(eq(studentsTable.classId, id));
+  const total = students.length;
+  const withDiagnostic = students.filter((s) => s.learningStyle != null).length;
+  const aggregate: Record<string, number> = { visual: 0, auditory: 0, reading: 0, kinesthetic: 0 };
+  for (const s of students) {
+    const ls = s.learningStyle as Record<string, number> | null;
+    if (!ls) continue;
+    for (const key of Object.keys(aggregate)) {
+      aggregate[key] += (ls[key] ?? 0);
+    }
+  }
+  const maxScore = Math.max(1, withDiagnostic * 4);
+  const profile: Record<string, number> = {};
+  for (const key of Object.keys(aggregate)) {
+    profile[key] = Math.round((aggregate[key] / maxScore) * 100);
+  }
+  res.json({ total, withDiagnostic, profile });
+});
+
 const addStudentSchema = z.object({
   firstName: z.string().min(1).max(80),
   lastInitial: z.string().min(1).max(8),

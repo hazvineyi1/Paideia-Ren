@@ -162,6 +162,8 @@ export const studentsTable = pgTable("copilot_students", {
   email: text("email").unique(),
   passwordHash: text("password_hash"),
   joinCode: text("join_code").unique().notNull(),
+  learningStyle: jsonb("learning_style").$type<{ visual?: number; auditory?: number; reading?: number; kinesthetic?: number }>(),
+  diagnosticTakenAt: timestamp("diagnostic_taken_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (t) => ({
   classIdx: index("copilot_students_class_idx").on(t.classId),

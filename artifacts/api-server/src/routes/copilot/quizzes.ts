@@ -1,13 +1,42 @@
 import { Router, type IRouter } from "express";
 import { z } from "zod";
-import { db, quizzesTable } from "@workspace/db";
+import { db, quizzesTable, classesTable, studentsTable } from "@workspace/db";
 import { and, desc, eq } from "drizzle-orm";
 import { requireAuth, requireActiveTeacher } from "../../middlewares/auth.js";
 import { requireQuota } from "../../middlewares/quota.js";
 import { REGION_IDS } from "../../lib/catalog.js";
 import { generateJSON } from "../../lib/openai.js";
 import { logEvent } from "../../lib/eventLog.js";
-import { quizPrompt } from "../../lib/prompts.js";
+import { quizPrompt, type LearningProfile } from "../../lib/prompts.js";
+
+async function fetchClassLearningProfile(classId: string, teacherId: string): Promise<LearningProfile | undefined> {
+  const [cls] = await db
+    .select()
+    .from(classesTable)
+    .where(and(eq(classesTable.id, classId), eq(classesTable.teacherId, teacherId)))
+    .limit(1);
+  if (!cls) return undefined;
+  const students = await db
+    .select()
+    .from(studentsTable)
+    .where(eq(studentsTable.classId, classId));
+  const withDiagnostic = students.filter((s) => s.learningStyle != null).length;
+  if (withDiagnostic === 0) return undefined;
+  const aggregate: Record<string, number> = { visual: 0, auditory: 0, reading: 0, kinesthetic: 0 };
+  for (const s of students) {
+    const ls = s.learningStyle as Record<string, number> | null;
+    if (!ls) continue;
+    for (const key of Object.keys(aggregate)) {
+      aggregate[key] += (ls[key] ?? 0);
+    }
+  }
+  const maxScore = withDiagnostic * 4;
+  const profile = {} as LearningProfile;
+  for (const key of Object.keys(aggregate) as Array<keyof LearningProfile>) {
+    profile[key] = Math.round((aggregate[key] / maxScore) * 100);
+  }
+  return profile;
+}
 
 const router: IRouter = Router();
 router.use(requireAuth, requireActiveTeacher);
@@ -22,6 +51,7 @@ const createSchema = z.object({
     .default("exit ticket"),
   questionCount: z.number().int().min(3).max(20).default(5),
   notes: z.string().max(1000).optional(),
+  classId: z.string().uuid().optional(),
 });
 
 interface QuizContent {
@@ -36,7 +66,11 @@ router.post("/", requireQuota, async (req, res) => {
     return;
   }
   try {
-    const prompt = quizPrompt(parsed.data);
+    let classLearningProfile: LearningProfile | undefined;
+    if (parsed.data.classId) {
+      classLearningProfile = await fetchClassLearningProfile(parsed.data.classId, req.teacher!.id);
+    }
+    const prompt = quizPrompt({ ...parsed.data, classLearningProfile });
     const content = await generateJSON<QuizContent>(prompt.system, prompt.user, {
       teacherId: req.teacher!.id,
       kind: "quiz",

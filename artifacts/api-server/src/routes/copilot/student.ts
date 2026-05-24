@@ -95,6 +95,55 @@ router.get("/me", (req, res) => {
   res.json({ student: safe });
 });
 
+const diagnosticSchema = z.object({
+  answers: z.record(z.string(), z.number().int().min(0).max(3)),
+});
+
+const DIAGNOSTIC_QUESTIONS = [
+  { id: "q1", options: ["visual", "auditory", "reading", "kinesthetic"] },
+  { id: "q2", options: ["reading", "visual", "kinesthetic", "auditory"] },
+  { id: "q3", options: ["kinesthetic", "reading", "auditory", "visual"] },
+  { id: "q4", options: ["auditory", "kinesthetic", "visual", "reading"] },
+];
+
+router.post("/diagnostic", requireStudent, async (req, res) => {
+  const parsed = diagnosticSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Invalid input" });
+    return;
+  }
+  const scores: Record<string, number> = { visual: 0, auditory: 0, reading: 0, kinesthetic: 0 };
+  for (const q of DIAGNOSTIC_QUESTIONS) {
+    const idx = parsed.data.answers[q.id];
+    if (idx == null) continue;
+    const style = q.options[idx];
+    if (style) scores[style] = (scores[style] ?? 0) + 1;
+  }
+  await db
+    .update(studentsTable)
+    .set({ learningStyle: scores, diagnosticTakenAt: new Date() })
+    .where(eq(studentsTable.id, req.student!.id));
+  res.json({ scores });
+});
+
+router.get("/diagnostic", requireStudent, async (req, res) => {
+  const rows = await db.select({ learningStyle: studentsTable.learningStyle, diagnosticTakenAt: studentsTable.diagnosticTakenAt })
+    .from(studentsTable)
+    .where(eq(studentsTable.id, req.student!.id))
+    .limit(1);
+  const row = rows[0];
+  res.json({
+    taken: !!row?.diagnosticTakenAt,
+    scores: row?.learningStyle ?? null,
+    questions: [
+      { id: "q1", prompt: "When learning something new, you most prefer to:", options: ["See a diagram or chart", "Listen to an explanation", "Read a detailed text", "Try it yourself first"] },
+      { id: "q2", prompt: "You need to give directions to someone. You would:", options: ["Write down the steps", "Draw a map with landmarks", "Walk them there personally", "Explain verbally over the phone"] },
+      { id: "q3", prompt: "You are helping someone with a new skill. You prefer to:", options: ["Demonstrate and let them practise", "Give them a written guide", "Talk them through it step by step", "Show pictures or a video"] },
+      { id: "q4", prompt: "In your spare time you are most likely to:", options: ["Listen to music or a podcast", "Build or repair something", "Read a book or article", "Watch a film or look at art"] },
+    ],
+  });
+});
+
 router.get("/assignments", requireStudent, async (req, res) => {
   const rows = await db
     .select({
