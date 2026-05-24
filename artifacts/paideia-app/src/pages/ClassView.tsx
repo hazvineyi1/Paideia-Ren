@@ -7,6 +7,12 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { api, ApiError } from "@/lib/api";
 import type { ClassRow, Student, Assignment } from "@/lib/types";
+
+interface AssignmentWithCounts extends Assignment {
+  submissionCount: number;
+  gradedCount: number;
+  pendingCount: number;
+}
 import { Plus, Trash2, ArrowUpRight, Link as LinkIcon, Users, Copy, Check } from "lucide-react";
 
 export default function ClassView() {
@@ -15,7 +21,7 @@ export default function ClassView() {
   const id = params?.id;
   const [cls, setCls] = useState<ClassRow | null>(null);
   const [students, setStudents] = useState<Student[]>([]);
-  const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [assignments, setAssignments] = useState<AssignmentWithCounts[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [firstName, setFirstName] = useState("");
@@ -28,7 +34,7 @@ export default function ClassView() {
 
   const load = async () => {
     if (!id) return;
-    const r = await api.get<{ class: ClassRow; students: Student[]; assignments: Assignment[] }>(`/classes/${id}`);
+    const r = await api.get<{ class: ClassRow; students: Student[]; assignments: AssignmentWithCounts[] }>(`/classes/${id}`);
     setCls(r.class); setStudents(r.students); setAssignments(r.assignments);
     setLoading(false);
   };
@@ -127,6 +133,14 @@ export default function ClassView() {
                       <div className="text-xs text-muted-foreground mt-0.5 flex items-center gap-2">
                         {a.resourceKind} · {a.deliveryMode === "share_link" ? <><LinkIcon className="h-3 w-3" />Share link</> : <><Users className="h-3 w-3" />Accounts</>}
                         {a.closed && <span className="text-destructive">· closed</span>}
+                        {a.submissionCount > 0 && (
+                          <span>
+                            · {a.submissionCount} submission{a.submissionCount === 1 ? "" : "s"}
+                            {a.pendingCount > 0 && (
+                              <span className="text-amber-700"> ({a.pendingCount} pending)</span>
+                            )}
+                          </span>
+                        )}
                       </div>
                     </Link>
                     <Link href={`/assignments/${a.id}`}>

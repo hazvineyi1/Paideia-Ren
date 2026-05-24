@@ -7,7 +7,7 @@ import {
   assignmentsTable,
   submissionsTable,
 } from "@workspace/db";
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { requireAuth, requireActiveTeacher } from "../../middlewares/auth.js";
 import { REGION_IDS } from "../../lib/catalog.js";
 import { generateShortCode, hashPassword } from "../../lib/auth.js";
@@ -76,11 +76,31 @@ router.get("/:id", async (req, res) => {
     .from(studentsTable)
     .where(eq(studentsTable.classId, id))
     .orderBy(studentsTable.firstName);
-  const assignments = await db
+  const assignmentsRaw = await db
     .select()
     .from(assignmentsTable)
     .where(eq(assignmentsTable.classId, id))
     .orderBy(desc(assignmentsTable.createdAt));
+  const assignmentIds = assignmentsRaw.map((a) => a.id);
+  const subCounts = assignmentIds.length > 0
+    ? await db
+        .select({
+          assignmentId: submissionsTable.assignmentId,
+          total: sql<number>`count(*)::int`,
+          graded: sql<number>`count(case when ${submissionsTable.gradingStatus} = 'graded' then 1 end)::int`,
+          pending: sql<number>`count(case when ${submissionsTable.gradingStatus} in ('pending', 'grading') then 1 end)::int`,
+        })
+        .from(submissionsTable)
+        .where(inArray(submissionsTable.assignmentId, assignmentIds))
+        .groupBy(submissionsTable.assignmentId)
+    : [];
+  const countsByAssignment = new Map(subCounts.map((s) => [s.assignmentId, s]));
+  const assignments = assignmentsRaw.map((a) => ({
+    ...a,
+    submissionCount: countsByAssignment.get(a.id)?.total ?? 0,
+    gradedCount: countsByAssignment.get(a.id)?.graded ?? 0,
+    pendingCount: countsByAssignment.get(a.id)?.pending ?? 0,
+  }));
   const studentsSanitised = students.map(({ passwordHash: _ph, ...rest }) => rest);
   res.json({ class: rows[0], students: studentsSanitised, assignments });
 });

@@ -106,12 +106,17 @@ router.get("/assignments", requireStudent, async (req, res) => {
     .where(and(eq(assignmentsTable.classId, req.student!.classId), eq(assignmentsTable.deliveryMode, "accounts")))
     .orderBy(desc(assignmentsTable.createdAt));
   const mine = await db
-    .select({ assignmentId: submissionsTable.assignmentId })
+    .select({ assignmentId: submissionsTable.assignmentId, id: submissionsTable.id })
     .from(submissionsTable)
     .where(eq(submissionsTable.studentId, req.student!.id));
-  const submitted = new Set(mine.map((m) => m.assignmentId));
+  const submissionByAssignment = new Map(mine.map((m) => [m.assignmentId, m.id]));
   res.json({
-    assignments: rows.map((r) => ({ ...r.assignment, className: r.class.name, submitted: submitted.has(r.assignment.id) })),
+    assignments: rows.map((r) => ({
+      ...r.assignment,
+      className: r.class.name,
+      submitted: submissionByAssignment.has(r.assignment.id),
+      submissionId: submissionByAssignment.get(r.assignment.id) ?? null,
+    })),
   });
 });
 

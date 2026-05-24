@@ -12,6 +12,7 @@ interface StudentAssignment {
   className: string;
   closed: boolean;
   submitted: boolean;
+  submissionId: string | null;
   createdAt: string;
 }
 
@@ -57,8 +58,8 @@ export default function StudentDashboard() {
             {items.map((a) => (
               <Link
                 key={a.id}
-                href={a.submitted || a.closed ? "/student" : `/student/assignments/${a.id}`}
-                className={`flex items-center justify-between px-5 py-4 ${a.submitted || a.closed ? "opacity-60" : "hover:bg-secondary/40"}`}
+                href={a.submitted && a.submissionId ? `/student/submissions/${a.submissionId}` : a.closed ? "/student" : `/student/assignments/${a.id}`}
+                className={`flex items-center justify-between px-5 py-4 ${!a.submitted && !a.closed ? "hover:bg-secondary/40" : "opacity-60"}`}
               >
                 <div>
                   <div className="font-medium">{a.title}</div>
