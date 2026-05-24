@@ -33,7 +33,6 @@ import StudentResults from "@/pages/student/StudentResults";
 import Admin from "@/pages/Admin";
 import Library from "@/pages/Library";
 import Shared from "@/pages/Shared";
-import AwaitingApproval from "@/pages/AwaitingApproval";
 import Onboarding from "@/pages/Onboarding";
 import ResetPassword from "@/pages/ResetPassword";
 import Upgrade from "@/pages/Upgrade";
@@ -42,24 +41,19 @@ import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
 
-function Protected({ component: Component, allowPending = false, allowUnonboarded = false }: { component: ComponentType; allowPending?: boolean; allowUnonboarded?: boolean }) {
+function Protected({ component: Component, allowUnonboarded = false }: { component: ComponentType; allowUnonboarded?: boolean }) {
   const { teacher, loading } = useAuth();
   const [loc, setLoc] = useLocation();
   useEffect(() => {
     if (loading || !teacher) return;
-    if (teacher.status === "pending" && !allowPending && loc !== "/awaiting-approval") {
-      setLoc("/awaiting-approval");
-      return;
-    }
     if (teacher.status === "active" && !teacher.onboardedAt && !allowUnonboarded && loc !== "/onboarding") {
       setLoc("/onboarding");
     }
-  }, [loading, teacher, setLoc, loc, allowPending, allowUnonboarded]);
+  }, [loading, teacher, setLoc, loc, allowUnonboarded]);
   useEffect(() => {
     if (!loading && !teacher) setLoc("/login");
   }, [loading, teacher, setLoc]);
   if (loading || !teacher) return null;
-  if (teacher.status === "pending" && !allowPending) return null;
   if (teacher.status === "active" && !teacher.onboardedAt && !allowUnonboarded) return null;
   return <Component />;
 }
@@ -91,7 +85,6 @@ function AppRoutes() {
       <Route path="/login" component={Login} />
       <Route path="/signup" component={Signup} />
       <Route path="/reset-password" component={ResetPassword} />
-      <Route path="/awaiting-approval">{() => <Protected component={AwaitingApproval} allowPending />}</Route>
       <Route path="/onboarding">{() => <Protected component={Onboarding} allowUnonboarded />}</Route>
       <Route path="/take/:code" component={PublicTake} />
       <Route path="/student/login" component={StudentLogin} />

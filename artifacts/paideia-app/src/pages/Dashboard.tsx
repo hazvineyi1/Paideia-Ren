@@ -3,13 +3,12 @@ import { useEffect, useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { api } from "@/lib/api";
 import { useAuth } from "@/hooks/use-auth";
-import { FileText, ClipboardList, MessageSquare, HelpCircle, BookOpen, ArrowUpRight } from "lucide-react";
-import type { LessonPlan, Worksheet, ParentDraft, Quiz, Sample } from "@/lib/types";
+import { FileText, ClipboardList, HelpCircle, BookOpen, ArrowUpRight } from "lucide-react";
+import type { LessonPlan, Worksheet, Quiz, Sample } from "@/lib/types";
 
 const CARDS = [
   { path: "/plans/new", label: "New lesson plan", icon: FileText, blurb: "Differentiated, with starters and exit tickets." },
   { path: "/worksheets/new", label: "New worksheet", icon: ClipboardList, blurb: "Practice questions with full answer keys." },
-  { path: "/parent-drafts/new", label: "Draft parent update", icon: MessageSquare, blurb: "Warm, honest, ready to copy and send." },
   { path: "/quizzes/new", label: "New quiz or exit ticket", icon: HelpCircle, blurb: "Multiple choice, short answer, true or false." },
 ];
 
@@ -30,17 +29,15 @@ export default function Dashboard() {
     if (!teacher) return;
     void (async () => {
       try {
-        const [plans, worksheets, drafts, quizzes, samp] = await Promise.all([
+        const [plans, worksheets, quizzes, samp] = await Promise.all([
           api.get<{ plans: LessonPlan[] }>("/plans"),
           api.get<{ worksheets: Worksheet[] }>("/worksheets"),
-          api.get<{ drafts: ParentDraft[] }>("/parent-drafts"),
           api.get<{ quizzes: Quiz[] }>("/quizzes"),
           api.get<{ samples: Sample[] }>(`/samples?region=${teacher.region}`),
         ]);
         const items: (RecentItem & { createdAt: string })[] = [
           ...plans.plans.map((p) => ({ id: p.id, title: p.title, href: `/plans/${p.id}`, meta: `Lesson plan · ${p.subject} · ${p.yearGroup}`, createdAt: p.createdAt })),
           ...worksheets.worksheets.map((w) => ({ id: w.id, title: w.title, href: `/worksheets/${w.id}`, meta: `Worksheet · ${w.subject} · ${w.yearGroup}`, createdAt: w.createdAt })),
-          ...drafts.drafts.map((d) => ({ id: d.id, title: `Update about ${d.studentName}`, href: `/parent-drafts/${d.id}`, meta: `Parent update · ${d.tone}`, createdAt: d.createdAt })),
           ...quizzes.quizzes.map((q) => ({ id: q.id, title: q.title, href: `/quizzes/${q.id}`, meta: `Quiz · ${q.subject} · ${q.yearGroup}`, createdAt: q.createdAt })),
         ];
         items.sort((a, b) => b.createdAt.localeCompare(a.createdAt));

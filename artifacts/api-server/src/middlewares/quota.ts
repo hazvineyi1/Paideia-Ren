@@ -68,7 +68,7 @@ export function requireQuota(
   void countMonthlyGenerations(teacher.id).then((used) => {
     if (used >= FREE_MONTHLY_GENERATIONS) {
       res.status(402).json({
-        error: "You have used all 4 free generations this month. Upgrade to keep building.",
+        error: "You have used all 10 free generations this month. Upgrade to keep building.",
         code: "quota_exceeded",
         used,
         limit: FREE_MONTHLY_GENERATIONS,

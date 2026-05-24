@@ -90,10 +90,6 @@ export function requireActiveTeacher(
     res.status(401).json({ error: "Not signed in" });
     return;
   }
-  if (req.teacher.status === "pending") {
-    res.status(403).json({ error: "Your account is awaiting founder approval." });
-    return;
-  }
   if (req.teacher.status === "suspended") {
     res.status(403).json({ error: "Your account has been suspended. Please contact the founder." });
     return;

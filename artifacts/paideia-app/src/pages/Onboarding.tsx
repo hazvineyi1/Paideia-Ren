@@ -30,8 +30,9 @@ export default function Onboarding() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    if (!country.trim() || !schoolName.trim() || subjects.length === 0 || yearGroups.length === 0) {
-      setError("Please complete every field so we can tailor your samples.");
+    // All fields are optional; skip to dashboard if user wants.
+    if (!country.trim() && !schoolName.trim() && subjects.length === 0 && yearGroups.length === 0) {
+      setLoc("/dashboard");
       return;
     }
     setBusy(true);
@@ -52,16 +53,16 @@ export default function Onboarding() {
   };
 
   return (
-    <AuthShell title="Tell us about your classroom" subtitle="So your lessons, worksheets and quizzes feel right from the first try.">
+    <AuthShell title="Tell us about your class (optional)" subtitle="You can skip this and fill it in later when you generate your first resource.">
       <form onSubmit={submit} className="space-y-5">
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="country">Country</Label>
-            <Input id="country" value={country} onChange={(e) => setCountry(e.target.value)} placeholder={region?.label} required />
+            <Label htmlFor="country">Country (optional)</Label>
+            <Input id="country" value={country} onChange={(e) => setCountry(e.target.value)} placeholder={region?.label} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="school">School</Label>
-            <Input id="school" value={schoolName} onChange={(e) => setSchoolName(e.target.value)} required />
+            <Label htmlFor="school">School (optional)</Label>
+            <Input id="school" value={schoolName} onChange={(e) => setSchoolName(e.target.value)} />
           </div>
         </div>
         {region && (
@@ -91,9 +92,14 @@ export default function Onboarding() {
           </>
         )}
         {error && <div className="text-sm text-destructive">{error}</div>}
-        <Button type="submit" className="w-full" disabled={busy} data-track="onboarding_submit">
-          {busy ? <InlineSpinner /> : "Save and continue"}
-        </Button>
+        <div className="flex flex-col gap-2">
+          <Button type="submit" className="w-full" disabled={busy} data-track="onboarding_submit">
+            {busy ? <InlineSpinner /> : "Save and continue"}
+          </Button>
+          <Button type="button" variant="ghost" className="w-full text-muted-foreground" onClick={() => setLoc("/dashboard")}>
+            Skip for now
+          </Button>
+        </div>
       </form>
     </AuthShell>
   );

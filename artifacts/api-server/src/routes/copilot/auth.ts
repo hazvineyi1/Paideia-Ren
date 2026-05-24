@@ -77,8 +77,8 @@ router.post("/signup", rateLimit({ windowMs: 60 * 60 * 1000, max: 5 }), async (r
       schoolName: data.schoolName?.trim() || null,
       subjects: data.subjects,
       yearGroups: data.yearGroups,
-      status: isFounder ? "active" : "pending",
-      approvedAt: isFounder ? new Date() : null,
+      status: "active",
+      approvedAt: new Date(),
     })
     .returning();
 
@@ -147,10 +147,10 @@ router.get("/me", (req, res) => {
 });
 
 const onboardingSchema = z.object({
-  country: z.string().min(1).max(120),
-  schoolName: z.string().min(1).max(200),
-  subjects: z.array(z.string().max(120)).min(1).max(20),
-  yearGroups: z.array(z.string().max(40)).min(1).max(20),
+  country: z.string().max(120).optional(),
+  schoolName: z.string().max(200).optional(),
+  subjects: z.array(z.string().max(120)).max(20).default([]),
+  yearGroups: z.array(z.string().max(40)).max(20).default([]),
 });
 
 router.post("/complete-onboarding", requireAuth, async (req, res) => {
@@ -162,8 +162,8 @@ router.post("/complete-onboarding", requireAuth, async (req, res) => {
   const [updated] = await db
     .update(teachersTable)
     .set({
-      country: parsed.data.country.trim(),
-      schoolName: parsed.data.schoolName.trim(),
+      country: parsed.data.country?.trim() ?? null,
+      schoolName: parsed.data.schoolName?.trim() ?? null,
       subjects: parsed.data.subjects,
       yearGroups: parsed.data.yearGroups,
       onboardedAt: new Date(),

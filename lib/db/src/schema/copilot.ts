@@ -33,7 +33,7 @@ export const teachersTable = pgTable("copilot_teachers", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-export const FREE_MONTHLY_GENERATIONS = 4;
+export const FREE_MONTHLY_GENERATIONS = 10;
 
 export const passwordResetsTable = pgTable("copilot_password_resets", {
   id: uuid("id").primaryKey().defaultRandom(),

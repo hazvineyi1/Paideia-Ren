@@ -83,8 +83,8 @@ export default function Upgrade() {
           </h1>
           <p className="text-muted-foreground">
             {paidOpen
-              ? "Free teachers get 4 AI generations per calendar month across lesson plans, worksheets, quizzes, and parent updates. Upgrade for unlimited generations."
-              : "Free teachers get 4 AI generations per calendar month. Paid plans aren't open yet. Join the waitlist and we'll let you know the moment they go live."}
+              ? "Free teachers get 10 AI generations per calendar month across lesson plans, worksheets, quizzes, and parent updates. Upgrade for unlimited generations."
+              : "Free teachers get 10 AI generations per calendar month. Paid plans aren't open yet. Join the waitlist and we'll let you know the moment they go live."}
           </p>
         </div>
       </header>
@@ -117,7 +117,7 @@ export default function Upgrade() {
           <div className="font-serif text-2xl text-primary mb-1">Free</div>
           <div className="text-3xl font-semibold mb-4">$0<span className="text-base font-normal text-muted-foreground">/month</span></div>
           <ul className="space-y-2 text-sm">
-            <li className="flex gap-2"><Check className="h-4 w-4 text-primary mt-0.5" /> 4 AI generations per month</li>
+            <li className="flex gap-2"><Check className="h-4 w-4 text-primary mt-0.5" /> 10 AI generations per month</li>
             <li className="flex gap-2"><Check className="h-4 w-4 text-primary mt-0.5" /> Library, sharing, and class profiles</li>
             <li className="flex gap-2"><Check className="h-4 w-4 text-primary mt-0.5" /> Print or save any resource as PDF</li>
           </ul>
