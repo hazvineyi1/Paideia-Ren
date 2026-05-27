@@ -34,7 +34,14 @@ app.use(
     },
   }),
 );
-app.use(cors());
+app.use(
+  cors({
+    origin: process.env["NODE_ENV"] === "production"
+      ? undefined
+      : ["http://localhost:25565", "http://localhost:5173", "http://localhost:3000"],
+    credentials: true,
+  }),
+);
 app.use(cookieParser());
 
 // Stripe webhook must receive the raw body and be registered BEFORE
