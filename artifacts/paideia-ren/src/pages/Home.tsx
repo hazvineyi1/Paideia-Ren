@@ -41,18 +41,10 @@ export default function Home() {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-[22px] md:text-[28px] font-serif text-foreground leading-[1.5] mb-12"
+          className="text-[22px] md:text-[28px] font-serif text-foreground leading-[1.5]"
         >
           Paideia-Ren is a nonprofit AI tutor that meets every learner where they are, and connects them to a teacher, a community, and a world.
         </motion.p>
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-white px-8 h-14 text-base rounded-none">
-            <Link href="/platform">See the platform</Link>
-          </Button>
-          <Button asChild size="lg" variant="outline" className="border-primary text-primary hover:bg-primary/5 px-8 h-14 text-base rounded-none">
-            <Link href="/for-funders">Partner with us</Link>
-          </Button>
-        </div>
       </section>
 
       {/* Audience Cards */}
