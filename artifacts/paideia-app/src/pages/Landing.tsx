@@ -38,7 +38,8 @@ export default function Landing() {
           <div className="text-xs tracking-wider uppercase text-muted-foreground">Teaching Companion</div>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="ghost" onClick={go("/login")}>Sign in</Button>
+          <Button variant="ghost" onClick={go("/student/login")}>Student sign in</Button>
+          <Button variant="ghost" onClick={go("/login")}>Teacher sign in</Button>
           <Button onClick={go("/signup")}>Create free account</Button>
         </div>
       </header>
