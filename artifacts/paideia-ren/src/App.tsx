@@ -18,6 +18,7 @@ import Blueprint from "@/pages/Blueprint";
 import ForSchools from "@/pages/ForSchools";
 import ForFunders from "@/pages/ForFunders";
 import ForEducators from "@/pages/ForEducators";
+import StudyTutor from "@/pages/StudyTutor";
 import WhereWeWork from "@/pages/WhereWeWork";
 import News from "@/pages/News";
 import Transparency from "@/pages/Transparency";
@@ -63,6 +64,7 @@ function Router() {
           <Route path="/for-schools" component={ForSchools} />
           <Route path="/for-funders" component={ForFunders} />
           <Route path="/for-educators" component={ForEducators} />
+          <Route path="/study-tutor" component={StudyTutor} />
           <Route path="/where-we-work" component={WhereWeWork} />
           <Route path="/news" component={News} />
           <Route path="/transparency" component={Transparency} />

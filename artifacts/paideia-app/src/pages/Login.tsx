@@ -51,10 +51,6 @@ export default function Login() {
           No account yet?{" "}
           <Link href="/signup" className="text-primary underline">Create one</Link>
         </p>
-        <p className="text-sm text-center text-muted-foreground">
-          Are you a student?{" "}
-          <Link href="/student/login" className="text-primary underline">Sign in here</Link>
-        </p>
         <p className="text-xs text-center text-muted-foreground">
           Lost your password? Email hazvimusoni@gmail.com for a one-time reset link.
         </p>

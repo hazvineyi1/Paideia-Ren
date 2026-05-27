@@ -22,6 +22,7 @@ export function Nav() {
     { href: "/about", label: "About" },
     { href: "/platform", label: "Platform" },
     { href: "/research", label: "Research" },
+    { href: "/study-tutor", label: "Study Tutor" },
     { href: "/for-schools", label: "For Schools" },
     { href: "/for-funders", label: "For Funders" },
     { href: "/for-educators", label: "For Educators" },
@@ -54,6 +55,13 @@ export function Nav() {
                 {link.label}
               </Link>
             ))}
+            <a
+              href="/app/student/login"
+              className="text-[15px] font-medium transition-colors hover:text-terracotta text-foreground"
+              data-testid="link-student-signin"
+            >
+              Student sign-in
+            </a>
             <a
               href="/app/login"
               className="text-[15px] font-medium transition-colors hover:text-terracotta text-foreground"
@@ -118,6 +126,14 @@ export function Nav() {
                 {link.label}
               </Link>
             ))}
+            <a
+              href="/app/student/login"
+              onClick={() => setMobileMenuOpen(false)}
+              className="font-serif text-4xl text-white hover:text-accent transition-colors"
+              data-testid="link-student-signin-mobile"
+            >
+              Student sign-in
+            </a>
             <a
               href="/app/login"
               onClick={() => setMobileMenuOpen(false)}
