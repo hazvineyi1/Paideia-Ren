@@ -16,6 +16,11 @@ export interface Teacher {
   createdAt: string;
 }
 
+export interface ImpersonationStatus {
+  teacher: Teacher | null;
+  impersonator: Teacher | null;
+}
+
 export interface Usage {
   subscribed: boolean;
   used: number;

@@ -17,6 +17,7 @@ declare global {
     interface Request {
       teacher?: Teacher;
       student?: Student;
+      impersonator?: Teacher;
     }
   }
 }
@@ -29,18 +30,36 @@ export async function loadTeacher(
   const token = req.cookies?.[SESSION_COOKIE];
   if (token) {
     try {
-      const rows = await db
+      const sessionRows = await db
         .select({
-          teacher: teachersTable,
+          teacherId: sessionsTable.teacherId,
+          impersonatedTeacherId: sessionsTable.impersonatedTeacherId,
           expiresAt: sessionsTable.expiresAt,
         })
         .from(sessionsTable)
-        .innerJoin(teachersTable, eq(sessionsTable.teacherId, teachersTable.id))
         .where(eq(sessionsTable.token, token))
         .limit(1);
-      const row = rows[0];
-      if (row && row.expiresAt > new Date()) {
-        req.teacher = row.teacher;
+      const sessionRow = sessionRows[0];
+      if (sessionRow && sessionRow.expiresAt > new Date()) {
+        const [admin] = await db
+          .select()
+          .from(teachersTable)
+          .where(eq(teachersTable.id, sessionRow.teacherId))
+          .limit(1);
+        if (admin) {
+          req.teacher = admin;
+          if (sessionRow.impersonatedTeacherId) {
+            const [target] = await db
+              .select()
+              .from(teachersTable)
+              .where(eq(teachersTable.id, sessionRow.impersonatedTeacherId))
+              .limit(1);
+            if (target) {
+              req.impersonator = admin;
+              req.teacher = target;
+            }
+          }
+        }
       }
     } catch (err) {
       req.log?.warn({ err }, "session lookup failed");
@@ -49,18 +68,35 @@ export async function loadTeacher(
   const studentToken = req.cookies?.[STUDENT_SESSION_COOKIE];
   if (studentToken) {
     try {
-      const rows = await db
+      const sessionRows = await db
         .select({
-          student: studentsTable,
+          studentId: studentSessionsTable.studentId,
+          impersonatedStudentId: studentSessionsTable.impersonatedStudentId,
           expiresAt: studentSessionsTable.expiresAt,
         })
         .from(studentSessionsTable)
-        .innerJoin(studentsTable, eq(studentSessionsTable.studentId, studentsTable.id))
         .where(eq(studentSessionsTable.token, studentToken))
         .limit(1);
-      const row = rows[0];
-      if (row && row.expiresAt > new Date()) {
-        req.student = row.student;
+      const sessionRow = sessionRows[0];
+      if (sessionRow && sessionRow.expiresAt > new Date()) {
+        const [realStudent] = await db
+          .select()
+          .from(studentsTable)
+          .where(eq(studentsTable.id, sessionRow.studentId))
+          .limit(1);
+        if (realStudent) {
+          req.student = realStudent;
+          if (sessionRow.impersonatedStudentId) {
+            const [target] = await db
+              .select()
+              .from(studentsTable)
+              .where(eq(studentsTable.id, sessionRow.impersonatedStudentId))
+              .limit(1);
+            if (target) {
+              req.student = target;
+            }
+          }
+        }
       }
     } catch (err) {
       req.log?.warn({ err }, "student session lookup failed");

@@ -21,7 +21,7 @@ const NAV = [
 const ADMIN_NAV = { path: "/admin", label: "Founder admin", icon: BarChart3 };
 
 export function AppShell({ children }: { children: ReactNode }) {
-  const { teacher, signOut } = useAuth();
+  const { teacher, signOut, impersonator, stopImpersonating } = useAuth();
   const { usage } = useUsage();
   const [loc, setLoc] = useLocation();
   const [inboxCount, setInboxCount] = useState(0);
@@ -56,6 +56,11 @@ export function AppShell({ children }: { children: ReactNode }) {
   const onSignOut = async () => {
     await signOut();
     setLoc("/login");
+  };
+
+  const onStopImpersonating = async () => {
+    await stopImpersonating();
+    window.location.reload();
   };
 
   return (
@@ -120,6 +125,18 @@ export function AppShell({ children }: { children: ReactNode }) {
               <span className="font-medium text-primary">Unlimited plan</span>
             </div>
           ) : null}
+          {impersonator ? (
+            <div className="mb-2 px-3 py-2 rounded-md bg-amber-50 border border-amber-200 text-xs">
+              <div className="font-semibold text-amber-700">Impersonating {teacher?.name}</div>
+              <div className="text-amber-600 mt-1">Logged in as super admin</div>
+              <button
+                onClick={onStopImpersonating}
+                className="mt-2 w-full text-center px-2 py-1 rounded bg-amber-100 hover:bg-amber-200 text-amber-800 font-medium text-xs"
+              >
+                Stop impersonating
+              </button>
+            </div>
+          ) : null}
           <div className="px-3 py-2 mb-1">
             <div className="text-sm font-medium truncate">{teacher?.name}</div>
             <div className="text-xs text-muted-foreground truncate">{teacher?.email}</div>
@@ -134,6 +151,12 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </aside>
       <main className="flex-1 min-w-0">
+        {impersonator ? (
+          <div className="bg-amber-50 border-b border-amber-200 px-8 py-2 text-xs text-amber-800 flex items-center gap-2">
+            <span className="font-semibold">Impersonation mode:</span>
+            You are viewing as <strong>{teacher?.name}</strong> ({teacher?.email})
+          </div>
+        ) : null}
         <div className="max-w-5xl mx-auto px-8 py-10">{children}</div>
       </main>
     </div>

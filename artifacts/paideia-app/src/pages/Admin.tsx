@@ -19,6 +19,7 @@ import type {
   PendingTeacher,
   PilotStatus,
   WaitlistEntry,
+  Teacher,
 } from "@/lib/types";
 
 function Stat({ label, value, hint }: { label: string; value: number | string; hint?: string }) {
@@ -66,7 +67,7 @@ function statusColor(s: string): string {
 const PILOT_STATUSES: PilotStatus[] = ["new", "contacted", "scheduled", "in_pilot", "won", "lost"];
 
 export default function Admin() {
-  const { teacher, loading: authLoading } = useAuth();
+  const { teacher, loading: authLoading, impersonator, impersonateTeacher, impersonateStudent, stopImpersonating } = useAuth();
   const [, setLoc] = useLocation();
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [digest, setDigest] = useState<AdminDigest | null>(null);
@@ -86,7 +87,7 @@ export default function Admin() {
       setLoc("/login");
       return;
     }
-    if (!teacher.isAdmin) {
+    if (!teacher?.isAdmin) {
       setError("This page is for the founder admin account only.");
       setLoading(false);
       return;
@@ -163,6 +164,16 @@ export default function Admin() {
   return (
     <AppShell>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        {impersonator ? (
+          <div className="mb-6 p-4 rounded-lg bg-amber-50 border border-amber-200 flex items-center justify-between flex-wrap gap-3">
+            <div className="text-sm text-amber-800">
+              <strong>Impersonation active:</strong> You are viewing as <strong>{teacher?.name}</strong> ({teacher?.email})
+            </div>
+            <Button size="sm" variant="outline" onClick={() => { void stopImpersonating(); window.location.reload(); }}>
+              Stop impersonating
+            </Button>
+          </div>
+        ) : null}
         <div className="flex items-end justify-between gap-4 flex-wrap">
           <div>
             <h1 className="font-serif text-3xl md:text-4xl text-primary">Founder dashboard</h1>
@@ -215,7 +226,7 @@ export default function Admin() {
             </TabsContent>
 
             <TabsContent value="engagement" className="mt-6">
-              {engagement ? <EngagementTab data={engagement} /> : null}
+              {engagement ? <EngagementTab data={engagement} onImpersonate={impersonateTeacher} /> : null}
             </TabsContent>
 
             <TabsContent value="product" className="mt-6">
@@ -227,7 +238,7 @@ export default function Admin() {
             </TabsContent>
 
             <TabsContent value="approvals" className="mt-6">
-              <ApprovalsTab pending={pending} onApprove={approveTeacher} onSuspend={suspendTeacher} onResetLink={mintResetLink} />
+              <ApprovalsTab pending={pending} onApprove={approveTeacher} onSuspend={suspendTeacher} onResetLink={mintResetLink} onImpersonate={impersonateTeacher} />
             </TabsContent>
 
             <TabsContent value="waitlist" className="mt-6">
@@ -541,8 +552,9 @@ function pctHint(n: number, d: number): string {
   return `${Math.round((n / d) * 100)}% of signups`;
 }
 
-function EngagementTab({ data }: { data: AdminEngagement }) {
+function EngagementTab({ data, onImpersonate }: { data: AdminEngagement; onImpersonate: (id: string) => Promise<Teacher | null> }) {
   const maxFeature = Math.max(1, ...data.featureUsage.map((f) => f.total));
+  const [busyId, setBusyId] = useState<string | null>(null);
   return (
     <div className="space-y-8">
       <div>
@@ -608,6 +620,7 @@ function EngagementTab({ data }: { data: AdminEngagement }) {
                 <th className="text-right p-3">Assigns</th>
                 <th className="text-right p-3">Events</th>
                 <th className="text-left p-3">Last seen</th>
+                <th className="text-left p-3">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -624,6 +637,18 @@ function EngagementTab({ data }: { data: AdminEngagement }) {
                   <td className="p-3 text-right tabular-nums">{t.assignments}</td>
                   <td className="p-3 text-right tabular-nums">{t.events}</td>
                   <td className="p-3 text-muted-foreground">{t.lastSeen ? new Date(t.lastSeen).toLocaleString() : "-"}</td>
+                  <td className="p-3">
+                    <Button
+                      size="sm" variant="ghost"
+                      disabled={busyId === t.id}
+                      onClick={() => {
+                        setBusyId(t.id);
+                        void onImpersonate(t.id).then(() => { window.location.reload(); });
+                      }}
+                    >
+                      Impersonate
+                    </Button>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -800,11 +825,13 @@ function ApprovalsTab({
   onApprove,
   onSuspend,
   onResetLink,
+  onImpersonate,
 }: {
   pending: PendingTeacher[];
   onApprove: (id: string) => Promise<void>;
   onSuspend: (id: string) => Promise<void>;
   onResetLink: (id: string) => Promise<{ token: string; email: string; expiresAt: string }>;
+  onImpersonate: (id: string) => Promise<Teacher | null>;
 }) {
   return (
     <div className="space-y-4">
@@ -818,7 +845,7 @@ function ApprovalsTab({
         <div className="border rounded-lg bg-card p-6 text-muted-foreground">No new sign-ups waiting. Nice and quiet.</div>
       ) : null}
       {pending.map((t) => (
-        <ApprovalRow key={t.id} teacher={t} onApprove={onApprove} onSuspend={onSuspend} onResetLink={onResetLink} />
+        <ApprovalRow key={t.id} teacher={t} onApprove={onApprove} onSuspend={onSuspend} onResetLink={onResetLink} onImpersonate={onImpersonate} />
       ))}
     </div>
   );
@@ -829,11 +856,13 @@ function ApprovalRow({
   onApprove,
   onSuspend,
   onResetLink,
+  onImpersonate,
 }: {
   teacher: PendingTeacher;
   onApprove: (id: string) => Promise<void>;
   onSuspend: (id: string) => Promise<void>;
   onResetLink: (id: string) => Promise<{ token: string; email: string; expiresAt: string }>;
+  onImpersonate: (id: string) => Promise<Teacher | null>;
 }) {
   const [busy, setBusy] = useState(false);
   const [link, setLink] = useState<string | null>(null);
@@ -847,6 +876,10 @@ function ApprovalRow({
       const base = window.location.origin + window.location.pathname.replace(/\/admin.*/, "");
       setLink(`${base}/reset-password?token=${r.token}`);
     } finally { setBusy(false); }
+  }
+  async function doImpersonate() {
+    setBusy(true);
+    try { await onImpersonate(teacher.id); window.location.reload(); } finally { setBusy(false); }
   }
   async function copyLink() {
     if (!link) return;
@@ -872,6 +905,7 @@ function ApprovalRow({
         <div className="flex gap-2 flex-wrap">
           <Button size="sm" onClick={doApprove} disabled={busy} data-track="admin_approve_teacher">Approve</Button>
           <Button size="sm" variant="outline" onClick={doSuspend} disabled={busy} data-track="admin_suspend_teacher">Suspend</Button>
+          <Button size="sm" variant="outline" onClick={doImpersonate} disabled={busy} data-track="admin_impersonate_teacher">Impersonate</Button>
           <Button size="sm" variant="outline" onClick={doReset} disabled={busy} data-track="admin_mint_reset_link">Reset link</Button>
         </div>
       </div>

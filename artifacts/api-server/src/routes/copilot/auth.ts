@@ -143,7 +143,10 @@ router.get("/me", (req, res) => {
     res.json({ teacher: null });
     return;
   }
-  res.json({ teacher: serialiseTeacher(req.teacher) });
+  res.json({
+    teacher: serialiseTeacher(req.teacher),
+    impersonator: req.impersonator ? serialiseTeacher(req.impersonator) : null,
+  });
 });
 
 const onboardingSchema = z.object({
@@ -259,7 +262,7 @@ export function adminEmails(): Set<string> {
   );
 }
 
-function serialiseTeacher(t: typeof teachersTable.$inferSelect) {
+export function serialiseTeacher(t: typeof teachersTable.$inferSelect) {
   const { passwordHash: _ignored, ...rest } = t;
   return {
     ...rest,

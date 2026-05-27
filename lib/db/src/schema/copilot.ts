@@ -55,6 +55,7 @@ export const sessionsTable = pgTable("copilot_sessions", {
   teacherId: uuid("teacher_id")
     .notNull()
     .references(() => teachersTable.id, { onDelete: "cascade" }),
+  impersonatedTeacherId: uuid("impersonated_teacher_id").references(() => teachersTable.id, { onDelete: "cascade" }),
   expiresAt: timestamp("expires_at").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
@@ -176,6 +177,7 @@ export const studentSessionsTable = pgTable("copilot_student_sessions", {
   studentId: uuid("student_id")
     .notNull()
     .references(() => studentsTable.id, { onDelete: "cascade" }),
+  impersonatedStudentId: uuid("impersonated_student_id").references(() => studentsTable.id, { onDelete: "cascade" }),
   expiresAt: timestamp("expires_at").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });

@@ -4,6 +4,7 @@ import {
   db,
   teachersTable,
   sessionsTable,
+  studentSessionsTable,
   classesTable,
   studentsTable,
   lessonPlansTable,
@@ -16,9 +17,20 @@ import {
   analyticsEventsTable,
   aiUsageTable,
 } from "@workspace/db";
-import { mintPasswordReset } from "./auth.js";
+import { mintPasswordReset, serialiseTeacher } from "./auth.js";
+import { SESSION_COOKIE, STUDENT_SESSION_COOKIE, SESSION_TTL_DAYS } from "../../lib/auth.js";
 import { sql, desc, eq } from "drizzle-orm";
 import { requireAuth } from "../../middlewares/auth.js";
+
+function cookieOpts() {
+  return {
+    httpOnly: true,
+    sameSite: "lax" as const,
+    secure: process.env["NODE_ENV"] === "production",
+    maxAge: SESSION_TTL_DAYS * 24 * 60 * 60 * 1000,
+    path: "/",
+  };
+}
 
 const router: IRouter = Router();
 
@@ -32,16 +44,102 @@ function adminEmails(): Set<string> {
 }
 
 const requireAdmin: RequestHandler = (req, res, next) => {
-  if (!req.teacher) {
+  const real = req.impersonator ?? req.teacher;
+  if (!real) {
     res.status(401).json({ error: "Not signed in" });
     return;
   }
-  if (!adminEmails().has(req.teacher.email.toLowerCase())) {
+  if (!adminEmails().has(real.email.toLowerCase())) {
     res.status(403).json({ error: "Admin access only" });
     return;
   }
   next();
 };
+
+// ── Impersonation routes ────────────────────────────
+router.post("/impersonate/teacher/:id", requireAuth, requireAdmin, async (req, res) => {
+  const rawId = req.params["id"];
+  const id = (typeof rawId === "string" ? rawId : Array.isArray(rawId) ? rawId[0] : "") as string;
+  if (!id) {
+    res.status(400).json({ error: "Missing teacher id" });
+    return;
+  }
+  const token = req.cookies?.[SESSION_COOKIE] as string | undefined;
+  if (!token) {
+    res.status(401).json({ error: "No session" });
+    return;
+  }
+  const targetRows = await db.select().from(teachersTable).where(eq(teachersTable.id, id)).limit(1);
+  if (targetRows.length === 0) {
+    res.status(404).json({ error: "Teacher not found" });
+    return;
+  }
+  await db.update(sessionsTable).set({ impersonatedTeacherId: id }).where(eq(sessionsTable.token, token));
+  const [target] = targetRows;
+  const { passwordHash: _ph, ...safe } = target;
+  res.json({ teacher: safe });
+});
+
+router.post("/impersonate/student/:id", requireAuth, requireAdmin, async (req, res) => {
+  const rawId = req.params["id"];
+  const id = (typeof rawId === "string" ? rawId : Array.isArray(rawId) ? rawId[0] : "") as string;
+  if (!id) {
+    res.status(400).json({ error: "Missing student id" });
+    return;
+  }
+  const token = req.cookies?.[SESSION_COOKIE] as string | undefined;
+  if (!token) {
+    res.status(401).json({ error: "No session" });
+    return;
+  }
+  const targetRows = await db.select().from(studentsTable).where(eq(studentsTable.id, id)).limit(1);
+  if (targetRows.length === 0) {
+    res.status(404).json({ error: "Student not found" });
+    return;
+  }
+  const target = targetRows[0];
+  // If admin isn't already in a student session, create a fresh one.
+  // If already has one, just update the impersonated id.
+  const existing = await db
+    .select()
+    .from(studentSessionsTable)
+    .where(eq(studentSessionsTable.token, token))
+    .limit(1);
+  if (existing.length > 0) {
+    await db.update(studentSessionsTable).set({ impersonatedStudentId: id }).where(eq(studentSessionsTable.token, token));
+  } else {
+    await db.insert(studentSessionsTable).values({
+      token,
+      studentId: target.id,
+      impersonatedStudentId: id,
+      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+    });
+  }
+  // Set the student session cookie so the admin browser becomes this student too
+  res.cookie(STUDENT_SESSION_COOKIE, token, cookieOpts());
+  const { passwordHash: _ph, ...safe } = target;
+  res.json({ student: safe });
+});
+
+router.post("/impersonate/stop", requireAuth, requireAdmin, async (req, res) => {
+  const token = req.cookies?.[SESSION_COOKIE] as string | undefined;
+  if (token) {
+    await db.update(sessionsTable).set({ impersonatedTeacherId: null }).where(eq(sessionsTable.token, token));
+  }
+  const studentToken = req.cookies?.[STUDENT_SESSION_COOKIE] as string | undefined;
+  if (studentToken) {
+    await db.update(studentSessionsTable).set({ impersonatedStudentId: null }).where(eq(studentSessionsTable.token, studentToken));
+    res.clearCookie(STUDENT_SESSION_COOKIE, { path: "/" });
+  }
+  res.json({ ok: true });
+});
+
+router.get("/impersonate/status", requireAuth, (req, res) => {
+  res.json({
+    teacher: req.teacher ? serialiseTeacher(req.teacher) : null,
+    impersonator: req.impersonator ? serialiseTeacher(req.impersonator) : null,
+  });
+});
 
 router.use(requireAuth, requireAdmin);
 
