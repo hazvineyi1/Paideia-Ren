@@ -18,11 +18,12 @@ export default function TutorList() {
   const [deleting, setDeleting] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!student) return;
+    if (authLoading) return;
+    if (!student) { setLoading(false); return; }
     void api.get<{ conversations: TutorConversation[] }>("/student/tutor/conversations")
       .then((r) => setConversations(r.conversations))
       .finally(() => setLoading(false));
-  }, [student]);
+  }, [authLoading, student]);
 
   const remove = async (id: string) => {
     setDeleting(id);

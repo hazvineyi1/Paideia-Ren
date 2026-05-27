@@ -29,7 +29,8 @@ export default function TutorChat() {
   }, []);
 
   useEffect(() => {
-    if (!id || !student) return;
+    if (!id || authLoading) return;
+    if (!student) { setLoading(false); return; }
     setLoading(true);
     void api.get<{ conversation: TutorConversation; messages: TutorMessage[] }>(`/student/tutor/conversations/${id}`)
       .then((r) => {
@@ -37,7 +38,7 @@ export default function TutorChat() {
         setMessages(r.messages);
       })
       .finally(() => setLoading(false));
-  }, [id, student]);
+  }, [id, authLoading, student]);
 
   useEffect(() => {
     scrollToBottom();

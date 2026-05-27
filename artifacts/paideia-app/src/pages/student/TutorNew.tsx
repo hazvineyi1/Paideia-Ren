@@ -27,7 +27,8 @@ export default function TutorNew() {
   const [creating, setCreating] = useState(false);
 
   useEffect(() => {
-    if (!student) return;
+    if (authLoading) return;
+    if (!student) { setLoading(false); return; }
     void api.get<{ assignments: ScopeOption[] }>("/student/tutor/scope-options")
       .then((r) => {
         setOptions(r.assignments);
@@ -36,7 +37,7 @@ export default function TutorNew() {
         }
       })
       .finally(() => setLoading(false));
-  }, [student]);
+  }, [authLoading, student]);
 
   const create = async () => {
     if (!title.trim()) return;
