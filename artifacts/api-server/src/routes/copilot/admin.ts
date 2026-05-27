@@ -19,7 +19,7 @@ import {
 } from "@workspace/db";
 import { mintPasswordReset, serialiseTeacher } from "./auth.js";
 import { SESSION_COOKIE, STUDENT_SESSION_COOKIE, SESSION_TTL_DAYS } from "../../lib/auth.js";
-import { sql, desc, eq } from "drizzle-orm";
+import { sql, desc, eq, asc } from "drizzle-orm";
 import { requireAuth } from "../../middlewares/auth.js";
 
 function cookieOpts() {
@@ -1010,6 +1010,26 @@ router.get("/export/ai-usage.csv", async (_req, res) => {
     .orderBy(desc(aiUsageTable.createdAt))
     .limit(10000);
   res.type("text/csv").attachment("ai-usage.csv").send(toCsv(rows));
+});
+
+router.get("/students", async (_req, res) => {
+  const rows = await db
+    .select({
+      id: studentsTable.id,
+      firstName: studentsTable.firstName,
+      lastInitial: studentsTable.lastInitial,
+      email: studentsTable.email,
+      joinCode: studentsTable.joinCode,
+      classId: studentsTable.classId,
+      teacherId: studentsTable.teacherId,
+      learningStyle: studentsTable.learningStyle,
+      diagnosticTakenAt: studentsTable.diagnosticTakenAt,
+      createdAt: studentsTable.createdAt,
+    })
+    .from(studentsTable)
+    .orderBy(asc(studentsTable.createdAt))
+    .limit(200);
+  res.json({ students: rows });
 });
 
 export default router;

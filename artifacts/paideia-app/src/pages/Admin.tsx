@@ -20,6 +20,7 @@ import type {
   PilotStatus,
   WaitlistEntry,
   Teacher,
+  Student,
 } from "@/lib/types";
 
 function Stat({ label, value, hint }: { label: string; value: number | string; hint?: string }) {
@@ -78,6 +79,7 @@ export default function Admin() {
   const [pilotFilter, setPilotFilter] = useState<string>("all");
   const [pending, setPending] = useState<PendingTeacher[]>([]);
   const [waitlist, setWaitlist] = useState<WaitlistEntry[]>([]);
+  const [students, setStudents] = useState<Student[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -101,8 +103,9 @@ export default function Admin() {
       api.get<AdminPilots>("/admin/pilots"),
       api.get<{ pending: PendingTeacher[] }>("/admin/pending-teachers"),
       api.get<{ waitlist: WaitlistEntry[] }>("/admin/waitlist"),
+      api.get<{ students: Student[] }>("/admin/students"),
     ])
-      .then(([s, d, e, p, a, pl, pt, wl]) => {
+      .then(([s, d, e, p, a, pl, pt, wl, st]) => {
         setStats(s);
         setDigest(d);
         setEngagement(e);
@@ -111,6 +114,7 @@ export default function Admin() {
         setPilots(pl);
         setPending(pt.pending);
         setWaitlist(wl.waitlist);
+        setStudents(st.students);
       })
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false));
@@ -215,6 +219,9 @@ export default function Admin() {
               <TabsTrigger value="waitlist" data-track="admin_tab" data-track-tab="waitlist">
                 Waitlist{openWaitlistCount > 0 ? ` (${openWaitlistCount})` : ""}
               </TabsTrigger>
+              <TabsTrigger value="students" data-track="admin_tab" data-track-tab="students">
+                Students{students.length > 0 ? ` (${students.length})` : ""}
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="digest" className="mt-6">
@@ -247,6 +254,10 @@ export default function Admin() {
                 onFulfilled={markWaitlistFulfilled}
                 onUnfulfilled={unmarkWaitlistFulfilled}
               />
+            </TabsContent>
+
+            <TabsContent value="students" className="mt-6">
+              <StudentsTab students={students} onImpersonate={impersonateStudent} />
             </TabsContent>
 
             <TabsContent value="pilots" className="mt-6">
@@ -991,6 +1002,52 @@ function PilotCard({
           <Button size="sm" onClick={() => void saveNotes()} disabled={saving} data-track="admin_pilot_save_notes">Save notes</Button>
         </div>
       </div>
+    </div>
+  );
+}
+
+function StudentsTab({ students, onImpersonate }: { students: Student[]; onImpersonate: (id: string) => Promise<void> }) {
+  const [busyId, setBusyId] = useState<string | null>(null);
+
+  if (students.length === 0) {
+    return <div className="text-muted-foreground">No students yet.</div>;
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="text-sm text-muted-foreground">
+        {students.length} student{students.length === 1 ? "" : "s"}. Click <strong>Impersonate</strong> to enter that student's Study Tutor view.
+      </div>
+      {students.map((s) => (
+        <div key={s.id} className="border rounded-lg bg-card p-5 flex items-start justify-between gap-4 flex-wrap">
+          <div>
+            <div className="font-medium text-lg">
+              {s.firstName} {s.lastInitial}
+            </div>
+            <div className="text-sm text-muted-foreground">
+              {s.email ? <a className="underline" href={`mailto:${s.email}`}>{s.email}</a> : <span className="italic">No email</span>}
+              {s.joinCode ? ` · Join code: ${s.joinCode}` : ""}
+            </div>
+            <div className="text-xs text-muted-foreground mt-1">
+              Created {new Date(s.createdAt).toLocaleString()}
+            </div>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={busyId === s.id}
+            onClick={() => {
+              setBusyId(s.id);
+              void onImpersonate(s.id).then(() => {
+                window.location.href = "/student/tutor";
+              });
+            }}
+            data-track="admin_impersonate_student"
+          >
+            {busyId === s.id ? "Impersonating..." : "Impersonate"}
+          </Button>
+        </div>
+      ))}
     </div>
   );
 }
