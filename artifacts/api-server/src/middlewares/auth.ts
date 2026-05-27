@@ -5,11 +5,15 @@ import {
   teachersTable,
   studentSessionsTable,
   studentsTable,
+  studySessionsTable,
+  studyUsersTable,
   type Teacher,
   type Student,
+  type StudyUser,
 } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { SESSION_COOKIE, STUDENT_SESSION_COOKIE } from "../lib/auth.js";
+import { STUDY_SESSION_COOKIE } from "../lib/studyAuth.js";
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -18,6 +22,7 @@ declare global {
       teacher?: Teacher;
       student?: Student;
       impersonator?: Teacher;
+      studyUser?: StudyUser;
     }
   }
 }
@@ -102,6 +107,32 @@ export async function loadTeacher(
       req.log?.warn({ err }, "student session lookup failed");
     }
   }
+  const studyToken = req.cookies?.[STUDY_SESSION_COOKIE];
+  if (studyToken) {
+    try {
+      const sessionRows = await db
+        .select({
+          userId: studySessionsTable.userId,
+          expiresAt: studySessionsTable.expiresAt,
+        })
+        .from(studySessionsTable)
+        .where(eq(studySessionsTable.token, studyToken))
+        .limit(1);
+      const sessionRow = sessionRows[0];
+      if (sessionRow && sessionRow.expiresAt > new Date()) {
+        const [user] = await db
+          .select()
+          .from(studyUsersTable)
+          .where(eq(studyUsersTable.id, sessionRow.userId))
+          .limit(1);
+        if (user) {
+          req.studyUser = user;
+        }
+      }
+    } catch (err) {
+      req.log?.warn({ err }, "study session lookup failed");
+    }
+  }
   next();
 }
 
@@ -139,6 +170,18 @@ export function requireStudent(
   next: NextFunction,
 ): void {
   if (!req.student) {
+    res.status(401).json({ error: "Not signed in" });
+    return;
+  }
+  next();
+}
+
+export function requireStudyUser(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): void {
+  if (!req.studyUser) {
     res.status(401).json({ error: "Not signed in" });
     return;
   }
