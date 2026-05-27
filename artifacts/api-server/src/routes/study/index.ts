@@ -11,6 +11,8 @@ import dashboardRouter from "./dashboard.js";
 import billingRouter from "./billing.js";
 import knowledgeRouter from "./knowledge.js";
 import adaptiveRouter from "./adaptive.js";
+import assessmentRouter from "./assessment.js";
+import pathsRouter from "./paths.js";
 
 const router: IRouter = Router();
 
@@ -26,5 +28,7 @@ router.use("/dashboard", dashboardRouter);
 router.use("/billing", billingRouter);
 router.use("/knowledge", knowledgeRouter);
 router.use("/adaptive", adaptiveRouter);
+router.use("/assessments", assessmentRouter);
+router.use("/paths", pathsRouter);
 
 export default router;

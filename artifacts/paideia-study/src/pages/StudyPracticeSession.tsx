@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useLocation, useParams } from "wouter";
+import { useCompletePathStep } from "@/hooks/use-study-journey";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -19,6 +20,12 @@ export default function StudyPracticeSession() {
   const [submitted, setSubmitted] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [summary, setSummary] = useState<any>(null);
+  const completePathStep = useCompletePathStep();
+  const [didCompletePathStep, setDidCompletePathStep] = useState(false);
+  const searchRef = useRef(new URLSearchParams(typeof window !== "undefined" ? window.location.search : ""));
+  const pathStepId = searchRef.current.get("pathStepId");
+  const pathId = searchRef.current.get("pathId");
+  const [startTime] = useState(Date.now());
 
   if (isLoading || !session) {
     return (
@@ -82,7 +89,22 @@ export default function StudyPracticeSession() {
             </Card>
           )}
 
-          <Button onClick={() => setLoc("/practice")}>Practice Again</Button>
+          {pathStepId && pathId && !didCompletePathStep && (
+            <Button
+              variant="default"
+              className="gap-1.5"
+              onClick={() => {
+                completePathStep.mutate(
+                  { pathId, stepId: pathStepId, masteryScore: summary?.accuracy ?? 0.7, durationSeconds: Math.round((Date.now() - startTime) / 1000) },
+                  { onSuccess: () => setDidCompletePathStep(true) }
+                );
+              }}
+              disabled={completePathStep.isPending}
+            >
+              {completePathStep.isPending ? "Completing..." : "Mark Path Step Complete"}
+            </Button>
+          )}
+          <Button onClick={() => setLoc("/practice")} variant="outline">Practice Again</Button>
         </main>
       </div>
     );

@@ -6,15 +6,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   useCreateStudyMaterial,
   getListStudyMaterialsQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useGenerateAssessment } from "@/hooks/use-study-journey";
 import {
   ArrowLeft, Sparkles, FileText, Link2, Upload, Image,
-  Mic, Globe, Brain, Loader2, CheckCircle2, X
+  Mic, Globe, Brain, Loader2, CheckCircle2, X, Rocket,
+  BookOpen, Zap, Compass, ChevronRight
 } from "lucide-react";
 
 type SourceType = "paste" | "url" | "file" | "image" | "audio";
@@ -38,6 +39,7 @@ const OPTIONS: IngestionOption[] = [
 export default function StudyMaterialNew() {
   const [, setLoc] = useLocation();
   const createMutation = useCreateStudyMaterial();
+  const generateAssessment = useGenerateAssessment();
   const queryClient = useQueryClient();
 
   const [title, setTitle] = useState("");
@@ -45,6 +47,8 @@ export default function StudyMaterialNew() {
   const [sourceUrl, setSourceUrl] = useState("");
   const [activeTab, setActiveTab] = useState<SourceType>("paste");
   const [submitting, setSubmitting] = useState(false);
+  const [stage, setStage] = useState<"input" | "processing" | "done">("input");
+  const [createdMaterial, setCreatedMaterial] = useState<any>(null);
   const [dragOver, setDragOver] = useState(false);
   const [droppedFile, setDroppedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -54,8 +58,10 @@ export default function StudyMaterialNew() {
     if (sourceType === "paste" && !content) return;
     if (sourceType === "url" && !sourceUrl) return;
     setSubmitting(true);
+    setStage("processing");
+
     try {
-      await createMutation.mutateAsync({
+      const material = await createMutation.mutateAsync({
         data: {
           title,
           sourceType: (sourceType === "audio" ? "file" : sourceType) as any,
@@ -63,12 +69,39 @@ export default function StudyMaterialNew() {
           contentText: content || sourceUrl || "",
         },
       });
+
       queryClient.invalidateQueries({ queryKey: getListStudyMaterialsQueryKey() });
-      setLoc("/materials");
+      setCreatedMaterial(material);
+
+      // Trigger knowledge graph generation
+      await fetch("/api/study/knowledge/generate", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ materialId: material.id }),
+      });
+
+      setStage("done");
     } catch (err: any) {
       alert(err?.data?.error || "Failed to add material");
       setSubmitting(false);
+      setStage("input");
     }
+  };
+
+  const handleStartAssessment = () => {
+    if (!createdMaterial) return;
+    generateAssessment.mutate(
+      { materialId: createdMaterial.id },
+      {
+        onSuccess: (assessment: any) => {
+          setLoc(`/assessment/${assessment.id}`);
+        },
+        onError: () => {
+          alert("Assessment generation failed. Try again in a moment.");
+        },
+      },
+    );
   };
 
   const handleDrop = (e: DragEvent<HTMLDivElement>, type: SourceType) => {
@@ -89,30 +122,104 @@ export default function StudyMaterialNew() {
     }
   };
 
+  // Done / Success Stage
+  if (stage === "done" && createdMaterial) {
+    return (
+      <div className="min-h-screen bg-background">
+        <main className="max-w-lg mx-auto px-4 py-16 text-center">
+          <div className="w-20 h-20 rounded-2xl bg-emerald-50 flex items-center justify-center mx-auto mb-6">
+            <CheckCircle2 className="h-10 w-10 text-emerald-500" />
+          </div>
+          <h1 className="text-2xl font-bold mb-2">Material Added!</h1>
+          <p className="text-muted-foreground mb-2">{createdMaterial.title}</p>
+          <p className="text-sm text-muted-foreground mb-8 max-w-sm mx-auto">
+            AI has extracted key concepts and built your knowledge graph. Now take a quick diagnostic assessment so we can personalize your learning path.
+          </p>
+
+          <div className="flex items-center justify-center gap-4 mb-8 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1"><BookOpen className="h-3 w-3 text-primary" /> Concepts Extracted</span>
+            <span className="flex items-center gap-1"><Zap className="h-3 w-3 text-primary" /> Flashcards Ready</span>
+            <span className="flex items-center gap-1"><Compass className="h-3 w-3 text-primary" /> Path Waiting</span>
+          </div>
+
+          <Button
+            size="lg"
+            className="gap-2 w-full max-w-xs"
+            onClick={handleStartAssessment}
+            disabled={generateAssessment.isPending}
+          >
+            {generateAssessment.isPending ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Generating Assessment...
+              </>
+            ) : (
+              <>
+                <Sparkles className="h-4 w-4" />
+                Start Diagnostic Assessment
+                <ChevronRight className="h-4 w-4" />
+              </>
+            )}
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            className="mt-3 text-xs"
+            onClick={() => setLoc("/dashboard")}
+          >
+            Skip for Now → Dashboard
+          </Button>
+        </main>
+      </div>
+    );
+  }
+
+  // Processing Stage
+  if (stage === "processing") {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center max-w-sm">
+          <div className="relative w-16 h-16 mx-auto mb-4">
+            <div className="absolute inset-0 rounded-full border-2 border-primary/20" />
+            <div className="absolute inset-0 rounded-full border-2 border-t-primary animate-spin" />
+            <Brain className="absolute inset-0 m-auto h-6 w-6 text-primary" />
+          </div>
+          <h2 className="font-semibold mb-1">AI is Analyzing Your Material</h2>
+          <p className="text-sm text-muted-foreground">
+            Extracting concepts, building knowledge graph, generating flashcards...
+          </p>
+          <p className="text-xs text-muted-foreground mt-2">This takes ~10-20 seconds</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Input Stage
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b px-4 py-3 flex items-center justify-between sticky top-0 bg-background/95 backdrop-blur-sm z-10">
         <Button variant="ghost" size="sm" className="gap-1.5" onClick={() => setLoc("/materials")}>
           <ArrowLeft className="h-4 w-4" />
-          Materials
+          Back
         </Button>
         <div className="flex items-center gap-2">
-          <Brain className="h-4 w-4 text-primary" />
-          <span className="text-sm font-medium">AI will extract concepts & generate flashcards</span>
+          <Rocket className="h-4 w-4 text-primary" />
+          <span className="text-sm font-medium">Start Your Learning Journey</span>
         </div>
       </header>
 
       <main className="max-w-3xl mx-auto px-4 py-8">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold mb-1">Add Learning Material</h1>
+        <div className="text-center mb-8">
+          <h1 className="text-2xl font-bold mb-2">What Do You Want to Learn?</h1>
           <p className="text-sm text-muted-foreground">
-            Upload anything — PDFs, images, URLs, pasted notes. AI processes it all into structured knowledge.
+            Paste notes, upload files, or share URLs — AI will extract concepts and build your personalized learning path.
           </p>
         </div>
 
         {/* Title */}
         <div className="mb-6">
-          <Label htmlFor="title" className="text-sm font-medium">Material Title</Label>
+          <Label htmlFor="title" className="text-sm font-medium">What are you studying?</Label>
           <Input
             id="title"
             placeholder="e.g., Advanced Cell Biology — Chapter 3"
@@ -151,7 +258,7 @@ export default function StudyMaterialNew() {
               <div>
                 <div className="flex items-center gap-2 mb-3">
                   <FileText className="h-4 w-4 text-primary" />
-                  <h3 className="font-semibold text-sm">Paste Your Notes</h3>
+                  <h3 className="font-semibold text-sm">Paste Your Study Notes</h3>
                   <Badge variant="outline" className="text-[10px] h-5 ml-auto">Fastest</Badge>
                 </div>
                 <Textarea
@@ -180,8 +287,7 @@ export default function StudyMaterialNew() {
                   onChange={(e) => setSourceUrl(e.target.value)}
                 />
                 <p className="text-xs text-muted-foreground mt-2">
-                  Paste a link to an article, Wikipedia page, Google Doc, or any web resource.
-                  AI will scrape and extract key concepts.
+                  Paste a link to an article, Wikipedia page, or any web resource. AI will extract key concepts.
                 </p>
               </div>
             )}
@@ -255,26 +361,14 @@ export default function StudyMaterialNew() {
           ) : (
             <>
               <Sparkles className="h-4 w-4" />
-              Generate Concepts & Flashcards
+              Start Learning — Generate Concepts & Path
             </>
           )}
         </Button>
 
-        {submitting && (
-          <div className="mt-4 p-4 bg-primary/5 rounded-lg border border-primary/10">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                <Brain className="h-4 w-4 text-primary animate-pulse" />
-              </div>
-              <div>
-                <p className="text-sm font-medium">AI is processing your material</p>
-                <p className="text-xs text-muted-foreground">
-                  Extracting concepts, mapping relationships, generating flashcards. This takes ~10-30 seconds.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
+        <p className="text-xs text-muted-foreground text-center mt-3">
+          After upload, AI extracts concepts, generates flashcards, and creates your personalized assessment & learning path.
+        </p>
       </main>
     </div>
   );

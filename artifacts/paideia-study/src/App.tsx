@@ -23,6 +23,9 @@ import StudyProfile from "@/pages/StudyProfile";
 import StudyBriefs from "@/pages/StudyBriefs";
 import StudyKnowledgeMap from "@/pages/StudyKnowledgeMap";
 import StudyMaterialView from "@/pages/StudyMaterialView";
+import StudyAssessment from "@/pages/StudyAssessment";
+import StudyDailySession from "@/pages/StudyDailySession";
+import StudyLearningPath from "@/pages/StudyLearningPath";
 
 const queryClient = new QueryClient();
 
@@ -68,6 +71,9 @@ function Router() {
       <Route path="/profile" component={() => <Protected component={StudyProfile} />} />
       <Route path="/briefs" component={() => <Protected component={StudyBriefs} />} />
       <Route path="/knowledge-map" component={() => <Protected component={StudyKnowledgeMap} />} />
+      <Route path="/assessment/:id" component={() => <Protected component={StudyAssessment} />} />
+      <Route path="/daily-session" component={() => <Protected component={StudyDailySession} />} />
+      <Route path="/learning-path/:id" component={() => <Protected component={StudyLearningPath} />} />
       <Route component={NotFound} />
     </Switch>
   );

@@ -383,6 +383,77 @@ export const studyCognitiveProfilesTable = pgTable("study_cognitive_profiles", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// ─── Assessments (diagnostic quiz after material ingestion) ───
+export const studyAssessmentsTable = pgTable("study_assessments", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => studyUsersTable.id, { onDelete: "cascade" }),
+  materialId: uuid("material_id")
+    .notNull()
+    .references(() => studyMaterialsTable.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  status: text("status").notNull().default("pending"), // pending, active, completed
+  questions: jsonb("questions").$type<Array<{
+    id: string;
+    questionText: string;
+    options: string[];
+    correctOptionIndex: number;
+    explanation: string;
+    conceptId: string;
+    difficulty: "easy" | "medium" | "hard";
+    type: "recall" | "comprehension" | "application";
+  }>>().notNull().default([]),
+  conceptIds: jsonb("concept_ids").$type<string[]>().notNull().default([]),
+  results: jsonb("results").$type<{
+    answers: Array<{
+      questionId: string;
+      selectedOptionIndex: number;
+      correct: boolean;
+      timeSpentSeconds: number;
+    }>;
+    score: number; // 0-100
+    accuracyByConcept: Record<string, number>;
+    detectedDifficulty: "beginner" | "intermediate" | "advanced";
+    recommendedPathType: "gentle" | "standard" | "intensive";
+  } | null>().default(null),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => ({
+  userIdx: index("study_assessments_user_idx").on(t.userId),
+  materialIdx: index("study_assessments_material_idx").on(t.materialId),
+}));
+
+// ─── Learning Path Steps (structured steps for guided learning) ───
+export const studyLearningPathStepsTable = pgTable("study_learning_path_steps", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => studyUsersTable.id, { onDelete: "cascade" }),
+  pathId: uuid("path_id")
+    .notNull()
+    .references(() => studyLearningPathsTable.id, { onDelete: "cascade" }),
+  nodeId: uuid("node_id")
+    .references(() => studyKnowledgeNodesTable.id, { onDelete: "set null" }),
+  conceptId: uuid("concept_id")
+    .references(() => studyConceptsTable.id, { onDelete: "set null" }),
+  order: integer("order").notNull(),
+  stepType: text("step_type").notNull(), // read_material, flashcard_review, practice_questions, tutor_session, mastery_check, spaced_review
+  title: text("title").notNull(),
+  description: text("description"),
+  estimatedMinutes: integer("estimated_minutes").notNull().default(10),
+  status: text("status").notNull().default("locked"), // locked, available, in_progress, completed, skipped
+  contentRef: text("content_ref"), // materialId, conceptId, etc
+  prerequisites: jsonb("prerequisites").$type<string[]>().notNull().default([]),
+  completedAt: timestamp("completed_at"),
+  masteryScore: real("mastery_score"), // 0-1, set after completion
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => ({
+  userIdx: index("study_path_steps_user_idx").on(t.userId),
+  pathIdx: index("study_path_steps_path_idx").on(t.pathId),
+  statusIdx: index("study_path_steps_status_idx").on(t.status),
+}));
+
 // ─── Activity Log (for pattern detection) ───
 export const studyActivityLogTable = pgTable("study_activity_log", {
   id: serial("id").primaryKey(),
@@ -423,5 +494,7 @@ export type StudyContentChunk = typeof studyContentChunksTable.$inferSelect;
 export type StudyAnnotation = typeof studyAnnotationsTable.$inferSelect;
 export type StudyContentSource = typeof studyContentSourcesTable.$inferSelect;
 export type StudyLearningPath = typeof studyLearningPathsTable.$inferSelect;
+export type StudyLearningPathStep = typeof studyLearningPathStepsTable.$inferSelect;
+export type StudyAssessment = typeof studyAssessmentsTable.$inferSelect;
 export type StudyCognitiveProfile = typeof studyCognitiveProfilesTable.$inferSelect;
 export type StudyActivityLog = typeof studyActivityLogTable.$inferSelect;

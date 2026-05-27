@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useLocation } from "wouter";
+import { useCompletePathStep } from "@/hooks/use-study-journey";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -44,6 +45,11 @@ export default function StudyFlashcards() {
   const [sessionComplete, setSessionComplete] = useState(false);
   const [reviewStats, setReviewStats] = useState({ again: 0, hard: 0, good: 0, easy: 0, totalTime: 0 });
   const [startTime] = useState(Date.now());
+  const [didCompletePathStep, setDidCompletePathStep] = useState(false);
+  const completePathStep = useCompletePathStep();
+  const searchRef = useRef(new URLSearchParams(typeof window !== "undefined" ? window.location.search : ""));
+  const pathStepId = searchRef.current.get("pathStepId");
+  const pathId = searchRef.current.get("pathId");
 
   if (isLoading) {
     return (
@@ -156,6 +162,21 @@ export default function StudyFlashcards() {
               <RotateCcw className="h-4 w-4" />
               Review Again
             </Button>
+            {pathStepId && pathId && !didCompletePathStep && (
+              <Button
+                variant="default"
+                className="gap-1.5"
+                onClick={() => {
+                  completePathStep.mutate(
+                    { pathId, stepId: pathStepId, masteryScore: accuracy / 100, durationSeconds: Math.round((Date.now() - startTime) / 1000) },
+                    { onSuccess: () => setDidCompletePathStep(true) }
+                  );
+                }}
+                disabled={completePathStep.isPending}
+              >
+                {completePathStep.isPending ? "Completing..." : "Mark Path Step Complete"}
+              </Button>
+            )}
             <Button onClick={() => setLoc("/dashboard")}>
               Back to Dashboard
             </Button>
