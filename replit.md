@@ -1,14 +1,20 @@
 # Paideia-Ren Teaching Companion
 
-Marketing site (`paideia-ren`), teacher app (`paideia-app`), and shared API
-(`api-server`) for an African-curriculum-first lesson planning, worksheet,
-quiz, and parent-update copilot for teachers.
+Marketing site (`paideia-ren`), teacher app (`paideia-app`), student study app
+(`paideia-study`), and shared API (`api-server`).
+
+- Teacher platform: African-curriculum-first lesson planning, worksheet,
+  quiz, and parent-update copilot.
+- Study app: Intelligent, individualized, adaptive learning. AI ingests any
+  content (PDFs, images, URLs, audio, text), builds knowledge graphs, detects
+  cognitive styles, and continuously adapts learning paths.
 
 ## Run & Operate
 
 - `pnpm --filter @workspace/api-server run dev` — run the API server
 - `pnpm --filter @workspace/paideia-app run dev` — teacher web app
 - `pnpm --filter @workspace/paideia-ren run dev` — marketing site
+- `pnpm --filter @workspace/paideia-study run dev` — student study app (port auto-assigned)
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
 - Required env: `DATABASE_URL`, `OPENAI_API_KEY`, `ADMIN_EMAILS`

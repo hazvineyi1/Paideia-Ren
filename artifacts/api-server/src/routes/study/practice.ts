@@ -86,7 +86,8 @@ router.post("/", async (req, res) => {
       { kind: "study_practice_questions" },
     );
 
-    questions = aiQuestions.map((q, i) => ({
+    const questionArray = Array.isArray(aiQuestions) ? aiQuestions : [];
+    questions = questionArray.map((q, i) => ({
       id: randomUUID(),
       prompt: q.prompt,
       options: q.options.slice(0, 4),

@@ -1,9 +1,15 @@
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { useListStudyMaterials, useDeleteStudyMaterial, getListStudyMaterialsQueryKey } from "@workspace/api-client-react";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import {
+  useListStudyMaterials,
+  useDeleteStudyMaterial,
+  getListStudyMaterialsQueryKey,
+} from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Plus, Trash2, BookOpen, FileText, ArrowLeft, Layers, Sparkles } from "lucide-react";
+import { Plus, Trash2, BookOpen, FileText, ArrowLeft, Layers, Sparkles, Network, ChevronRight } from "lucide-react";
 
 export default function StudyMaterials() {
   const [, setLoc] = useLocation();
@@ -17,39 +23,59 @@ export default function StudyMaterials() {
     queryClient.invalidateQueries({ queryKey: getListStudyMaterialsQueryKey() });
   };
 
+  const getIcon = (sourceType: string) => {
+    switch (sourceType) {
+      case "url": return <BookOpen className="h-4 w-4" />;
+      case "file": return <FileText className="h-4 w-4" />;
+      default: return <Layers className="h-4 w-4" />;
+    }
+  };
+
+  const getColor = (sourceType: string) => {
+    switch (sourceType) {
+      case "url": return "bg-blue-50 border-blue-100 text-blue-600";
+      case "file": return "bg-amber-50 border-amber-100 text-amber-600";
+      default: return "bg-emerald-50 border-emerald-100 text-emerald-600";
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b px-6 py-4 flex items-center justify-between">
-        <Button variant="ghost" size="sm" onClick={() => setLoc("/dashboard")}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
+      <header className="border-b px-4 py-3 flex items-center justify-between sticky top-0 bg-background/95 backdrop-blur-sm z-10">
+        <Button variant="ghost" size="sm" className="gap-1.5" onClick={() => setLoc("/dashboard")}>
+          <ArrowLeft className="h-4 w-4" />
           Dashboard
         </Button>
-        <Button size="sm" onClick={() => setLoc("/materials/new")}>
-          <Plus className="h-4 w-4 mr-2" />
+        <Button size="sm" className="gap-1.5" onClick={() => setLoc("/materials/new")}>
+          <Plus className="h-4 w-4" />
           Add Material
         </Button>
       </header>
 
-      <main className="max-w-3xl mx-auto px-6 py-8">
-        <h1 className="text-2xl font-bold mb-2">Study Materials</h1>
-        <p className="text-muted-foreground mb-6">
-          Paste notes, paste URLs, or describe topics to generate flashcards and concepts.
-        </p>
+      <main className="max-w-4xl mx-auto px-4 py-6">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold mb-1">Your Materials</h1>
+          <p className="text-sm text-muted-foreground">
+            {materials?.length ?? 0} sources ingested · AI has extracted {materials?.reduce((s, m) => s + (m.conceptCount ?? 0), 0) ?? 0} concepts
+          </p>
+        </div>
 
         {isLoading ? (
           <div className="flex justify-center py-12">
             <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
           </div>
         ) : !materials || materials.length === 0 ? (
-          <Card>
+          <Card className="border-dashed">
             <CardContent className="py-12 text-center">
-              <BookOpen className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+              <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mx-auto mb-3">
+                <BookOpen className="h-6 w-6 text-primary" />
+              </div>
               <h3 className="font-semibold mb-1">No materials yet</h3>
-              <p className="text-muted-foreground text-sm mb-4">
-                Add your notes, textbook chapters, or any study content.
+              <p className="text-muted-foreground text-sm mb-4 max-w-sm mx-auto">
+                Add PDFs, images, URLs, or paste notes. AI will extract concepts and build your knowledge graph.
               </p>
-              <Button onClick={() => setLoc("/materials/new")}>
-                <Plus className="h-4 w-4 mr-2" />
+              <Button onClick={() => setLoc("/materials/new")} className="gap-1.5">
+                <Plus className="h-4 w-4" />
                 Add First Material
               </Button>
             </CardContent>
@@ -57,33 +83,61 @@ export default function StudyMaterials() {
         ) : (
           <div className="space-y-3">
             {materials.map((m) => (
-              <Card key={m.id} className="group">
-                <CardContent className="py-4 flex items-start justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <FileText className="h-4 w-4 text-primary" />
-                      <h3 className="font-semibold truncate">{m.title}</h3>
+              <Card key={m.id} className="group overflow-hidden hover:shadow-md transition-shadow cursor-pointer" onClick={() => setLoc(`/materials/${m.id}`)}>
+                <CardContent className="py-4 px-5">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-start gap-3 flex-1 min-w-0">
+                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${getColor(m.sourceType)}`}>
+                        {getIcon(m.sourceType)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <h3 className="font-semibold text-sm truncate">{m.title}</h3>
+                          <Badge variant="outline" className="text-[10px] h-5 shrink-0 capitalize">
+                            {m.sourceType}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <Network className="h-3 w-3" />
+                            {m.conceptCount ?? 0} concepts
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Sparkles className="h-3 w-3" />
+                            {m.flashcardCount ?? 0} flashcards
+                          </span>
+                          <span>{new Date(m.createdAt).toLocaleDateString()}</span>
+                        </div>
+                        {m.conceptCount && m.conceptCount > 0 && (
+                          <div className="mt-2">
+                            <div className="flex items-center justify-between text-[10px] mb-1">
+                              <span className="text-muted-foreground">Study Progress</span>
+                              <span className="font-medium">{Math.round(((m.flashcardCount ?? 0) / (m.conceptCount * 0.7)) * 100)}%</span>
+                            </div>
+                            <Progress value={Math.min(100, ((m.flashcardCount ?? 0) / (m.conceptCount * 0.7)) * 100)} className="h-1" />
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <Layers className="h-3 w-3" />
-                        {m.conceptCount} concepts
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Sparkles className="h-3 w-3" />
-                        {m.flashcardCount} flashcards
-                      </span>
-                      <span>{new Date(m.createdAt).toLocaleDateString()}</span>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => handleDelete(m.id)}
+                      >
+                        <Trash2 className="h-4 w-4 text-red-500" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        onClick={() => setLoc("/flashcards")}
+                      >
+                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                      </Button>
                     </div>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={() => handleDelete(m.id)}
-                  >
-                    <Trash2 className="h-4 w-4 text-red-500" />
-                  </Button>
                 </CardContent>
               </Card>
             ))}

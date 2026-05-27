@@ -9,6 +9,8 @@ import profileRouter from "./profile.js";
 import briefsRouter from "./briefs.js";
 import dashboardRouter from "./dashboard.js";
 import billingRouter from "./billing.js";
+import knowledgeRouter from "./knowledge.js";
+import adaptiveRouter from "./adaptive.js";
 
 const router: IRouter = Router();
 
@@ -22,5 +24,7 @@ router.use("/profile", profileRouter);
 router.use("/briefs", briefsRouter);
 router.use("/dashboard", dashboardRouter);
 router.use("/billing", billingRouter);
+router.use("/knowledge", knowledgeRouter);
+router.use("/adaptive", adaptiveRouter);
 
 export default router;

@@ -21,6 +21,8 @@ import StudyTutor from "@/pages/StudyTutor";
 import StudyTutorChat from "@/pages/StudyTutorChat";
 import StudyProfile from "@/pages/StudyProfile";
 import StudyBriefs from "@/pages/StudyBriefs";
+import StudyKnowledgeMap from "@/pages/StudyKnowledgeMap";
+import StudyMaterialView from "@/pages/StudyMaterialView";
 
 const queryClient = new QueryClient();
 
@@ -55,6 +57,7 @@ function Router() {
       <Route path="/dashboard" component={() => <Protected component={StudyDashboard} />} />
       <Route path="/materials" component={() => <Protected component={StudyMaterials} />} />
       <Route path="/materials/new" component={() => <Protected component={StudyMaterialNew} />} />
+      <Route path="/materials/:materialId" component={() => <Protected component={StudyMaterialView} />} />
       <Route path="/flashcards" component={() => <Protected component={StudyFlashcards} />} />
       <Route path="/practice" component={() => <Protected component={StudyPractice} />} />
       <Route path="/practice/:sessionId" component={StudyPracticeSession} />
@@ -64,6 +67,7 @@ function Router() {
       <Route path="/tutor/:conversationId" component={StudyTutorChat} />
       <Route path="/profile" component={() => <Protected component={StudyProfile} />} />
       <Route path="/briefs" component={() => <Protected component={StudyBriefs} />} />
+      <Route path="/knowledge-map" component={() => <Protected component={StudyKnowledgeMap} />} />
       <Route component={NotFound} />
     </Switch>
   );
