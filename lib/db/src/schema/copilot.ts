@@ -363,3 +363,39 @@ export const paidPlanWaitlistTable = pgTable("copilot_paid_plan_waitlist", {
 }));
 
 export type PaidPlanWaitlistEntry = typeof paidPlanWaitlistTable.$inferSelect;
+
+export const tutorConversationsTable = pgTable("copilot_tutor_conversations", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  studentId: uuid("student_id")
+    .notNull()
+    .references(() => studentsTable.id, { onDelete: "cascade" }),
+  classId: uuid("class_id")
+    .notNull()
+    .references(() => classesTable.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  socraticMode: boolean("socratic_mode").notNull().default(false),
+  scope: text("scope").notNull().default("all_material"),
+  scopeRefId: text("scope_ref_id"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (t) => ({
+  studentIdx: index("copilot_tutor_conversations_student_idx").on(t.studentId),
+  classIdx: index("copilot_tutor_conversations_class_idx").on(t.classId),
+}));
+
+export const tutorMessagesTable = pgTable("copilot_tutor_messages", {
+  id: serial("id").primaryKey(),
+  conversationId: uuid("conversation_id")
+    .notNull()
+    .references(() => tutorConversationsTable.id, { onDelete: "cascade" }),
+  role: text("role").notNull(), // "user" | "assistant"
+  content: text("content").notNull(),
+  citations: jsonb("citations").$type<Array<{ type: "concept" | "source"; title: string; url?: string }>>(),
+  usedPersonalization: boolean("used_personalization").default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => ({
+  conversationIdx: index("copilot_tutor_messages_conversation_idx").on(t.conversationId),
+}));
+
+export type TutorConversation = typeof tutorConversationsTable.$inferSelect;
+export type TutorMessage = typeof tutorMessagesTable.$inferSelect;

@@ -101,7 +101,11 @@ router.get("/:id", async (req, res) => {
     gradedCount: countsByAssignment.get(a.id)?.graded ?? 0,
     pendingCount: countsByAssignment.get(a.id)?.pending ?? 0,
   }));
-  const studentsSanitised = students.map(({ passwordHash: _ph, ...rest }) => rest);
+  const studentsSanitised = students.map((s) => {
+    const { passwordHash: _ph, ...rest } = s;
+    void _ph;
+    return rest;
+  });
   res.json({ class: rows[0], students: studentsSanitised, assignments });
 });
 

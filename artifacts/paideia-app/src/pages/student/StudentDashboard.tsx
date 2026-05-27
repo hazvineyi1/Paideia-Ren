@@ -3,7 +3,7 @@ import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 import { useStudentAuth } from "@/hooks/use-student-auth";
-import { ArrowUpRight, Check, LogOut } from "lucide-react";
+import { ArrowUpRight, Check, LogOut, MessageSquare } from "lucide-react";
 
 interface StudentAssignment {
   id: string;
@@ -42,6 +42,11 @@ export default function StudentDashboard() {
             <div className="font-serif text-xl text-primary">Paideia-Ren</div>
             <div className="text-xs text-muted-foreground">Signed in as {student.firstName} {student.lastInitial}</div>
           </div>
+          <Link href="/student/tutor">
+            <Button variant="ghost" size="sm" className="gap-1.5 mr-2">
+              <MessageSquare className="h-4 w-4" /> Study Tutor
+            </Button>
+          </Link>
           <Button variant="ghost" size="sm" onClick={out}><LogOut className="h-4 w-4 mr-1" />Sign out</Button>
         </div>
       </header>

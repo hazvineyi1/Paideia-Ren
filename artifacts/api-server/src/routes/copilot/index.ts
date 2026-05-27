@@ -17,6 +17,7 @@ import profilesRouter from "./profiles.js";
 import libraryRouter from "./library.js";
 import resourceSharesRouter from "./resource-shares.js";
 import billingRouter from "./billing.js";
+import tutorRouter from "./tutor.js";
 
 const router: IRouter = Router();
 
@@ -38,5 +39,6 @@ router.use("/profiles", profilesRouter);
 router.use("/library", libraryRouter);
 router.use("/resource-shares", resourceSharesRouter);
 router.use("/billing", billingRouter);
+router.use("/student/tutor", tutorRouter);
 
 export default router;

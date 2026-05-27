@@ -419,3 +419,25 @@ export interface Sample {
   content: unknown;
   createdAt: string;
 }
+
+export interface TutorConversation {
+  id: string;
+  studentId: string;
+  classId: string;
+  title: string;
+  socraticMode: boolean;
+  scope: "all_material" | "specific_assignment";
+  scopeRefId: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TutorMessage {
+  id: number;
+  conversationId: string;
+  role: "user" | "assistant";
+  content: string;
+  citations: Array<{ type: "concept" | "source"; title: string; url?: string }> | null;
+  usedPersonalization: boolean | null;
+  createdAt: string;
+}
