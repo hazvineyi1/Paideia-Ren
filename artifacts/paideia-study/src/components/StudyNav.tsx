@@ -1,22 +1,21 @@
 import { useLocation } from "wouter";
 import { useStudyAuth } from "@/hooks/use-study-auth";
 import {
-  LayoutDashboard, GraduationCap, BookOpen, Network, Zap, TrendingUp,
-  LogOut, User, ChevronDown, Brain,
+  LayoutDashboard, BookOpen, TrendingUp,
+  LogOut, User, ChevronDown, Brain, Zap, Network, GraduationCap,
+  MessageCircle,
 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent,
   DropdownMenuItem, DropdownMenuSeparator, DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 
+// Pared-down nav: only three primary destinations. Everything else lives in
+// the profile dropdown or is reached contextually from the AI-led "Today" flow.
 const TABS = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/tutor", label: "AI Tutor", icon: GraduationCap, match: ["/tutor"] },
+  { href: "/dashboard", label: "Today", icon: LayoutDashboard },
   { href: "/materials", label: "Materials", icon: BookOpen, match: ["/materials"] },
-  { href: "/knowledge-map", label: "Knowledge", icon: Network },
-  { href: "/flashcards", label: "Flashcards", icon: Zap },
   { href: "/progress", label: "Progress", icon: TrendingUp },
-  { href: "/retention", label: "Profile", icon: Brain },
 ];
 
 export default function StudyNav() {
@@ -73,6 +72,22 @@ export default function StudyNav() {
                 <div className="text-muted-foreground truncate font-normal">{user?.email}</div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
+              <DropdownMenuLabel className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                Tools
+              </DropdownMenuLabel>
+              <DropdownMenuItem onClick={() => setLoc("/tutor")}>
+                <MessageCircle className="h-3.5 w-3.5 mr-2" /> AI Tutor
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setLoc("/flashcards")}>
+                <Zap className="h-3.5 w-3.5 mr-2" /> Flashcards
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setLoc("/knowledge-map")}>
+                <Network className="h-3.5 w-3.5 mr-2" /> Knowledge map
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                Account
+              </DropdownMenuLabel>
               <DropdownMenuItem onClick={() => setLoc("/profile")}>
                 <User className="h-3.5 w-3.5 mr-2" /> Account settings
               </DropdownMenuItem>

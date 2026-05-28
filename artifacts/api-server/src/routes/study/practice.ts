@@ -28,6 +28,17 @@ const answerInputSchema = z.object({
   confidence: z.number().int().min(1).max(5),
 });
 
+// DELETE /study/practice/sessions  - wipe all practice sessions for current user
+// (useful to clear stale sessions from before the strict-prompt fix that may
+// contain off-topic / cross-domain questions)
+router.delete("/sessions", async (req, res) => {
+  const userId = req.studyUser!.id;
+  await db
+    .delete(studyPracticeSessionsTable)
+    .where(eq(studyPracticeSessionsTable.userId, userId));
+  res.json({ success: true });
+});
+
 router.post("/", async (req, res) => {
   const parsed = createInputSchema.safeParse(req.body);
   if (!parsed.success) {

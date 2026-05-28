@@ -6,8 +6,11 @@ import {
   studyLearningPathStepsTable,
   studyKnowledgeNodesTable,
   studyAssessmentsTable,
+  studyMaterialsTable,
+  studyConceptsTable,
 } from "@workspace/db";
 import { eq, and, asc, desc, sql } from "drizzle-orm";
+import { randomUUID } from "crypto";
 import { isLearningProfile } from "../../lib/prompts.js";
 
 function generateCoachingMessage(step: any, assessmentResults: any | null, nodes: any[]): string {
@@ -57,6 +60,114 @@ import { requireStudyUser } from "../../middlewares/auth.js";
 
 const router: IRouter = Router();
 router.use(requireStudyUser);
+
+// POST /study/paths/from-material  - build an AI-led path from a material's concepts
+// without requiring a completed diagnostic. Marks any existing active paths archived
+// so the dashboard always has exactly one current path.
+router.post("/from-material", async (req, res) => {
+  const userId = req.studyUser!.id;
+  const schema = z.object({ materialId: z.string().min(1) });
+  const parsed = schema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "materialId required" });
+    return;
+  }
+  const { materialId } = parsed.data;
+
+  const [material] = await db
+    .select()
+    .from(studyMaterialsTable)
+    .where(and(eq(studyMaterialsTable.userId, userId), eq(studyMaterialsTable.id, materialId)))
+    .limit(1);
+  if (!material) {
+    res.status(404).json({ error: "Material not found" });
+    return;
+  }
+
+  const concepts = await db
+    .select()
+    .from(studyConceptsTable)
+    .where(and(eq(studyConceptsTable.userId, userId), eq(studyConceptsTable.materialId, materialId)))
+    .orderBy(asc(studyConceptsTable.createdAt));
+
+  if (concepts.length === 0) {
+    res.status(400).json({
+      error: "This material has no extracted concepts yet. Wait for AI extraction to finish, then try again.",
+    });
+    return;
+  }
+
+  // Archive any other active paths so there is exactly one current path
+  await db
+    .update(studyLearningPathsTable)
+    .set({ status: "archived" })
+    .where(and(eq(studyLearningPathsTable.userId, userId), eq(studyLearningPathsTable.status, "active")));
+
+  const STEPS_PER_CONCEPT: Array<{ type: string; label: string; minutes: number }> = [
+    { type: "read_material", label: "Read & Understand", minutes: 10 },
+    { type: "flashcard_review", label: "Active Recall", minutes: 8 },
+    { type: "practice_questions", label: "Apply Knowledge", minutes: 10 },
+    { type: "mastery_check", label: "Mastery Check", minutes: 5 },
+  ];
+
+  const totalMinutes = concepts.length * STEPS_PER_CONCEPT.reduce((s, x) => s + x.minutes, 0);
+
+  const [path] = await db
+    .insert(studyLearningPathsTable)
+    .values({
+      userId,
+      title: `${material.title} — AI Study Plan`,
+      description: `An AI-led plan that walks you through every concept in "${material.title}", one step at a time.`,
+      goal: `Master all ${concepts.length} concepts from "${material.title}".`,
+      status: "active",
+      nodeSequence: [],
+      totalEstimatedMinutes: totalMinutes,
+      completedMinutes: 0,
+    })
+    .returning();
+
+  // Generate ordered steps: per concept → read → recall → practice → mastery
+  type StepRow = typeof studyLearningPathStepsTable.$inferInsert;
+  const rows: StepRow[] = [];
+  let order = 1;
+  for (let ci = 0; ci < concepts.length; ci++) {
+    const c = concepts[ci];
+    const conceptStepIds: string[] = [];
+    for (let si = 0; si < STEPS_PER_CONCEPT.length; si++) {
+      const tpl = STEPS_PER_CONCEPT[si];
+      const id = randomUUID();
+      const prevInConcept = conceptStepIds[conceptStepIds.length - 1];
+      const prevConceptLastId = ci > 0 ? rows[rows.length - 1]?.id : undefined;
+      const prereqs: string[] = [];
+      if (prevInConcept) prereqs.push(prevInConcept);
+      else if (prevConceptLastId) prereqs.push(prevConceptLastId);
+
+      rows.push({
+        id,
+        userId,
+        pathId: path.id,
+        nodeId: null,
+        conceptId: c.id,
+        order: order++,
+        stepType: tpl.type,
+        title: `${tpl.label}: ${c.title}`,
+        description: `${tpl.label.toLowerCase()} for "${c.title}"`,
+        estimatedMinutes: tpl.minutes,
+        status: ci === 0 && si === 0 ? "available" : "locked",
+        contentRef: materialId,
+        prerequisites: prereqs,
+        masteryScore: null,
+      });
+      conceptStepIds.push(id);
+    }
+  }
+
+  for (const r of rows) {
+    await db.insert(studyLearningPathStepsTable).values(r);
+  }
+
+  res.status(201).json({ pathId: path.id, totalSteps: rows.length, totalMinutes });
+});
 
 // GET /study/paths - list learning paths
 router.get("/", async (req, res) => {

@@ -11,7 +11,9 @@ import {
   useStudyProfile,
   useLearningStyleProfile,
 } from "@/hooks/use-study-journey";
-import { useEffect } from "react";
+import { useListStudyMaterials, customFetch, getDailyStudySessionQueryKey } from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import {
   BookOpen, Zap, Target, MessageCircle, ArrowRight, LogOut, Flame,
   Brain, Clock, ChevronRight, CheckCircle2, RotateCcw, Award,
@@ -57,7 +59,45 @@ export default function StudyDashboard() {
   const { data: sessionData, isLoading } = useDailySession();
   const { data: profile } = useStudyProfile();
   const { data: learningStyle, isLoading: lsLoading } = useLearningStyleProfile();
+  const { data: materials } = useListStudyMaterials();
   const startStep = useStartPathStep();
+  const queryClient = useQueryClient();
+  const [buildingPath, setBuildingPath] = useState(false);
+  const [clearingHistory, setClearingHistory] = useState(false);
+  const [planError, setPlanError] = useState<string | null>(null);
+  const apiBase = `${import.meta.env.BASE_URL}api/study`.replace(/\/+api/, "/api");
+
+  const buildPath = async (materialId: string) => {
+    setPlanError(null);
+    setBuildingPath(true);
+    try {
+      await customFetch(`${apiBase}/paths/from-material`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ materialId }),
+      });
+      await queryClient.invalidateQueries({ queryKey: getDailyStudySessionQueryKey() });
+    } catch (err: unknown) {
+      setPlanError(
+        (err as { response?: { data?: { error?: string } } })?.response?.data?.error ||
+          "Couldn't build your study plan. Make sure the material has finished concept extraction, then try again.",
+      );
+    } finally {
+      setBuildingPath(false);
+    }
+  };
+
+  const clearStaleHistory = async () => {
+    if (!confirm("Clear all your old practice sessions? This removes any leftover questions from earlier sessions (including any that mixed subjects). Your materials and flashcards stay.")) return;
+    setClearingHistory(true);
+    try {
+      await customFetch(`${apiBase}/practice/sessions`, { method: "DELETE" });
+    } catch {
+      alert("Couldn't clear practice history. Please try again.");
+    } finally {
+      setClearingHistory(false);
+    }
+  };
 
   // Gate: send to learning-style diagnostic if not yet completed
   useEffect(() => {
@@ -236,8 +276,66 @@ export default function StudyDashboard() {
               )}
             </CardContent>
           </Card>
+        ) : materials && materials.length > 0 ? (
+          // Materials exist but no active path — let the AI build one
+          <Card className="border-primary/30 bg-primary/5">
+            <CardContent className="py-8 px-5 text-center">
+              <div className="w-14 h-14 rounded-2xl bg-primary/15 flex items-center justify-center mx-auto mb-3">
+                <Sparkles className="h-7 w-7 text-primary" />
+              </div>
+              <h2 className="text-lg font-bold mb-1">Let the AI lead your study plan</h2>
+              <p className="text-sm text-muted-foreground mb-5 max-w-sm mx-auto">
+                Pick a material and your coach will sequence every concept into a guided path: read → recall → practice → mastery check. You just follow the next step.
+              </p>
+              <div className="space-y-2 max-w-sm mx-auto text-left">
+                {materials.map((m) => (
+                  <Button
+                    key={m.id}
+                    variant="outline"
+                    className="w-full justify-between h-auto py-3 px-4"
+                    disabled={buildingPath}
+                    onClick={() => buildPath(m.id)}
+                  >
+                    <span className="flex items-center gap-2 min-w-0">
+                      <BookOpen className="h-4 w-4 text-primary shrink-0" />
+                      <span className="truncate font-medium">{m.title}</span>
+                    </span>
+                    <span className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
+                      {m.conceptCount ?? 0} concepts <ArrowRight className="h-3.5 w-3.5" />
+                    </span>
+                  </Button>
+                ))}
+              </div>
+              {buildingPath && (
+                <p className="text-xs text-muted-foreground mt-4">
+                  Building your personalized path — this takes a few seconds.
+                </p>
+              )}
+              {planError && (
+                <div className="mt-4 mx-auto max-w-sm rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700 text-left">
+                  {planError}
+                </div>
+              )}
+              <div className="mt-5 pt-4 border-t border-primary/10 flex items-center justify-center gap-3 text-xs">
+                <button
+                  className="text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
+                  onClick={() => setLoc("/materials/new")}
+                >
+                  Add another material
+                </button>
+                <span className="text-muted-foreground/50">·</span>
+                <button
+                  className="text-muted-foreground hover:text-rose-600 underline-offset-2 hover:underline disabled:opacity-50"
+                  disabled={clearingHistory}
+                  onClick={clearStaleHistory}
+                >
+                  Clear old practice history
+                </button>
+              </div>
+            </CardContent>
+          </Card>
         ) : (
-          // No path yet - onboarding
+          // No materials at all — onboarding
           <Card className="border-dashed border-primary/30 bg-primary/5">
             <CardContent className="py-10 text-center">
               <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
