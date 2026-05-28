@@ -65,21 +65,23 @@ export default function StudyDashboard() {
   const [buildingPath, setBuildingPath] = useState(false);
   const [clearingHistory, setClearingHistory] = useState(false);
   const [planError, setPlanError] = useState<string | null>(null);
-  const apiBase = `${import.meta.env.BASE_URL}api/study`.replace(/\/+api/, "/api");
+  const API_BASE = "/api/study";
 
   const buildPath = async (materialId: string) => {
     setPlanError(null);
     setBuildingPath(true);
     try {
-      await customFetch(`${apiBase}/paths/from-material`, {
+      await customFetch(`${API_BASE}/paths/from-material`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ materialId }),
       });
       await queryClient.invalidateQueries({ queryKey: ["study", "daily-session"] });
     } catch (err: unknown) {
+      const apiErr = err as { data?: { error?: string }; message?: string };
       setPlanError(
-        (err as { response?: { data?: { error?: string } } })?.response?.data?.error ||
+        apiErr?.data?.error ||
+          apiErr?.message ||
           "Couldn't build your study plan. Make sure the material has finished concept extraction, then try again.",
       );
     } finally {
@@ -91,7 +93,7 @@ export default function StudyDashboard() {
     if (!confirm("Clear all your old practice sessions? This removes any leftover questions from earlier sessions (including any that mixed subjects). Your materials and flashcards stay.")) return;
     setClearingHistory(true);
     try {
-      await customFetch(`${apiBase}/practice/sessions`, { method: "DELETE" });
+      await customFetch(`${API_BASE}/practice/sessions`, { method: "DELETE" });
     } catch {
       alert("Couldn't clear practice history. Please try again.");
     } finally {
