@@ -86,8 +86,19 @@ export interface ExtractedContent {
 
 const MAX_TEXT_CHARS = 50000;
 
+function sanitizeText(text: string): string {
+  // Postgres TEXT cannot store NUL (0x00). Also strip other C0 control chars
+  // (except tab/LF/CR) that some PDFs embed and which break downstream tools.
+  // Normalise line endings to \n.
+  return text
+    .replace(/\u0000/g, "")
+    .replace(/[\u0001-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, "")
+    .replace(/\r\n?/g, "\n");
+}
+
 function clamp(text: string): string {
-  return text.length > MAX_TEXT_CHARS ? text.slice(0, MAX_TEXT_CHARS) : text;
+  const cleaned = sanitizeText(text);
+  return cleaned.length > MAX_TEXT_CHARS ? cleaned.slice(0, MAX_TEXT_CHARS) : cleaned;
 }
 
 function stripHtml(html: string): string {
@@ -106,7 +117,10 @@ function stripHtml(html: string): string {
 }
 
 async function extractPdf(buffer: Buffer): Promise<string> {
-  const mod: any = await import("pdf-parse");
+  // Import the inner implementation directly. The top-level `pdf-parse`
+  // entry has a debug block that tries to read a bundled test PDF from
+  // the CWD when bundled, which throws ENOENT in production.
+  const mod: any = await import("pdf-parse/lib/pdf-parse.js");
   const pdfParse = mod.default ?? mod;
   const data = await pdfParse(buffer);
   return (data.text ?? "").trim();
