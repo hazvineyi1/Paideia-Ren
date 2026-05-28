@@ -66,7 +66,7 @@ export default function StudyDailySession() {
     const ref = step.contentRef || step.conceptId;
     const stepParams = `?pathId=${encodeURIComponent(path.id)}&pathStepId=${encodeURIComponent(step.id)}`;
     switch (step.stepType) {
-      case "read_material": setLoc(ref ? `/materials/${ref}${stepParams}` : `/materials${stepParams}`); break;
+      case "read_material": setLoc(`/read-step/${path.id}/${step.id}`); break;
       case "flashcard_review": setLoc(`/flashcards${stepParams}`); break;
       case "practice_questions": setLoc(`/practice${stepParams}`); break;
       case "tutor_session": setLoc(`/tutor${stepParams}`); break;

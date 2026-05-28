@@ -45,7 +45,7 @@ function navigateToStep(step: any, pathId: string, setLoc: (s: string) => void) 
   const ref = step.contentRef || step.conceptId;
   const params = `?pathId=${encodeURIComponent(pathId)}&pathStepId=${encodeURIComponent(step.id)}`;
   switch (step.stepType) {
-    case "read_material": setLoc(ref ? `/materials/${ref}${params}` : `/materials${params}`); break;
+    case "read_material": setLoc(`/read-step/${pathId}/${step.id}`); break;
     case "flashcard_review": setLoc(`/flashcards${params}`); break;
     case "practice_questions": setLoc(`/practice${params}`); break;
     case "tutor_session": setLoc(`/tutor${params}`); break;
