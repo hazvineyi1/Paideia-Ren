@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import StudyNav from "@/components/StudyNav";
@@ -31,7 +31,18 @@ export default function StudyPractice() {
   const { data: materials, isLoading: matLoading } = useListStudyMaterials();
   const createMutation = useCreateStudyPractice();
 
-  const [materialId, setMaterialId] = useState("");
+  const [materialId, setMaterialId] = useState(() => {
+    try {
+      return new URLSearchParams(window.location.search).get("material") || "";
+    } catch { return ""; }
+  });
+
+  // Keep selection in sync if user arrives with a different ?material= later
+  useEffect(() => {
+    const fromUrl = new URLSearchParams(window.location.search).get("material");
+    if (fromUrl && fromUrl !== materialId) setMaterialId(fromUrl);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [questionCount, setQuestionCount] = useState(10);
   const [difficulty, setDifficulty] = useState<DifficultyLevel>("mixed");
   const [focusMode, setFocusMode] = useState(false);

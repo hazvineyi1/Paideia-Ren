@@ -9,11 +9,13 @@ import {
   useListStudyConcepts,
   useListStudyFlashcards,
   useCreateStudyFlashcard,
+  useCreateStudyPractice,
 } from "@workspace/api-client-react";
 import { useStudyKnowledgeGraph } from "@/hooks/use-study-api";
 import {
   ArrowLeft, BookOpen, Network, Brain, Flashlight, Target,
-  FileText, ExternalLink, Tag, ChevronRight, Plus, Check
+  FileText, ExternalLink, Tag, ChevronRight, Plus, Check,
+  Play, Loader2, Settings2, GraduationCap,
 } from "lucide-react";
 import StudyNav from "@/components/StudyNav";
 
@@ -26,8 +28,41 @@ export default function StudyMaterialView() {
   const flashcards = allFlashcards?.filter((f) => f.materialId === materialId);
   const { data: kgraph } = useStudyKnowledgeGraph();
   const createFcMutation = useCreateStudyFlashcard();
+  const createPracticeMutation = useCreateStudyPractice();
 
   const [createdFlashcards, setCreatedFlashcards] = useState<Set<string>>(new Set());
+  const [startingPractice, setStartingPractice] = useState(false);
+
+  const startPracticeNow = async () => {
+    if (!materialId || startingPractice) return;
+    setStartingPractice(true);
+    try {
+      const res = await createPracticeMutation.mutateAsync({
+        data: { materialId, questionCount: 10, difficulty: "mixed" },
+      });
+      setLoc(`/practice/${res.id}`);
+    } catch {
+      alert("Could not generate a practice session. Try again, or open the configure page.");
+      setStartingPractice(false);
+    }
+  };
+
+  const startGuidedOnMaterial = async () => {
+    if (!materialId) return;
+    try {
+      const r = await fetch("/api/study/tutor/guided/start", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ materialId }),
+      });
+      if (!r.ok) { alert("Could not start tutor session."); return; }
+      const data = await r.json();
+      setLoc(`/tutor/guided/${data.conversation.id}`);
+    } catch {
+      alert("Could not start tutor session.");
+    }
+  };
 
   const handleCreateFlashcard = async (concept: { title: string; explanation: string; keyTerms?: string[] }) => {
     const res = await createFcMutation.mutateAsync({
@@ -98,12 +133,47 @@ export default function StudyMaterialView() {
               </a>
             </Button>
           )}
+        </div>
+      </header>
+
+      {/* Primary action bar — surface the things people actually want to do */}
+      <div className="border-b bg-gradient-to-b from-primary/[0.03] to-background sticky top-[5.25rem] z-30">
+        <div className="max-w-5xl mx-auto px-4 py-2.5 flex flex-wrap items-center gap-2">
+          <Button
+            size="sm"
+            className="gap-1.5"
+            onClick={startPracticeNow}
+            disabled={startingPractice || !hasConcepts}
+            title={!hasConcepts ? "Waiting for AI to analyze this material" : "Generate 10 mixed-difficulty questions now"}
+          >
+            {startingPractice ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Play className="h-3.5 w-3.5" />}
+            {startingPractice ? "Generating questions…" : "Practice now"}
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-1.5"
+            onClick={() => setLoc(`/practice?material=${materialId}`)}
+            title="Choose question count and difficulty"
+          >
+            <Settings2 className="h-3.5 w-3.5" />
+            Configure
+          </Button>
+          <Button size="sm" variant="outline" className="gap-1.5" onClick={startGuidedOnMaterial}>
+            <GraduationCap className="h-3.5 w-3.5" />
+            Tutor on this
+          </Button>
           <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setLoc(`/flashcards`)}>
             <Flashlight className="h-3.5 w-3.5" />
             Flashcards
           </Button>
+          <span className="ml-auto text-[11px] text-muted-foreground hidden sm:inline">
+            {totalConcepts > 0
+              ? `${totalConcepts} concepts ready`
+              : "Analyzing material…"}
+          </span>
         </div>
-      </header>
+      </div>
 
       <div className="max-w-5xl mx-auto px-4 py-6">
         {/* Overview Stats */}
@@ -261,17 +331,6 @@ export default function StudyMaterialView() {
               )}
             </div>
 
-            {/* Actions */}
-            <div className="flex flex-col gap-2">
-              <Button size="sm" className="w-full gap-1.5" onClick={() => setLoc(`/practice`)}>
-                <Target className="h-3.5 w-3.5" />
-                Practice This Material
-              </Button>
-              <Button size="sm" variant="outline" className="w-full gap-1.5" onClick={() => setLoc(`/tutor`)}>
-                <Brain className="h-3.5 w-3.5" />
-                Ask AI Tutor
-              </Button>
-            </div>
           </aside>
         </div>
       </div>
