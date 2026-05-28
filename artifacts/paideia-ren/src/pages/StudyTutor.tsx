@@ -76,7 +76,7 @@ export default function StudyTutor() {
                 size="lg"
                 className="bg-primary hover:bg-primary/90 text-white px-8 h-14 text-base rounded-none"
               >
-                <a href="/app/student/login">Student sign-in</a>
+                <a href="/study/login">Student sign-in</a>
               </Button>
             </motion.div>
           </div>
@@ -193,7 +193,7 @@ export default function StudyTutor() {
               size="lg"
               className="bg-accent hover:bg-accent/90 text-white px-10 h-14 text-base rounded-none"
             >
-              <a href="/app/student/login">
+              <a href="/study/login">
                 Student sign-in <ArrowRight size={16} className="ml-2" />
               </a>
             </Button>
