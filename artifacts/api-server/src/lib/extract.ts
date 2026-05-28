@@ -1,5 +1,83 @@
 import { toFile } from "openai";
+import { promises as dns } from "node:dns";
+import net from "node:net";
 import { openai, PRIMARY_MODEL } from "./openai.js";
+
+const URL_FETCH_TIMEOUT_MS = 15_000;
+const RESEARCH_TIMEOUT_MS = 60_000;
+
+/**
+ * Reject URLs that could be used for SSRF: non-http(s) schemes, embedded
+ * credentials, hostnames that resolve to loopback, link-local, private, or
+ * other reserved ranges, and bare IP literals in those same ranges.
+ */
+async function assertSafePublicUrl(rawUrl: string): Promise<URL> {
+  let u: URL;
+  try {
+    u = new URL(rawUrl);
+  } catch {
+    throw new Error("Invalid URL.");
+  }
+  if (u.protocol !== "http:" && u.protocol !== "https:") {
+    throw new Error("Only http:// and https:// URLs are supported.");
+  }
+  if (u.username || u.password) {
+    throw new Error("URLs with embedded credentials are not allowed.");
+  }
+  const host = u.hostname;
+  if (!host) throw new Error("URL is missing a hostname.");
+
+  const ipsToCheck: string[] = [];
+  if (net.isIP(host)) {
+    ipsToCheck.push(host);
+  } else {
+    const lower = host.toLowerCase();
+    if (lower === "localhost" || lower.endsWith(".localhost") || lower.endsWith(".internal")) {
+      throw new Error("URL hostname is not publicly addressable.");
+    }
+    try {
+      const records = await dns.lookup(host, { all: true });
+      for (const r of records) ipsToCheck.push(r.address);
+    } catch {
+      throw new Error(`Could not resolve hostname: ${host}`);
+    }
+  }
+  for (const ip of ipsToCheck) {
+    if (isBlockedAddress(ip)) {
+      throw new Error("URL resolves to a non-public address and cannot be fetched.");
+    }
+  }
+  return u;
+}
+
+function isBlockedAddress(ip: string): boolean {
+  if (net.isIPv4(ip)) {
+    const [a, b] = ip.split(".").map((p) => Number(p));
+    if (a === undefined || b === undefined) return true;
+    if (a === 10) return true;
+    if (a === 127) return true;
+    if (a === 0) return true;
+    if (a === 169 && b === 254) return true; // link-local + cloud metadata 169.254.169.254
+    if (a === 172 && b >= 16 && b <= 31) return true;
+    if (a === 192 && b === 168) return true;
+    if (a === 100 && b >= 64 && b <= 127) return true; // CGNAT
+    if (a >= 224) return true; // multicast + reserved
+    return false;
+  }
+  if (net.isIPv6(ip)) {
+    const lower = ip.toLowerCase();
+    if (lower === "::1" || lower === "::") return true;
+    if (lower.startsWith("fe80:")) return true; // link-local
+    if (lower.startsWith("fc") || lower.startsWith("fd")) return true; // unique local
+    if (lower.startsWith("ff")) return true; // multicast
+    if (lower.startsWith("::ffff:")) {
+      const mapped = lower.slice(7);
+      if (net.isIPv4(mapped)) return isBlockedAddress(mapped);
+    }
+    return false;
+  }
+  return true;
+}
 
 export interface ExtractedContent {
   text: string;
@@ -118,24 +196,143 @@ export async function extractFromFile(args: {
 }
 
 export async function extractFromUrl(url: string): Promise<ExtractedContent> {
-  const res = await fetch(url, {
+  const safe = await assertSafePublicUrl(url);
+
+  const res = await fetch(safe.toString(), {
     headers: {
       "User-Agent":
         "Mozilla/5.0 (compatible; PaideiaStudy/1.0; +https://paideia-ren.com)",
       Accept: "text/html,application/xhtml+xml,*/*;q=0.8",
     },
     redirect: "follow",
+    signal: AbortSignal.timeout(URL_FETCH_TIMEOUT_MS),
   });
-  if (!res.ok) {
-    throw new Error(`Failed to fetch URL (${res.status})`);
+
+  // Auth-required / forbidden pages must NOT be silently replaced with a
+  // public-web summary — that would mislead the user.
+  if (res.status === 401 || res.status === 403) {
+    throw new Error(
+      `This page requires authentication (HTTP ${res.status}). Paste the content directly, or pick a public URL.`,
+    );
   }
+  if (!res.ok) {
+    throw new Error(`Failed to fetch URL (HTTP ${res.status}).`);
+  }
+
   const contentType = res.headers.get("content-type") || "";
   const body = await res.text();
-  let text: string;
-  if (contentType.includes("html")) {
-    text = stripHtml(body);
-  } else {
-    text = body.replace(/\s+/g, " ").trim();
+  const directText = contentType.includes("html")
+    ? stripHtml(body)
+    : body.replace(/\s+/g, " ").trim();
+
+  // The page loaded successfully but had little extractable text (likely a
+  // JS-rendered SPA or a thin landing page). Use grounded web research that
+  // focuses on this URL so we still produce real, cited study content.
+  if (directText.length < 400) {
+    return researchTopic(
+      `Summarize the educational content of this page so a learner can study from it: ${safe.toString()}`,
+      { preferredUrl: safe.toString() },
+    );
   }
+  return { text: clamp(directText), kind: "url" };
+}
+
+/**
+ * Use the LLM's built-in `web_search` tool to research a topic against the
+ * live web and return a study-ready writeup grounded in real sources, with
+ * citations appended. Falls back with a clear error if the proxy does not
+ * support web search.
+ */
+export async function researchTopic(
+  query: string,
+  opts: { preferredUrl?: string } = {},
+): Promise<ExtractedContent> {
+  const focus = opts.preferredUrl
+    ? `Focus on the page ${opts.preferredUrl} and closely related authoritative pages from the same source.`
+    : "Prefer authoritative sources (official documentation, peer-reviewed articles, recognised standards bodies, established educational publishers, reputable encyclopedias).";
+
+  const prompt = [
+    `You are a careful research assistant building study material for a learner.`,
+    ``,
+    `Topic / request: ${query}`,
+    ``,
+    `Use the web_search tool to gather REAL information. Do NOT invent facts,`,
+    `examples, dates, names, or citations. If you cannot find evidence for a`,
+    `claim, omit it. ${focus}`,
+    ``,
+    `Produce a study-ready reference in plain prose with this structure:`,
+    `1. Overview (2-3 paragraphs of what this topic is and why it matters)`,
+    `2. Key concepts (each with a 2-5 sentence explanation grounded in your sources)`,
+    `3. Important terminology and definitions`,
+    `4. Common misconceptions, exam traps, or pitfalls (if any)`,
+    `5. A short "Sources used" list of the most relevant URLs you actually consulted`,
+    ``,
+    `Cite specific claims inline by including the source URL in parentheses.`,
+    `Do not include marketing copy. Do not address the reader. Plain text only.`,
+  ].join("\n");
+
+  let response: any;
+  try {
+    response = await (openai as any).responses.create(
+      {
+        model: PRIMARY_MODEL,
+        input: prompt,
+        tools: [{ type: "web_search" }],
+        tool_choice: { type: "web_search" },
+      },
+      { signal: AbortSignal.timeout(RESEARCH_TIMEOUT_MS) },
+    );
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    throw new Error(
+      `Web research failed (the upstream model could not run a web search): ${msg}`,
+    );
+  }
+
+  let text: string = typeof response?.output_text === "string" ? response.output_text : "";
+  const citationUrls = new Set<string>();
+  let webSearchInvoked = false;
+  const output: any[] = Array.isArray(response?.output) ? response.output : [];
+  for (const item of output) {
+    if (item?.type === "web_search_call" || item?.type === "tool_call") {
+      webSearchInvoked = true;
+    }
+    if (item?.type === "message" && Array.isArray(item.content)) {
+      for (const c of item.content) {
+        if (!text && c?.type === "output_text" && typeof c.text === "string") {
+          text = c.text;
+        }
+        const annotations = Array.isArray(c?.annotations) ? c.annotations : [];
+        for (const a of annotations) {
+          if (a?.type === "url_citation" && typeof a.url === "string") {
+            citationUrls.add(a.url);
+          }
+        }
+      }
+    }
+  }
+
+  if (!text || text.trim().length < 200) {
+    throw new Error(
+      "Web research returned no usable content for this topic. Try a more specific query or paste source material directly.",
+    );
+  }
+  // Enforce the grounding contract: we promised real, cited sources. If the
+  // model answered from memory without invoking web_search or returning any
+  // citation, treat it as a failure rather than silently shipping ungrounded
+  // text.
+  if (!webSearchInvoked && citationUrls.size === 0) {
+    throw new Error(
+      "Could not retrieve cited web sources for this topic. Try a more specific query, or paste source material directly.",
+    );
+  }
+
+  if (citationUrls.size > 0) {
+    const block = `\n\n---\nSources consulted:\n${[...citationUrls]
+      .map((u) => `- ${u}`)
+      .join("\n")}`;
+    text = text + block;
+  }
+
   return { text: clamp(text), kind: "url" };
 }

@@ -2,7 +2,7 @@ import { Router, type IRouter } from "express";
 import multer from "multer";
 import { db, studyMaterialsTable } from "@workspace/db";
 import { requireStudyUser } from "../../middlewares/auth.js";
-import { extractFromFile, extractFromUrl } from "../../lib/extract.js";
+import { extractFromFile, extractFromUrl, researchTopic } from "../../lib/extract.js";
 import { kickoffConceptExtraction } from "../../lib/concept-extraction.js";
 
 const router: IRouter = Router();
@@ -34,12 +34,16 @@ router.post("/", upload.array("files", MAX_FILES), async (req, res) => {
       .split(/[\n,]+/)
       .map((u) => u.trim())
       .filter(Boolean);
+    const topics = String(req.body?.topics ?? "")
+      .split(/\n+/)
+      .map((t) => t.trim())
+      .filter(Boolean);
 
-    if (files.length === 0 && urls.length === 0) {
-      res.status(400).json({ error: "Provide at least one file or URL." });
+    if (files.length === 0 && urls.length === 0 && topics.length === 0) {
+      res.status(400).json({ error: "Provide at least one file, URL, or topic." });
       return;
     }
-    if (files.length + urls.length > MAX_FILES) {
+    if (files.length + urls.length + topics.length > MAX_FILES) {
       res.status(400).json({ error: `Maximum ${MAX_FILES} items per upload.` });
       return;
     }
@@ -89,6 +93,19 @@ router.post("/", upload.array("files", MAX_FILES), async (req, res) => {
             text: "",
             kind: "url",
             sourceUrl: url,
+            error: err instanceof Error ? err.message : String(err),
+          });
+        }
+      }),
+      ...topics.map((topic) => async () => {
+        try {
+          const result = await researchTopic(topic);
+          items.push({ label: topic, text: result.text, kind: result.kind });
+        } catch (err) {
+          items.push({
+            label: topic,
+            text: "",
+            kind: "url",
             error: err instanceof Error ? err.message : String(err),
           });
         }

@@ -15,11 +15,11 @@ import { useStudyProfile, useUpdateStudyProfile, useLearningStyleProfile } from 
 import { useEffect } from "react";
 import {
   ArrowLeft, Sparkles, FileText, Link2, Upload, Image as ImageIcon,
-  Brain, Loader2, CheckCircle2, X, Rocket,
+  Brain, Loader2, CheckCircle2, X, Rocket, Search,
   BookOpen, Zap, Compass, ChevronRight, FileAudio, FileVideo, File as FileIcon, AlertCircle
 } from "lucide-react";
 
-type TabId = "paste" | "url" | "files";
+type TabId = "paste" | "url" | "topic" | "files";
 
 function fileIconFor(file: File) {
   const t = file.type;
@@ -59,6 +59,7 @@ export default function StudyMaterialNew() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [sourceUrl, setSourceUrl] = useState("");
+  const [topic, setTopic] = useState("");
   const [activeTab, setActiveTab] = useState<TabId>("paste");
   const [submitting, setSubmitting] = useState(false);
   const [stage, setStage] = useState<"input" | "processing" | "done">("input");
@@ -149,6 +150,39 @@ export default function StudyMaterialNew() {
       setStage("done");
     } catch (err: any) {
       alert(err?.message || "Failed to add material");
+      setSubmitting(false);
+      setStage("input");
+    }
+  };
+
+  const handleSubmitTopic = async () => {
+    const t = topic.trim();
+    if (!title || !t) return;
+    setSubmitting(true);
+    setStage("processing");
+    try {
+      await saveLearningGoal();
+      const fd = new FormData();
+      fd.append("title", title);
+      fd.append("combine", "true");
+      fd.append("topics", t);
+      const res = await fetch("/api/study/materials/upload", {
+        method: "POST",
+        credentials: "include",
+        body: fd,
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.error || "Failed to research topic");
+      }
+      const data = await res.json();
+      queryClient.invalidateQueries({ queryKey: getListStudyMaterialsQueryKey() });
+      setCreatedMaterials(data.materials ?? []);
+      setProcessedReport(data.processed ?? []);
+      for (const m of data.materials ?? []) await triggerKnowledgeGen(m.id);
+      setStage("done");
+    } catch (err: any) {
+      alert(err?.message || "Failed to research topic");
       setSubmitting(false);
       setStage("input");
     }
@@ -354,10 +388,11 @@ export default function StudyMaterialNew() {
         </div>
 
         {/* Source Type Tabs */}
-        <div className="grid grid-cols-3 gap-2 mb-6">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-6">
           {([
             { id: "paste", label: "Paste Text", icon: FileText, desc: "Notes, articles, content" },
             { id: "url", label: "Web URL", icon: Link2, desc: "Articles, Wikipedia, docs" },
+            { id: "topic", label: "Research a Topic", icon: Search, desc: "We fetch real sources for you" },
             { id: "files", label: "Upload Files", icon: Upload, desc: "PDFs, docs, images, audio, video" },
           ] as const).map((opt) => (
             <button
@@ -414,7 +449,27 @@ export default function StudyMaterialNew() {
                   onChange={(e) => setSourceUrl(e.target.value)}
                 />
                 <p className="text-xs text-muted-foreground mt-2">
-                  AI fetches the page, strips the markup, and extracts concepts.
+                  We fetch the page and extract its real content. If the page is thin or JavaScript-heavy, we automatically fall back to a grounded web search on that URL — never made-up content.
+                </p>
+              </div>
+            )}
+
+            {activeTab === "topic" && (
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <Search className="h-4 w-4 text-primary" />
+                  <h3 className="font-semibold text-sm">Research a Topic or Course</h3>
+                  <Badge variant="outline" className="text-[10px] h-5 ml-auto">Cited sources</Badge>
+                </div>
+                <Textarea
+                  placeholder={`Examples:\n• "PMP exam — process groups and knowledge areas"\n• "CCNA — OSI model fundamentals"\n• "AP Biology Unit 4: cell communication and the cell cycle"`}
+                  value={topic}
+                  onChange={(e) => setTopic(e.target.value)}
+                  rows={5}
+                  className="resize-none text-sm leading-relaxed"
+                />
+                <p className="text-xs text-muted-foreground mt-2">
+                  We use a live web search to gather real, authoritative material — official docs, recognized standards, peer-reviewed sources — and assemble it into a study reference with citations. Nothing is invented. This usually takes 15–30 seconds.
                 </p>
               </div>
             )}
@@ -537,11 +592,13 @@ export default function StudyMaterialNew() {
             submitting ||
             (activeTab === "paste" && (!title || !content)) ||
             (activeTab === "url" && (!title || !sourceUrl)) ||
+            (activeTab === "topic" && (!title || !topic.trim())) ||
             (activeTab === "files" && fileSubmitDisabled)
           }
           onClick={() => {
             if (activeTab === "paste") handleSubmitText();
             else if (activeTab === "url") handleSubmitUrl();
+            else if (activeTab === "topic") handleSubmitTopic();
             else handleSubmitFiles();
           }}
         >
