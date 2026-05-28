@@ -19,6 +19,7 @@ import StudyExams from "@/pages/StudyExams";
 import StudyExamTake from "@/pages/StudyExamTake";
 import StudyTutor from "@/pages/StudyTutor";
 import StudyTutorChat from "@/pages/StudyTutorChat";
+import StudyTutorGuided from "@/pages/StudyTutorGuided";
 import StudyProfile from "@/pages/StudyProfile";
 import StudyBriefs from "@/pages/StudyBriefs";
 import StudyKnowledgeMap from "@/pages/StudyKnowledgeMap";
@@ -69,6 +70,7 @@ function Router() {
       <Route path="/exams" component={() => <Protected component={StudyExams} />} />
       <Route path="/exams/:examId/take" component={StudyExamTake} />
       <Route path="/tutor" component={() => <Protected component={StudyTutor} />} />
+      <Route path="/tutor/guided/:conversationId" component={() => <Protected component={StudyTutorGuided} />} />
       <Route path="/tutor/:conversationId" component={StudyTutorChat} />
       <Route path="/profile" component={() => <Protected component={StudyProfile} />} />
       <Route path="/briefs" component={() => <Protected component={StudyBriefs} />} />

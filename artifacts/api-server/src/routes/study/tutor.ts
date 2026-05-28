@@ -10,7 +10,21 @@ import {
 } from "@workspace/db";
 import { eq, and, desc, sql } from "drizzle-orm";
 import { requireStudyUser } from "../../middlewares/auth.js";
-import { openai, PRIMARY_MODEL } from "../../lib/openai.js";
+import { openai, PRIMARY_MODEL, generateJSON } from "../../lib/openai.js";
+import { researchTopic } from "../../lib/extract.js";
+
+const TUTOR_TURN_PREFIX = "<<TUTOR_TURN>>";
+function encodeTurn(turn: unknown): string {
+  return `${TUTOR_TURN_PREFIX}${JSON.stringify(turn)}`;
+}
+function decodeTurn(content: string): any | null {
+  if (!content.startsWith(TUTOR_TURN_PREFIX)) return null;
+  try {
+    return JSON.parse(content.slice(TUTOR_TURN_PREFIX.length));
+  } catch {
+    return null;
+  }
+}
 
 const router: IRouter = Router();
 router.use(requireStudyUser);
@@ -276,6 +290,552 @@ router.post("/conversations/:conversationId/messages", async (req, res) => {
     req.log?.error({ err }, "tutor AI call failed");
     res.status(500).json({ error: "AI tutor temporarily unavailable" });
   }
+});
+
+// =====================================================================
+// Guided session: diagnose-first tutor flow
+// =====================================================================
+
+async function loadLearnerProfileText(userId: string): Promise<string> {
+  const rows = await db
+    .select()
+    .from(studyLearnerProfilesTable)
+    .where(eq(studyLearnerProfilesTable.userId, userId))
+    .limit(1);
+  if (rows.length === 0) return "(no learner profile on file)";
+  const p = rows[0];
+  const lines = [
+    p.examTarget ? `Goal: ${p.examTarget}` : null,
+    p.goals.length ? `Aspirations: ${p.goals.join(", ")}` : null,
+    p.interests.length ? `Interests: ${p.interests.join(", ")}` : null,
+    p.background ? `Background: ${p.background}` : null,
+    `Study style: ${p.studyStyle}`,
+    `Preferred difficulty: ${p.preferredDifficulty}`,
+  ].filter(Boolean);
+  return lines.join("\n");
+}
+
+function materialIdFromScopeRef(scopeRefId: string | null): string | null {
+  if (!scopeRefId) return null;
+  // Guided conversations stash a tag like "guided:<materialId-or-empty>" in scopeRefId.
+  if (scopeRefId.startsWith("guided:")) {
+    const m = scopeRefId.slice("guided:".length);
+    return m && /^[0-9a-f-]{36}$/i.test(m) ? m : null;
+  }
+  return /^[0-9a-f-]{36}$/i.test(scopeRefId) ? scopeRefId : null;
+}
+
+async function pickFocusConcepts(userId: string, materialId: string | null, limit: number) {
+  const where = materialId
+    ? and(eq(studyConceptsTable.userId, userId), eq(studyConceptsTable.materialId, materialId))
+    : eq(studyConceptsTable.userId, userId);
+  const rows = await db
+    .select()
+    .from(studyConceptsTable)
+    .where(where)
+    .orderBy(desc(studyConceptsTable.createdAt))
+    .limit(limit);
+  return rows;
+}
+
+const startGuidedSchema = z.object({
+  materialId: z.string().uuid().nullable().optional(),
+  title: z.string().min(1).optional(),
+});
+
+router.post("/guided/start", async (req, res) => {
+  const parsed = startGuidedSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Invalid input" });
+    return;
+  }
+  const userId = req.studyUser!.id;
+  const { materialId, title } = parsed.data;
+
+  const concepts = await pickFocusConcepts(userId, materialId ?? null, 8);
+  if (concepts.length === 0) {
+    res.status(422).json({
+      error:
+        "I need at least one studied concept to start a guided session. Upload a material or research a topic first.",
+    });
+    return;
+  }
+
+  const profileText = await loadLearnerProfileText(userId);
+  const conceptList = concepts
+    .map((c) => `- [${c.id}] ${c.title}: ${c.explanation.slice(0, 220).replace(/\s+/g, " ")}`)
+    .join("\n");
+
+  let diagnostic: any;
+  try {
+    diagnostic = await generateJSON<{
+      intro: string;
+      questions: Array<{
+        id: string;
+        conceptId: string;
+        conceptTitle: string;
+        question: string;
+        options: string[];
+        correctIndex: number;
+        explanation: string;
+      }>;
+    }>(
+      `You are a warm, expert tutor designing a SHORT diagnostic to find what a learner already knows before teaching. Return strict JSON only.`,
+      `Pick the 3 MOST CENTRAL concepts from the list below and write one multiple-choice question for each (exactly 4 plausible options, one clearly correct). Each question should test core understanding, not trivia. Tailor wording to the learner's profile.
+
+Learner profile:
+${profileText}
+
+Concepts available (format: [id] title: explanation):
+${conceptList}
+
+Return JSON exactly:
+{
+  "intro": "1-2 short sentences greeting the learner by reference to their goal and explaining you'll start with a quick diagnostic.",
+  "questions": [
+    {
+      "id": "q1",
+      "conceptId": "the [id] from the list above",
+      "conceptTitle": "the concept title",
+      "question": "the question text",
+      "options": ["...", "...", "...", "..."],
+      "correctIndex": 0,
+      "explanation": "one sentence on why that option is correct"
+    }
+  ]
+}`,
+      { kind: "tutor_guided_diagnostic" },
+    );
+  } catch (err) {
+    req.log?.error({ err }, "guided diagnostic generation failed");
+    res.status(500).json({ error: "Could not start guided session. Try again in a moment." });
+    return;
+  }
+
+  if (!Array.isArray(diagnostic?.questions) || diagnostic.questions.length === 0) {
+    res.status(500).json({ error: "Tutor could not assemble a diagnostic. Try again." });
+    return;
+  }
+  // Sanitize: clamp options to 4, ensure correctIndex in range, ensure conceptIds are real.
+  const conceptIdSet = new Set(concepts.map((c) => c.id));
+  diagnostic.questions = diagnostic.questions.slice(0, 5).map((q: any, i: number) => ({
+    id: q.id || `q${i + 1}`,
+    conceptId: conceptIdSet.has(q.conceptId) ? q.conceptId : concepts[i % concepts.length].id,
+    conceptTitle: String(q.conceptTitle ?? "").slice(0, 120),
+    question: String(q.question ?? "").slice(0, 500),
+    options: Array.isArray(q.options) ? q.options.slice(0, 4).map((o: any) => String(o).slice(0, 200)) : [],
+    correctIndex: Math.max(0, Math.min(3, Number(q.correctIndex) || 0)),
+    explanation: String(q.explanation ?? "").slice(0, 400),
+  })).filter((q: any) => q.options.length === 4 && q.question.length > 0);
+
+  // Tag guided conversations so the list view can route them to the guided page,
+  // not the free-form chat (which would render raw <<TUTOR_TURN>> JSON).
+  const guidedTag = `guided:${materialId ?? ""}`;
+  const [conv] = await db
+    .insert(studyTutorConversationsTable)
+    .values({
+      userId,
+      title: title || (materialId ? `Guided session` : `Guided study session`),
+      socraticMode: false,
+      scope: materialId ? "specific_material" : "all_material",
+      scopeRefId: guidedTag,
+    })
+    .returning();
+
+  const turn = {
+    v: 1,
+    kind: "diagnostic" as const,
+    intro: String(diagnostic.intro ?? "Let's start with a quick diagnostic so I can teach you exactly what you need."),
+    questions: diagnostic.questions,
+  };
+
+  const [msg] = await db
+    .insert(studyTutorMessagesTable)
+    .values({
+      conversationId: conv.id,
+      role: "assistant",
+      content: encodeTurn(turn),
+      usedPersonalization: true,
+    })
+    .returning();
+
+  res.status(201).json({ conversation: conv, message: msg, turn });
+});
+
+const guidedReplySchema = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("diagnostic_answers"),
+    answers: z.array(z.object({ questionId: z.string(), selectedIndex: z.number().int().min(0).max(3) })),
+  }),
+  z.object({
+    kind: z.literal("check_answer"),
+    lessonMessageId: z.number().int(),
+    selectedIndex: z.number().int().min(0).max(3),
+  }),
+  z.object({ kind: z.literal("teach_next"), conceptId: z.string().nullable().optional() }),
+  z.object({ kind: z.literal("research_deeper"), conceptTitle: z.string() }),
+  z.object({ kind: z.literal("done") }),
+]);
+
+router.post("/guided/:conversationId/reply", async (req, res) => {
+  const userId = req.studyUser!.id;
+  const conversationId = req.params.conversationId;
+  const parsed = guidedReplySchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Invalid reply payload" });
+    return;
+  }
+  const reply = parsed.data;
+
+  const convs = await db
+    .select()
+    .from(studyTutorConversationsTable)
+    .where(and(eq(studyTutorConversationsTable.userId, userId), eq(studyTutorConversationsTable.id, conversationId)))
+    .limit(1);
+  if (convs.length === 0) {
+    res.status(404).json({ error: "Conversation not found" });
+    return;
+  }
+  const conv = convs[0];
+
+  // Store the user's structured reply as a user message
+  await db.insert(studyTutorMessagesTable).values({
+    conversationId,
+    role: "user",
+    content: encodeTurn({ v: 1, kind: "user_reply", reply }),
+  });
+
+  const concepts = await pickFocusConcepts(userId, materialIdFromScopeRef(conv.scopeRefId), 12);
+  const profileText = await loadLearnerProfileText(userId);
+
+  let assistantTurn: any = null;
+  let extraMsgs: any[] = [];
+
+  try {
+    if (reply.kind === "diagnostic_answers") {
+      // Find the last diagnostic turn to grade against
+      const recent = await db
+        .select()
+        .from(studyTutorMessagesTable)
+        .where(eq(studyTutorMessagesTable.conversationId, conversationId))
+        .orderBy(desc(studyTutorMessagesTable.createdAt))
+        .limit(20);
+      const decoded = recent.map((m) => decodeTurn(m.content));
+      const diagMsg = decoded.find((t) => t?.kind === "diagnostic");
+      if (!diagMsg) {
+        res.status(400).json({ error: "No diagnostic to grade." });
+        return;
+      }
+      // Reject re-submission: if feedback already exists, the diagnostic is closed.
+      if (decoded.some((t) => t?.kind === "feedback")) {
+        res.status(409).json({ error: "Diagnostic has already been submitted." });
+        return;
+      }
+      const graded = diagMsg.questions.map((q: any) => {
+        const ans = reply.answers.find((a) => a.questionId === q.id);
+        const selectedIndex = ans?.selectedIndex ?? -1;
+        return {
+          questionId: q.id,
+          conceptId: q.conceptId,
+          conceptTitle: q.conceptTitle,
+          question: q.question,
+          options: q.options,
+          correctIndex: q.correctIndex,
+          selectedIndex,
+          correct: selectedIndex === q.correctIndex,
+          explanation: q.explanation,
+        };
+      });
+      const wrong = graded.filter((g: any) => !g.correct);
+      const correctCount = graded.length - wrong.length;
+
+      // Pick focus concept = first wrong; else lowest-scoring concept's title
+      const focus = wrong[0] ?? graded[0];
+      const focusConcept = concepts.find((c) => c.id === focus.conceptId) ?? concepts[0];
+
+      // Generate a tailored lesson grounded in the focus concept's stored explanation
+      const lesson = await generateJSON<{
+        explanation_md: string;
+        example: string;
+        check: { question: string; options: string[]; correctIndex: number; explanation: string };
+      }>(
+        `You are an expert tutor. The learner just took a 3-question diagnostic. You will now teach ONE concept in depth, tailored to their profile. Return strict JSON only.`,
+        `Learner profile:
+${profileText}
+
+Diagnostic results: ${correctCount}/${graded.length} correct. ${
+          wrong.length
+            ? `They got these wrong: ${wrong.map((w: any) => w.conceptTitle).join("; ")}.`
+            : `They got everything right — go DEEPER on the most important one.`
+        }
+
+Concept to teach now: "${focusConcept.title}"
+Source material excerpt the learner has already saved:
+"""
+${focusConcept.explanation.slice(0, 1800)}
+"""
+
+Write a clear, layered explanation (250-400 words) using their study style. Use plain markdown (headings, short paragraphs, bullets if helpful). Then give ONE concrete example tailored to their interests/background, and ONE multiple-choice check question (4 options, one clearly correct).
+
+Return JSON exactly:
+{
+  "explanation_md": "the explanation in markdown",
+  "example": "1-3 sentence concrete example",
+  "check": {
+    "question": "...",
+    "options": ["...","...","...","..."],
+    "correctIndex": 0,
+    "explanation": "one sentence on why correct"
+  }
+}`,
+        { kind: "tutor_guided_lesson" },
+      );
+
+      // Save a "feedback" turn first, then a "lesson" turn — two assistant messages.
+      const feedbackTurn = {
+        v: 1,
+        kind: "feedback" as const,
+        summary: `You got ${correctCount} of ${graded.length} right.`,
+        items: graded,
+        focusConceptTitle: focusConcept.title,
+        focusConceptId: focusConcept.id,
+      };
+      const [fbMsg] = await db
+        .insert(studyTutorMessagesTable)
+        .values({ conversationId, role: "assistant", content: encodeTurn(feedbackTurn), usedPersonalization: true })
+        .returning();
+
+      const lessonTurn = {
+        v: 1,
+        kind: "lesson" as const,
+        conceptId: focusConcept.id,
+        conceptTitle: focusConcept.title,
+        explanation_md: String(lesson.explanation_md ?? "").slice(0, 5000),
+        example: String(lesson.example ?? "").slice(0, 800),
+        check: {
+          question: String(lesson.check?.question ?? "").slice(0, 500),
+          options: Array.isArray(lesson.check?.options)
+            ? lesson.check.options.slice(0, 4).map((o: any) => String(o).slice(0, 200))
+            : [],
+          correctIndex: Math.max(0, Math.min(3, Number(lesson.check?.correctIndex) || 0)),
+          explanation: String(lesson.check?.explanation ?? "").slice(0, 400),
+        },
+        sources: [] as string[],
+      };
+      const [lsMsg] = await db
+        .insert(studyTutorMessagesTable)
+        .values({ conversationId, role: "assistant", content: encodeTurn(lessonTurn), usedPersonalization: true })
+        .returning();
+
+      assistantTurn = lessonTurn;
+      extraMsgs = [fbMsg, lsMsg];
+    } else if (reply.kind === "check_answer") {
+      // Bind to the exact lesson message the learner is answering, and reject if
+      // it was already graded.
+      const lessonRow = await db
+        .select()
+        .from(studyTutorMessagesTable)
+        .where(
+          and(
+            eq(studyTutorMessagesTable.conversationId, conversationId),
+            eq(studyTutorMessagesTable.id, reply.lessonMessageId),
+          ),
+        )
+        .limit(1);
+      const lessonTurn = lessonRow[0] ? decodeTurn(lessonRow[0].content) : null;
+      if (!lessonTurn || lessonTurn.kind !== "lesson") {
+        res.status(400).json({ error: "Lesson not found." });
+        return;
+      }
+      const laterMsgs = await db
+        .select({ content: studyTutorMessagesTable.content })
+        .from(studyTutorMessagesTable)
+        .where(
+          and(
+            eq(studyTutorMessagesTable.conversationId, conversationId),
+            sql`${studyTutorMessagesTable.id} > ${reply.lessonMessageId}`,
+          ),
+        );
+      const alreadyChecked = laterMsgs
+        .map((m) => decodeTurn(m.content))
+        .some((t) => t?.kind === "check_result");
+      if (alreadyChecked) {
+        res.status(409).json({ error: "This check question has already been answered." });
+        return;
+      }
+      const correct = reply.selectedIndex === lessonTurn.check.correctIndex;
+      const allMsgs = await db
+        .select({ content: studyTutorMessagesTable.content })
+        .from(studyTutorMessagesTable)
+        .where(eq(studyTutorMessagesTable.conversationId, conversationId));
+      const usedConceptIds = allMsgs
+        .map((m) => decodeTurn(m.content))
+        .filter((t) => t?.kind === "lesson")
+        .map((t: any) => t.conceptId as string);
+      const remaining = concepts.filter((c) => !usedConceptIds.includes(c.id));
+      const proposedNext = remaining[0];
+
+      assistantTurn = {
+        v: 1,
+        kind: "check_result" as const,
+        correct,
+        explanation: lessonTurn.check.explanation ?? "",
+        correctIndex: lessonTurn.check.correctIndex ?? 0,
+        selectedIndex: reply.selectedIndex,
+        proposedNext: proposedNext
+          ? { conceptId: proposedNext.id, conceptTitle: proposedNext.title }
+          : null,
+      };
+      const [m] = await db
+        .insert(studyTutorMessagesTable)
+        .values({ conversationId, role: "assistant", content: encodeTurn(assistantTurn) })
+        .returning();
+      extraMsgs = [m];
+    } else if (reply.kind === "teach_next") {
+      const recent = await db
+        .select()
+        .from(studyTutorMessagesTable)
+        .where(eq(studyTutorMessagesTable.conversationId, conversationId))
+        .orderBy(desc(studyTutorMessagesTable.createdAt))
+        .limit(20);
+      const usedConceptIds = recent
+        .map((m) => decodeTurn(m.content))
+        .filter((t) => t?.kind === "lesson")
+        .map((t: any) => t.conceptId as string);
+      const target = reply.conceptId
+        ? concepts.find((c) => c.id === reply.conceptId)
+        : concepts.find((c) => !usedConceptIds.includes(c.id));
+      if (!target) {
+        const doneTurn = {
+          v: 1,
+          kind: "done" as const,
+          summary: "You've worked through every concept in this material. Excellent.",
+        };
+        const [m] = await db
+          .insert(studyTutorMessagesTable)
+          .values({ conversationId, role: "assistant", content: encodeTurn(doneTurn) })
+          .returning();
+        assistantTurn = doneTurn;
+        extraMsgs = [m];
+      } else {
+        const lesson = await generateJSON<{
+          explanation_md: string;
+          example: string;
+          check: { question: string; options: string[]; correctIndex: number; explanation: string };
+        }>(
+          `You are an expert tutor. Teach ONE concept clearly, tailored to the learner. Return strict JSON only.`,
+          `Learner profile:
+${profileText}
+
+Concept to teach: "${target.title}"
+Source excerpt:
+"""
+${target.explanation.slice(0, 1800)}
+"""
+
+Write a clear 250-400 word explanation (markdown), a concrete example, and one multiple-choice check question (4 options).
+Return JSON: {"explanation_md":"...","example":"...","check":{"question":"...","options":["","","",""],"correctIndex":0,"explanation":"..."}}`,
+          { kind: "tutor_guided_lesson" },
+        );
+        const lessonTurn = {
+          v: 1,
+          kind: "lesson" as const,
+          conceptId: target.id,
+          conceptTitle: target.title,
+          explanation_md: String(lesson.explanation_md ?? "").slice(0, 5000),
+          example: String(lesson.example ?? "").slice(0, 800),
+          check: {
+            question: String(lesson.check?.question ?? "").slice(0, 500),
+            options: Array.isArray(lesson.check?.options)
+              ? lesson.check.options.slice(0, 4).map((o: any) => String(o).slice(0, 200))
+              : [],
+            correctIndex: Math.max(0, Math.min(3, Number(lesson.check?.correctIndex) || 0)),
+            explanation: String(lesson.check?.explanation ?? "").slice(0, 400),
+          },
+          sources: [] as string[],
+        };
+        const [m] = await db
+          .insert(studyTutorMessagesTable)
+          .values({ conversationId, role: "assistant", content: encodeTurn(lessonTurn), usedPersonalization: true })
+          .returning();
+        assistantTurn = lessonTurn;
+        extraMsgs = [m];
+      }
+    } else if (reply.kind === "research_deeper") {
+      try {
+        const researched = await researchTopic(
+          `${reply.conceptTitle} — give a learner-friendly deep dive with authoritative sources.`,
+        );
+        // Pull citation URLs out of the appended "Sources consulted" block, if any.
+        const srcMatch = researched.text.match(/Sources consulted:\n([\s\S]+)$/);
+        const sources = srcMatch
+          ? srcMatch[1]
+              .split("\n")
+              .map((l) => l.replace(/^- /, "").trim())
+              .filter((u) => /^https?:\/\//.test(u))
+          : [];
+        assistantTurn = {
+          v: 1,
+          kind: "research" as const,
+          conceptTitle: reply.conceptTitle,
+          text_md: researched.text,
+          sources,
+        };
+        const [m] = await db
+          .insert(studyTutorMessagesTable)
+          .values({ conversationId, role: "assistant", content: encodeTurn(assistantTurn), usedPersonalization: true })
+          .returning();
+        extraMsgs = [m];
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Web research failed.";
+        assistantTurn = { v: 1, kind: "error" as const, message: msg };
+        const [m] = await db
+          .insert(studyTutorMessagesTable)
+          .values({ conversationId, role: "assistant", content: encodeTurn(assistantTurn) })
+          .returning();
+        extraMsgs = [m];
+      }
+    } else if (reply.kind === "done") {
+      assistantTurn = { v: 1, kind: "done" as const, summary: "Great session. Come back any time to keep building on this." };
+      const [m] = await db
+        .insert(studyTutorMessagesTable)
+        .values({ conversationId, role: "assistant", content: encodeTurn(assistantTurn) })
+        .returning();
+      extraMsgs = [m];
+    }
+  } catch (err) {
+    req.log?.error({ err }, "guided reply generation failed");
+    res.status(500).json({ error: "Tutor stumbled. Try again." });
+    return;
+  }
+
+  await db
+    .update(studyTutorConversationsTable)
+    .set({ updatedAt: new Date() })
+    .where(eq(studyTutorConversationsTable.id, conversationId));
+
+  res.json({ messages: extraMsgs, turn: assistantTurn });
+});
+
+router.get("/guided/:conversationId", async (req, res) => {
+  const userId = req.studyUser!.id;
+  const conversationId = req.params.conversationId;
+  const convs = await db
+    .select()
+    .from(studyTutorConversationsTable)
+    .where(and(eq(studyTutorConversationsTable.userId, userId), eq(studyTutorConversationsTable.id, conversationId)))
+    .limit(1);
+  if (convs.length === 0) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+  const msgs = await db
+    .select()
+    .from(studyTutorMessagesTable)
+    .where(eq(studyTutorMessagesTable.conversationId, conversationId))
+    .orderBy(studyTutorMessagesTable.createdAt);
+  const enriched = msgs.map((m) => ({ ...m, turn: decodeTurn(m.content) }));
+  res.json({ conversation: convs[0], messages: enriched });
 });
 
 export default router;
