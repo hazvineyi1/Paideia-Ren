@@ -249,7 +249,7 @@ export default function StudyLanding() {
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
           <div className="flex items-center gap-2">
             <Brain className="h-4 w-4 text-primary" />
-            <span className="font-semibold">Paideia Study</span>
+            <span className="font-semibold">Study Tutor</span>
           </div>
           <p>Built for learners who want to understand, not just memorize.</p>
         </div>
