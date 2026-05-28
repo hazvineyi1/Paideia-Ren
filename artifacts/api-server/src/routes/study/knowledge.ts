@@ -93,57 +93,66 @@ router.post("/generate", async (req, res) => {
       // Step 2: Generate knowledge nodes from concepts
       if (!conceptTexts) return;
 
-      const raw = await generateJSON<
-        { concepts?: Array<{
-          label: string;
-          description: string;
-          category: string;
-          relatedLabels: string[];
-          relationType: string;
-        }> } | Array<{
-          label: string;
-          description: string;
-          category: string;
-          relatedLabels: string[];
-          relationType: string;
-        }>
-      >(
-        "You are an expert knowledge mapper. Extract key concepts and relationships from the study material. Return a JSON object with a top-level array named 'concepts'. Each concept has: label (short name), description (1-2 sentences), category (subject area like Biology, Chemistry, Physics, etc.), relatedLabels (array of related concept names), and relationType (prerequisite, related, subtopic, or extension).",
-        `Material: ${material.title}\n\nConcepts:\n${conceptTexts.slice(0, 4000)}`,
-        { kind: "study_knowledge_extraction" },
-      );
+      // Re-fetch concepts so labels are the source of truth (no AI invention).
+      const currentConcepts = await db
+        .select()
+        .from(studyConceptsTable)
+        .where(and(eq(studyConceptsTable.userId, userId), eq(studyConceptsTable.materialId, materialId)));
+      if (currentConcepts.length === 0) return;
 
-      const conceptArray = (raw as any).concepts ?? (Array.isArray(raw) ? raw : Object.values(raw as any).find(Array.isArray) ?? []);
+      // Idempotent rebuild: clear this user's existing graph so repeat calls don't
+      // accumulate duplicates and any prior hallucinated nodes get purged.
+      await db.delete(studyKnowledgeEdgesTable).where(eq(studyKnowledgeEdgesTable.userId, userId));
+      await db.delete(studyKnowledgeNodesTable).where(eq(studyKnowledgeNodesTable.userId, userId));
+
+      const allowedLabels = currentConcepts.map((c) => c.title);
       const labelToId: Record<string, string> = {};
+      const labelToConcept = new Map(currentConcepts.map((c) => [c.title, c]));
 
-      for (const item of conceptArray) {
+      // Create one node per real concept — no AI freedom over labels/categories.
+      for (const c of currentConcepts) {
         const id = randomUUID();
-        labelToId[item.label] = id;
+        labelToId[c.title] = id;
         await db.insert(studyKnowledgeNodesTable).values({
           id,
           userId,
-          label: item.label,
-          description: item.description,
-          category: item.category,
+          label: c.title,
+          description: c.explanation,
+          category: material.title,
           masteryLevel: 0,
           confidenceScore: 0,
         });
       }
 
-      for (const item of conceptArray) {
-        const sourceId = labelToId[item.label];
-        if (!sourceId) continue;
-        for (const related of item.relatedLabels ?? []) {
-          const targetId = labelToId[related];
-          if (!targetId || targetId === sourceId) continue;
-          await db.insert(studyKnowledgeEdgesTable).values({
-            userId,
-            sourceNodeId: sourceId,
-            targetNodeId: targetId,
-            relationType: item.relationType || "related",
-            strength: 0.5,
-          });
-        }
+      // Ask AI only for relationships between the supplied labels — nothing else.
+      const raw = await generateJSON<{ edges?: Array<{ from: string; to: string; relationType: string }> }>(
+        `You are a knowledge graph builder. You will be given a strict list of concept labels from a single study material titled "${material.title}". Return a JSON object with a top-level array named 'edges'. Each edge has: from (must be EXACTLY one of the supplied labels), to (must be EXACTLY one of the supplied labels, different from 'from'), and relationType (one of: prerequisite, related, subtopic, extension). Do NOT invent new labels. Do NOT include concepts from other subjects. Do NOT output anything other than relationships between the supplied labels. If two concepts are unrelated, omit the edge.`,
+        `Material title: ${material.title}\n\nAllowed labels (use EXACTLY these strings, do not invent others):\n${allowedLabels.map((l) => `- ${l}`).join("\n")}`,
+        { kind: "study_knowledge_extraction" },
+      );
+
+      const edgeArray: Array<{ from: string; to: string; relationType: string }> =
+        (raw as any).edges ?? (Array.isArray(raw) ? raw : Object.values(raw as any).find(Array.isArray) ?? []);
+
+      const seenEdges = new Set<string>();
+      for (const edge of edgeArray) {
+        const sourceId = labelToId[edge.from];
+        const targetId = labelToId[edge.to];
+        if (!sourceId || !targetId || sourceId === targetId) continue;
+        if (!labelToConcept.has(edge.from) || !labelToConcept.has(edge.to)) continue;
+        const key = `${sourceId}->${targetId}`;
+        if (seenEdges.has(key)) continue;
+        seenEdges.add(key);
+        const relationType = ["prerequisite", "related", "subtopic", "extension"].includes(edge.relationType)
+          ? edge.relationType
+          : "related";
+        await db.insert(studyKnowledgeEdgesTable).values({
+          userId,
+          sourceNodeId: sourceId,
+          targetNodeId: targetId,
+          relationType,
+          strength: 0.5,
+        });
       }
     } catch (err) {
       // eslint-disable-next-line no-console
