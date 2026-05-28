@@ -11,7 +11,8 @@ import {
   getListStudyMaterialsQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useGenerateAssessment, useStudyProfile, useUpdateStudyProfile } from "@/hooks/use-study-journey";
+import { useStudyProfile, useUpdateStudyProfile, useLearningStyleProfile } from "@/hooks/use-study-journey";
+import { useEffect } from "react";
 import {
   ArrowLeft, Sparkles, FileText, Link2, Upload, Image as ImageIcon,
   Brain, Loader2, CheckCircle2, X, Rocket,
@@ -42,10 +43,17 @@ const ACCEPT_ALL =
 export default function StudyMaterialNew() {
   const [, setLoc] = useLocation();
   const createMutation = useCreateStudyMaterial();
-  const generateAssessment = useGenerateAssessment();
   const updateProfile = useUpdateStudyProfile();
   const { data: profile } = useStudyProfile();
+  const { data: learningStyle, isLoading: lsLoading } = useLearningStyleProfile();
   const queryClient = useQueryClient();
+
+  // Gate: must complete the learning-style diagnostic first
+  useEffect(() => {
+    if (!lsLoading && learningStyle === null) {
+      setLoc("/learning-style");
+    }
+  }, [lsLoading, learningStyle, setLoc]);
 
   const [learningGoal, setLearningGoal] = useState("");
   const [title, setTitle] = useState("");
@@ -178,16 +186,10 @@ export default function StudyMaterialNew() {
     }
   };
 
-  const handleStartAssessment = () => {
+  const handleGenerateStrategy = () => {
     const first = createdMaterials[0];
     if (!first) return;
-    generateAssessment.mutate(
-      { materialId: first.id },
-      {
-        onSuccess: (assessment: any) => setLoc(`/assessment/${assessment.id}`),
-        onError: () => alert("Assessment generation failed. Try again in a moment."),
-      },
-    );
+    setLoc(`/strategy/${first.id}`);
   };
 
   const handleDrop = (e: DragEvent<HTMLDivElement>) => {
@@ -219,7 +221,7 @@ export default function StudyMaterialNew() {
             </div>
           )}
           <p className="text-sm text-muted-foreground mb-6 max-w-sm mx-auto">
-            AI is extracting concepts and building your knowledge graph. Take a quick diagnostic assessment to personalize your learning path.
+            AI is extracting concepts and building your knowledge graph. Now we'll combine that with your learning profile to build a personalized study strategy.
           </p>
 
           {failed.length > 0 && (
@@ -244,14 +246,9 @@ export default function StudyMaterialNew() {
           <Button
             size="lg"
             className="gap-2 w-full max-w-xs"
-            onClick={handleStartAssessment}
-            disabled={generateAssessment.isPending}
+            onClick={handleGenerateStrategy}
           >
-            {generateAssessment.isPending ? (
-              <><Loader2 className="h-4 w-4 animate-spin" /> Generating Assessment...</>
-            ) : (
-              <><Sparkles className="h-4 w-4" /> Start Diagnostic Assessment <ChevronRight className="h-4 w-4" /></>
-            )}
+            <Sparkles className="h-4 w-4" /> Generate My Study Strategy <ChevronRight className="h-4 w-4" />
           </Button>
 
           <Button

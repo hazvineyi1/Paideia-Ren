@@ -43,6 +43,20 @@ export const studyMaterialsTable = pgTable("study_materials", {
   sourceType: text("source_type").notNull(), // paste, url, file
   sourceUrl: text("source_url"),
   contentText: text("content_text").notNull(),
+  strategy: jsonb("strategy").$type<{
+    summary: string;
+    sessionMinutes: number;
+    modalityMix: { text: number; audio: number; visual: number; practice: number };
+    activities: Array<{
+      order: number;
+      title: string;
+      description: string;
+      modality: "read" | "listen" | "watch" | "practice" | "reflect";
+      estimatedMinutes: number;
+    }>;
+    tips: string[];
+    generatedAt: string;
+  } | null>().default(null),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (t) => ({
   userIdx: index("study_materials_user_idx").on(t.userId),
@@ -384,6 +398,35 @@ export const studyCognitiveProfilesTable = pgTable("study_cognitive_profiles", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// ─── Learning Style Profiles (how-the-learner-learns diagnostic, run BEFORE material) ───
+export const studyLearningStyleProfilesTable = pgTable("study_learning_style_profiles", {
+  userId: uuid("user_id")
+    .primaryKey()
+    .references(() => studyUsersTable.id, { onDelete: "cascade" }),
+  // Modality preference weights (0-1, should sum ~ 1)
+  textPref: real("text_pref").notNull().default(0.25),
+  audioPref: real("audio_pref").notNull().default(0.25),
+  visualPref: real("visual_pref").notNull().default(0.25),
+  practicePref: real("practice_pref").notNull().default(0.25),
+  // Pace / structure
+  pace: text("pace").notNull().default("moderate"), // deliberate | moderate | quick
+  preferredSessionMinutes: integer("preferred_session_minutes").notNull().default(25),
+  focusMinutes: integer("focus_minutes").notNull().default(20),
+  motivationType: text("motivation_type").notNull().default("mastery"), // mastery | deadline | curiosity | obligation
+  priorKnowledge: text("prior_knowledge").notNull().default("some"), // none | some | strong
+  studyTime: text("study_time").notNull().default("flexible"), // morning | afternoon | evening | night | flexible
+  // Raw responses + mini-task scores for transparency
+  rawResponses: jsonb("raw_responses").$type<Record<string, unknown>>().notNull().default({}),
+  miniTaskScores: jsonb("mini_task_scores").$type<{
+    read?: { correct: number; total: number };
+    listen?: { correct: number; total: number };
+    visual?: { correct: number; total: number };
+  }>().notNull().default({}),
+  aiSummary: text("ai_summary"),
+  completedAt: timestamp("completed_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // ─── Assessments (diagnostic quiz after material ingestion) ───
 export const studyAssessmentsTable = pgTable("study_assessments", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -499,3 +542,5 @@ export type StudyLearningPathStep = typeof studyLearningPathStepsTable.$inferSel
 export type StudyAssessment = typeof studyAssessmentsTable.$inferSelect;
 export type StudyCognitiveProfile = typeof studyCognitiveProfilesTable.$inferSelect;
 export type StudyActivityLog = typeof studyActivityLogTable.$inferSelect;
+export type StudyLearningStyleProfile = typeof studyLearningStyleProfilesTable.$inferSelect;
+export type InsertStudyLearningStyleProfile = typeof studyLearningStyleProfilesTable.$inferInsert;

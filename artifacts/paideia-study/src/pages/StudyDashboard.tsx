@@ -8,7 +8,9 @@ import {
   useDailySession,
   useStartPathStep,
   useStudyProfile,
+  useLearningStyleProfile,
 } from "@/hooks/use-study-journey";
+import { useEffect } from "react";
 import {
   BookOpen, Zap, Target, MessageCircle, ArrowRight, LogOut, Flame,
   Brain, Clock, ChevronRight, CheckCircle2, RotateCcw, Award,
@@ -53,7 +55,15 @@ export default function StudyDashboard() {
   const { user, logout } = useStudyAuth();
   const { data: sessionData, isLoading } = useDailySession();
   const { data: profile } = useStudyProfile();
+  const { data: learningStyle, isLoading: lsLoading } = useLearningStyleProfile();
   const startStep = useStartPathStep();
+
+  // Gate: send to learning-style diagnostic if not yet completed
+  useEffect(() => {
+    if (!lsLoading && learningStyle === null) {
+      setLoc("/learning-style");
+    }
+  }, [lsLoading, learningStyle, setLoc]);
 
   const hasActivePath = sessionData?.hasActivePath ?? false;
   const progress = sessionData?.progress ?? { completedSteps: 0, totalSteps: 0, percentComplete: 0 };
@@ -253,11 +263,11 @@ export default function StudyDashboard() {
               </div>
               <h2 className="text-xl font-bold mb-2">Start Your Learning Journey</h2>
               <p className="text-sm text-muted-foreground mb-6 max-w-sm mx-auto">
-                Tell us what you're preparing for and upload your materials. AI profiles how you learn and builds your optimal path - you just follow it.
+                Your learning profile is ready. Now upload your material and we'll build a personalized study strategy for you.
               </p>
               <Button size="lg" className="gap-2" onClick={() => setLoc("/materials/new")}>
                 <BookOpen className="h-4 w-4" />
-                Begin Setup
+                Upload Material
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </CardContent>
