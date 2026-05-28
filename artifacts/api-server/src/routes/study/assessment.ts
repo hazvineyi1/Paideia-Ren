@@ -40,14 +40,57 @@ router.post("/generate", async (req, res) => {
   }
 
   // Get concepts from material
-  const concepts = await db
+  let concepts = await db
     .select()
     .from(studyConceptsTable)
     .where(and(eq(studyConceptsTable.userId, userId), eq(studyConceptsTable.materialId, materialId)));
 
+  // If background extraction hasn't produced concepts yet (or failed),
+  // extract them synchronously here so the learner never sees a "try again" error.
   if (concepts.length === 0) {
-    res.status(400).json({ error: "No concepts found. Generate knowledge graph first." });
-    return;
+    if (!material.contentText || material.contentText.trim().length < 20) {
+      res.status(400).json({
+        error: "This material has no readable content. Try uploading again or paste the text directly.",
+      });
+      return;
+    }
+
+    try {
+      const raw = await generateJSON<
+        { concepts?: Array<{ title: string; explanation: string; difficulty: string; keyTerms: string[] }> } | Array<{ title: string; explanation: string; difficulty: string; keyTerms: string[] }>
+      >(
+        "You are an expert educator. Extract key concepts from the study material. Return JSON with a top-level array named 'concepts'. Each concept has: title, explanation (2-3 sentences), difficulty (easy/medium/hard), and keyTerms (array of important terms).",
+        `Extract concepts from this material:\n\nTitle: ${material.title}\n\n${material.contentText.slice(0, 8000)}`,
+        { kind: "study_concept_extraction" },
+      );
+      const conceptsData: Array<{ title: string; explanation: string; difficulty: string; keyTerms: string[] }> =
+        Array.isArray(raw) ? raw : (raw as any).concepts ?? Object.values(raw as any).find(Array.isArray) ?? [];
+
+      if (conceptsData.length > 0) {
+        const rows = conceptsData.map((c) => ({
+          userId,
+          materialId,
+          title: c.title,
+          explanation: c.explanation,
+          difficulty: ["easy", "medium", "hard"].includes(c.difficulty) ? c.difficulty : "medium",
+          keyTerms: c.keyTerms ?? [],
+        }));
+        await db.insert(studyConceptsTable).values(rows);
+        concepts = await db
+          .select()
+          .from(studyConceptsTable)
+          .where(and(eq(studyConceptsTable.userId, userId), eq(studyConceptsTable.materialId, materialId)));
+      }
+    } catch (err) {
+      console.warn("On-demand concept extraction failed:", err);
+    }
+
+    if (concepts.length === 0) {
+      res.status(422).json({
+        error: "AI couldn't extract concepts from this material. Try a clearer source or paste the text directly.",
+      });
+      return;
+    }
   }
 
   // Generate diagnostic questions from concepts
