@@ -14,16 +14,18 @@ import {
 } from "@workspace/api-client-react";
 import {
   ArrowLeft, Play, BrainCircuit, Target, Zap, BarChart3,
-  BookOpen, ChevronRight, TrendingUp
+  BookOpen, ChevronRight, TrendingUp, Check, Loader2
 } from "lucide-react";
 
 type DifficultyLevel = "easy" | "medium" | "hard" | "mixed";
 
-const DIFFICULTIES: { id: DifficultyLevel; label: string; color: string; desc: string }[] = [
-  { id: "easy", label: "Easy", color: "bg-emerald-500", desc: "Warm-up, confidence building" },
-  { id: "medium", label: "Medium", color: "bg-blue-500", desc: "Balanced challenge" },
-  { id: "hard", label: "Hard", color: "bg-amber-500", desc: "Push your limits" },
-  { id: "mixed", label: "Adaptive", color: "bg-primary", desc: "AI adjusts per question" },
+const DIFFICULTIES: {
+  id: DifficultyLevel; label: string; dot: string; selectedBg: string; selectedBorder: string; selectedText: string; desc: string;
+}[] = [
+  { id: "easy",   label: "Easy",     dot: "bg-emerald-500", selectedBg: "bg-emerald-50", selectedBorder: "border-emerald-500", selectedText: "text-emerald-700", desc: "Warm-up, confidence building" },
+  { id: "medium", label: "Medium",   dot: "bg-blue-500",    selectedBg: "bg-blue-50",    selectedBorder: "border-blue-500",    selectedText: "text-blue-700",    desc: "Balanced challenge" },
+  { id: "hard",   label: "Hard",     dot: "bg-amber-500",   selectedBg: "bg-amber-50",   selectedBorder: "border-amber-500",   selectedText: "text-amber-700",   desc: "Push your limits" },
+  { id: "mixed",  label: "Adaptive", dot: "bg-primary",     selectedBg: "bg-primary/10", selectedBorder: "border-primary",     selectedText: "text-primary",     desc: "AI adjusts per question" },
 ];
 
 export default function StudyPractice() {
@@ -125,28 +127,37 @@ export default function StudyPractice() {
                 Difficulty Mode
               </Label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                {DIFFICULTIES.map((d) => (
-                  <button
-                    key={d.id}
-                    onClick={() => setDifficulty(d.id)}
-                    className={`p-3 rounded-xl border text-left transition-all ${
-                      difficulty === d.id
-                        ? "border-primary bg-primary/5 ring-1 ring-primary/20"
-                        : "border-border bg-card hover:border-primary/30"
-                    }`}
-                  >
-                    <div className="flex items-center gap-2 mb-1">
-                      <div className={`w-2 h-2 rounded-full ${d.color}`} />
-                      <span className={`text-sm font-medium ${difficulty === d.id ? "text-primary" : ""}`}>
-                        {d.label}
-                      </span>
-                      {d.id === "mixed" && (
-                        <Badge variant="outline" className="ml-auto text-[10px] h-5">AI</Badge>
+                {DIFFICULTIES.map((d) => {
+                  const selected = difficulty === d.id;
+                  return (
+                    <button
+                      key={d.id}
+                      onClick={() => setDifficulty(d.id)}
+                      aria-pressed={selected}
+                      className={`relative p-3 rounded-xl border-2 text-left transition-all ${
+                        selected
+                          ? `${d.selectedBorder} ${d.selectedBg} shadow-sm`
+                          : "border-border bg-card hover:bg-muted/40"
+                      }`}
+                    >
+                      {selected && (
+                        <div className={`absolute top-1.5 right-1.5 h-4 w-4 rounded-full flex items-center justify-center ${d.selectedBorder.replace("border-", "bg-")}`}>
+                          <Check className="h-2.5 w-2.5 text-white" strokeWidth={3} />
+                        </div>
                       )}
-                    </div>
-                    <p className="text-[10px] text-muted-foreground">{d.desc}</p>
-                  </button>
-                ))}
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className={`w-2 h-2 rounded-full ${d.dot}`} />
+                        <span className={`text-sm font-medium ${selected ? d.selectedText : ""}`}>
+                          {d.label}
+                        </span>
+                        {d.id === "mixed" && !selected && (
+                          <Badge variant="outline" className="ml-auto text-[10px] h-5">AI</Badge>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-muted-foreground">{d.desc}</p>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -170,9 +181,23 @@ export default function StudyPractice() {
               onClick={handleCreate}
               disabled={!materialId || creating}
             >
-              <Play className="h-4 w-4" />
-              {creating ? "Generating questions..." : "Start Practice Session"}
+              {creating ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Generating {questionCount} questions...
+                </>
+              ) : (
+                <>
+                  <Play className="h-4 w-4" />
+                  Start Practice Session
+                </>
+              )}
             </Button>
+            {creating && (
+              <p className="text-xs text-center text-muted-foreground -mt-2">
+                This usually takes 10–20 seconds while AI tailors each question to your material.
+              </p>
+            )}
           </CardContent>
         </Card>
 
