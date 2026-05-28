@@ -2,7 +2,7 @@ import { useLocation } from "wouter";
 import { useStudyAuth } from "@/hooks/use-study-auth";
 import {
   LayoutDashboard, GraduationCap, BookOpen, Network, Zap, TrendingUp,
-  LogOut, User, ChevronDown,
+  LogOut, User, ChevronDown, Brain,
 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent,
@@ -16,6 +16,7 @@ const TABS = [
   { href: "/knowledge-map", label: "Knowledge", icon: Network },
   { href: "/flashcards", label: "Flashcards", icon: Zap },
   { href: "/progress", label: "Progress", icon: TrendingUp },
+  { href: "/retention", label: "Profile", icon: Brain },
 ];
 
 export default function StudyNav() {
@@ -73,7 +74,10 @@ export default function StudyNav() {
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => setLoc("/profile")}>
-                <User className="h-3.5 w-3.5 mr-2" /> Profile
+                <User className="h-3.5 w-3.5 mr-2" /> Account settings
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setLoc("/retention")}>
+                <Brain className="h-3.5 w-3.5 mr-2" /> Retention profile
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setLoc("/learning-style")}>
                 <GraduationCap className="h-3.5 w-3.5 mr-2" /> Learning style
