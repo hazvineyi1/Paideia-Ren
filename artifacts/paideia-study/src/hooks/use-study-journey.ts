@@ -101,6 +101,28 @@ export function useCompletePathStep() {
   });
 }
 
+// Learner Profile
+export function useStudyProfile() {
+  return useQuery({
+    queryKey: ["study", "profile"],
+    queryFn: () => fetchApi("/study/profile/"),
+  });
+}
+
+export function useUpdateStudyProfile() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: Record<string, unknown>) =>
+      fetchApi("/study/profile/", {
+        method: "PATCH",
+        body: JSON.stringify(data),
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["study", "profile"] });
+    },
+  });
+}
+
 export function useStartPathStep() {
   const qc = useQueryClient();
   return useMutation({

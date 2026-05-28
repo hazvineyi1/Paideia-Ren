@@ -5,8 +5,51 @@ import {
   studyLearningPathsTable,
   studyLearningPathStepsTable,
   studyKnowledgeNodesTable,
+  studyAssessmentsTable,
 } from "@workspace/db";
-import { eq, and, asc, sql } from "drizzle-orm";
+import { eq, and, asc, desc, sql } from "drizzle-orm";
+
+function generateCoachingMessage(step: any, assessmentResults: any | null, nodes: any[]): string {
+  const conceptName = step.node?.label || nodes.find((n: any) => n.id === step.nodeId)?.label || "this concept";
+  const learningProfile = assessmentResults?.learningProfile;
+  const accuracyByConcept = assessmentResults?.accuracyByConcept ?? {};
+  const accuracy = step.conceptId ? accuracyByConcept[step.conceptId] : null;
+
+  let whyPart: string;
+  if (accuracy !== null && accuracy !== undefined) {
+    if (accuracy < 40) {
+      whyPart = `You scored ${accuracy}% on ${conceptName} in your diagnostic — your highest-priority gap. The AI starts here to build a solid foundation.`;
+    } else if (accuracy < 65) {
+      whyPart = `You showed ${accuracy}% understanding of ${conceptName}. There's more to unlock — this step deepens it.`;
+    } else {
+      whyPart = `You scored ${accuracy}% on ${conceptName}. This review reinforces retention before moving on.`;
+    }
+  } else {
+    const reasons: Record<string, string> = {
+      read_material: `The AI sequenced ${conceptName} here to build foundational understanding before active recall.`,
+      flashcard_review: `Active recall of ${conceptName} at this stage strengthens long-term retention.`,
+      practice_questions: `Applying ${conceptName} in varied contexts builds durable, transferable knowledge.`,
+      tutor_session: `Deep exploration of ${conceptName} will surface and close any remaining gaps.`,
+      mastery_check: `You've built up ${conceptName} — this check confirms you're ready to progress.`,
+      spaced_review: `Revisiting ${conceptName} at the optimal interval prevents forgetting.`,
+    };
+    whyPart = reasons[step.stepType as string] || `The AI determined this is your optimal next step right now.`;
+  }
+
+  let profilePart = "";
+  if (learningProfile?.processingStyle === "sequential") {
+    profilePart = " Your profile shows you build knowledge step by step — following the AI sequence is optimal for you.";
+  } else if (learningProfile?.processingStyle === "conceptual") {
+    profilePart = " Your profile shows you grasp the big picture first — connect this to the broader concept map as you go.";
+  }
+  if (learningProfile?.confidencePattern === "fatiguing") {
+    profilePart += " Keep this session short and focused — your accuracy fades when sessions run long.";
+  } else if (learningProfile?.confidencePattern === "improving") {
+    profilePart += " You warm up as you go — push through any initial resistance.";
+  }
+
+  return whyPart + profilePart;
+}
 import { requireStudyUser } from "../../middlewares/auth.js";
 
 const router: IRouter = Router();
@@ -271,14 +314,40 @@ router.get("/active/daily-session", async (req, res) => {
   const totalMinutes = sessionSteps.reduce((sum, s) => sum + (s.estimatedMinutes ?? 0), 0);
   const totalProgress = allSteps.length > 0 ? Math.round((completedSteps.length / allSteps.length) * 100) : 0;
 
+  // Fetch most recent completed assessment for coaching context
+  const [recentAssessment] = await db
+    .select()
+    .from(studyAssessmentsTable)
+    .where(and(
+      eq(studyAssessmentsTable.userId, userId),
+      eq(studyAssessmentsTable.status, "completed"),
+    ))
+    .orderBy(desc(studyAssessmentsTable.completedAt))
+    .limit(1);
+
+  const assessmentResults = (recentAssessment?.results as any) ?? null;
+
+  const stepsWithNodes = sessionSteps.map((s) => ({
+    ...s,
+    node: s.nodeId ? nodes.find((n) => n.id === s.nodeId) ?? null : null,
+  }));
+
+  const primaryStep = stepsWithNodes[0] ?? null;
+  const upcomingSteps = stepsWithNodes.slice(1);
+
+  const coachingMessage = primaryStep
+    ? generateCoachingMessage(primaryStep, assessmentResults, nodes)
+    : null;
+
   res.json({
     hasActivePath: true,
     path: activePath,
+    coachingMessage,
+    learningProfile: assessmentResults?.learningProfile ?? null,
     session: {
-      steps: sessionSteps.map((s) => ({
-        ...s,
-        node: s.nodeId ? nodes.find((n) => n.id === s.nodeId) ?? null : null,
-      })),
+      primaryStep,
+      upcomingSteps,
+      steps: stepsWithNodes,
       totalEstimatedMinutes: totalMinutes,
       stepsCount: sessionSteps.length,
     },

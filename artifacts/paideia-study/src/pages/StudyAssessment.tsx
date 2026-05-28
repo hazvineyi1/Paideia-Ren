@@ -101,7 +101,7 @@ export default function StudyAssessment() {
 
   // Results screen
   if (results) {
-    const { score, detectedDifficulty, recommendedPathType, accuracyByConcept, conceptNameMap } = results.results ?? {};
+    const { score, detectedDifficulty, recommendedPathType, accuracyByConcept, conceptNameMap, learningProfile } = results.results ?? {};
 
     // Build concept accuracies with names, sorted weakest first
     const conceptAccuracies = Object.entries(accuracyByConcept ?? {})
@@ -195,6 +195,75 @@ export default function StudyAssessment() {
               </CardContent>
             </Card>
           </div>
+
+          {/* Learning Profile — cognitive science-based */}
+          {learningProfile && (
+            <Card className="mb-5 border-primary/20">
+              <CardContent className="py-5 px-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <Brain className="h-4 w-4 text-primary" />
+                  <h3 className="font-semibold text-sm">Your Learning Profile</h3>
+                  <Badge variant="outline" className={`text-[10px] ml-auto ${
+                    learningProfile.inferenceConfidence === "high" ? "border-emerald-300 text-emerald-700" :
+                    learningProfile.inferenceConfidence === "low" ? "border-amber-300 text-amber-700" : ""
+                  }`}>
+                    {learningProfile.inferenceConfidence === "high" ? "High confidence" :
+                     learningProfile.inferenceConfidence === "low" ? "Early signal" : "Moderate signal"}
+                  </Badge>
+                </div>
+                <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
+                  Inferred from how you answered — your response patterns across question types, timing, and accuracy trend. Not a self-report quiz, and not VARK. The AI uses these signals to sequence your path and will refine them as you progress.
+                  {learningProfile.inferenceConfidence === "low" && (
+                    <span className="block mt-1 text-amber-700"> ⚠ Based on {learningProfile.sampleSize?.total ?? 0} questions — treat these as initial hints that will sharpen as you do more.</span>
+                  )}
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="p-3 rounded-lg bg-muted/40">
+                    <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground mb-0.5">Processing Style</p>
+                    <p className="text-sm font-semibold capitalize">{learningProfile.processingStyle}</p>
+                    <p className="text-[11px] text-muted-foreground mt-1">
+                      {learningProfile.processingStyle === "conceptual"
+                        ? "You grasp the big picture first, then fill in details."
+                        : "You build understanding step-by-step from fundamentals."}
+                    </p>
+                  </div>
+                  <div className="p-3 rounded-lg bg-muted/40">
+                    <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground mb-0.5">Pace</p>
+                    <p className="text-sm font-semibold capitalize">{learningProfile.pace}</p>
+                    <p className="text-[11px] text-muted-foreground mt-1">
+                      {learningProfile.pace === "deliberate"
+                        ? `Avg ${learningProfile.avgTimePerQuestion}s/question — you think things through.`
+                        : learningProfile.pace === "intuitive"
+                        ? `Avg ${learningProfile.avgTimePerQuestion}s/question — quick pattern recognition.`
+                        : `Avg ${learningProfile.avgTimePerQuestion}s/question — balanced reflection.`}
+                    </p>
+                  </div>
+                  <div className="p-3 rounded-lg bg-muted/40">
+                    <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground mb-0.5">Strength</p>
+                    <p className="text-sm font-semibold capitalize">{learningProfile.strengthModality}</p>
+                    <p className="text-[11px] text-muted-foreground mt-1">
+                      {learningProfile.strengthModality === "application"
+                        ? "Strong at applying concepts to new problems."
+                        : learningProfile.strengthModality === "comprehension"
+                        ? "Strong at explaining and interpreting concepts."
+                        : "Strong at remembering facts and definitions."}
+                    </p>
+                  </div>
+                  <div className="p-3 rounded-lg bg-muted/40">
+                    <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground mb-0.5">Confidence Pattern</p>
+                    <p className="text-sm font-semibold capitalize">{learningProfile.confidencePattern}</p>
+                    <p className="text-[11px] text-muted-foreground mt-1">
+                      {learningProfile.confidencePattern === "improving"
+                        ? "You warm up — your accuracy grew through the quiz."
+                        : learningProfile.confidencePattern === "fatiguing"
+                        ? "Best to keep sessions short — accuracy faded over time."
+                        : "Steady performance — consistent attention throughout."}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Concept Breakdown — Prioritized */}
           {conceptAccuracies.length > 0 && (

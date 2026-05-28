@@ -11,7 +11,7 @@ import {
   getListStudyMaterialsQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useGenerateAssessment } from "@/hooks/use-study-journey";
+import { useGenerateAssessment, useStudyProfile, useUpdateStudyProfile } from "@/hooks/use-study-journey";
 import {
   ArrowLeft, Sparkles, FileText, Link2, Upload, Image,
   Mic, Globe, Brain, Loader2, CheckCircle2, X, Rocket,
@@ -40,8 +40,11 @@ export default function StudyMaterialNew() {
   const [, setLoc] = useLocation();
   const createMutation = useCreateStudyMaterial();
   const generateAssessment = useGenerateAssessment();
+  const updateProfile = useUpdateStudyProfile();
+  const { data: profile } = useStudyProfile();
   const queryClient = useQueryClient();
 
+  const [learningGoal, setLearningGoal] = useState("");
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [sourceUrl, setSourceUrl] = useState("");
@@ -61,6 +64,16 @@ export default function StudyMaterialNew() {
     setStage("processing");
 
     try {
+      // Save learning goal to learner profile so AI can use it as context
+      const goal = learningGoal.trim();
+      if (goal && goal !== (profile?.examTarget ?? "")) {
+        try {
+          await updateProfile.mutateAsync({ examTarget: goal });
+        } catch {
+          // non-fatal — continue with material creation
+        }
+      }
+
       const material = await createMutation.mutateAsync({
         data: {
           title,
@@ -211,18 +224,43 @@ export default function StudyMaterialNew() {
 
       <main className="max-w-3xl mx-auto px-4 py-8">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold mb-2">What Do You Want to Learn?</h1>
+          <h1 className="text-2xl font-bold mb-2">Set Up Your Learning Journey</h1>
           <p className="text-sm text-muted-foreground">
-            Paste notes, upload files, or share URLs — AI will extract concepts and build your personalized learning path.
+            Tell us your goal and share your materials. AI will profile how you learn and build your optimal path.
           </p>
         </div>
 
+        {/* Learning Goal — sets context for everything */}
+        <Card className="mb-5 border-primary/20 bg-primary/5">
+          <CardContent className="py-5 px-5">
+            <div className="flex items-center gap-2 mb-2">
+              <Rocket className="h-4 w-4 text-primary" />
+              <Label htmlFor="goal" className="text-sm font-semibold m-0">What are you preparing for?</Label>
+            </div>
+            <p className="text-xs text-muted-foreground mb-3">
+              The AI uses this to focus every step on your goal — exam, certification, project, or topic mastery.
+            </p>
+            <Input
+              id="goal"
+              placeholder="e.g., Scrum Master Certification, AWS Solutions Architect, USMLE Step 1"
+              value={learningGoal}
+              onChange={(e) => setLearningGoal(e.target.value)}
+              className="bg-background"
+            />
+            {profile?.examTarget && !learningGoal && (
+              <p className="text-[11px] text-muted-foreground mt-2">
+                Current goal: <span className="font-medium">{profile.examTarget}</span> · type above to change
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
         {/* Title */}
         <div className="mb-6">
-          <Label htmlFor="title" className="text-sm font-medium">What are you studying?</Label>
+          <Label htmlFor="title" className="text-sm font-medium">Material title</Label>
           <Input
             id="title"
-            placeholder="e.g., Advanced Cell Biology — Chapter 3"
+            placeholder="e.g., Scrum Guide 2020 — Chapter 1"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             className="mt-1.5"

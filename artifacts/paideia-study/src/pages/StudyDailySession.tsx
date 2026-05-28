@@ -6,17 +6,17 @@ import { Progress } from "@/components/ui/progress";
 import { useDailySession, useStartPathStep, useCompletePathStep } from "@/hooks/use-study-journey";
 import {
   Brain, BookOpen, Zap, Target, MessageCircle, CheckCircle2,
-  ArrowRight, Clock, ChevronRight, Flame, Sparkles, Loader2,
-  Lock, PlayCircle, TrendingUp, RotateCcw, Award
+  ArrowRight, Clock, ChevronLeft, Sparkles, Loader2,
+  RotateCcw, Award,
 } from "lucide-react";
 
 const stepTypeConfig: Record<string, { icon: typeof Brain; label: string; color: string; bg: string; action: string }> = {
-  read_material: { icon: BookOpen, label: "Read & Understand", color: "text-blue-600", bg: "bg-blue-50", action: "Read" },
-  flashcard_review: { icon: Zap, label: "Active Recall", color: "text-amber-600", bg: "bg-amber-50", action: "Review" },
-  practice_questions: { icon: Target, label: "Apply Knowledge", color: "text-emerald-600", bg: "bg-emerald-50", action: "Practice" },
-  tutor_session: { icon: MessageCircle, label: "Deep Dive", color: "text-purple-600", bg: "bg-purple-50", action: "Discuss" },
-  mastery_check: { icon: Award, label: "Mastery Check", color: "text-orange-600", bg: "bg-orange-50", action: "Check" },
-  spaced_review: { icon: RotateCcw, label: "Spaced Review", color: "text-teal-600", bg: "bg-teal-50", action: "Review" },
+  read_material: { icon: BookOpen, label: "Read & Understand", color: "text-blue-600", bg: "bg-blue-50", action: "Open Reading" },
+  flashcard_review: { icon: Zap, label: "Active Recall", color: "text-amber-600", bg: "bg-amber-50", action: "Start Flashcards" },
+  practice_questions: { icon: Target, label: "Apply Knowledge", color: "text-emerald-600", bg: "bg-emerald-50", action: "Start Practice" },
+  tutor_session: { icon: MessageCircle, label: "Deep Dive", color: "text-purple-600", bg: "bg-purple-50", action: "Open Tutor" },
+  mastery_check: { icon: Award, label: "Mastery Check", color: "text-orange-600", bg: "bg-orange-50", action: "Begin Check" },
+  spaced_review: { icon: RotateCcw, label: "Spaced Review", color: "text-teal-600", bg: "bg-teal-50", action: "Start Review" },
 };
 
 export default function StudyDailySession() {
@@ -30,7 +30,7 @@ export default function StudyDailySession() {
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
           <Brain className="h-8 w-8 text-primary animate-pulse mx-auto mb-3" />
-          <p className="text-sm text-muted-foreground">Preparing today's session...</p>
+          <p className="text-sm text-muted-foreground">Preparing your session...</p>
         </div>
       </div>
     );
@@ -45,7 +45,7 @@ export default function StudyDailySession() {
           </div>
           <h1 className="text-2xl font-bold mb-3">Start Your Learning Journey</h1>
           <p className="text-muted-foreground mb-8 max-w-md mx-auto">
-            Add your first study material and take a quick diagnostic assessment. AI will build your personalized learning path.
+            Upload materials and take a quick diagnostic. AI will build your personalized path.
           </p>
           <Button size="lg" className="gap-2" onClick={() => setLoc("/materials/new")}>
             <BookOpen className="h-4 w-4" />
@@ -57,205 +57,172 @@ export default function StudyDailySession() {
     );
   }
 
-  const { path, session, progress } = sessionData;
-  const steps = session?.steps ?? [];
-  const totalMinutes = session?.totalEstimatedMinutes ?? 0;
-
-  const handleStepAction = (step: any) => {
-    if (step.status === "locked") return;
-
-    if (step.status === "available") {
-      startStep.mutate({ pathId: path.id, stepId: step.id }, {
-        onSuccess: () => navigateToStep(step),
-      });
-    } else {
-      navigateToStep(step);
-    }
-  };
+  const { path, session, progress, coachingMessage } = sessionData;
+  const primaryStep = session?.primaryStep ?? session?.steps?.[0] ?? null;
+  const upcomingSteps: any[] = session?.upcomingSteps ?? session?.steps?.slice(1) ?? [];
 
   const navigateToStep = (step: any) => {
     const ref = step.contentRef || step.conceptId;
     const stepParams = `?pathId=${encodeURIComponent(path.id)}&pathStepId=${encodeURIComponent(step.id)}`;
     switch (step.stepType) {
-      case "read_material":
-        setLoc(ref ? `/materials/${ref}${stepParams}` : `/materials${stepParams}`);
-        break;
-      case "flashcard_review":
-        setLoc(`/flashcards${stepParams}`);
-        break;
-      case "practice_questions":
-        setLoc(`/practice${stepParams}`);
-        break;
-      case "tutor_session":
-        setLoc(`/tutor${stepParams}`);
-        break;
-      default:
-        setLoc("/dashboard");
+      case "read_material": setLoc(ref ? `/materials/${ref}${stepParams}` : `/materials${stepParams}`); break;
+      case "flashcard_review": setLoc(`/flashcards${stepParams}`); break;
+      case "practice_questions": setLoc(`/practice${stepParams}`); break;
+      case "tutor_session": setLoc(`/tutor${stepParams}`); break;
+      default: setLoc("/dashboard");
     }
   };
 
-  const handleCompleteStep = (step: any) => {
-    completeStep.mutate(
-      { pathId: path.id, stepId: step.id, masteryScore: 0.7 },
-      { onSuccess: () => {/* session refreshes automatically */} }
-    );
+  const handleStepAction = (step: any) => {
+    if (step.status === "locked") return;
+    if (step.status === "available") {
+      startStep.mutate(
+        { pathId: path.id, stepId: step.id },
+        { onSuccess: () => navigateToStep(step) }
+      );
+    } else {
+      navigateToStep(step);
+    }
+  };
+
+  const handleCompletePrimary = () => {
+    if (!primaryStep) return;
+    completeStep.mutate({ pathId: path.id, stepId: primaryStep.id, masteryScore: 0.7 });
   };
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b px-4 py-4 sticky top-0 bg-background/95 backdrop-blur-sm z-10">
-        <div className="max-w-3xl mx-auto">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <div className="bg-primary/10 p-1.5 rounded-lg">
-                <Brain className="h-4 w-4 text-primary" />
-              </div>
-              <div>
-                <h1 className="font-bold text-sm">Today's Learning Session</h1>
-                <p className="text-[10px] text-muted-foreground">{path.title}</p>
-              </div>
+      <header className="border-b px-4 py-3 sticky top-0 bg-background/95 backdrop-blur-sm z-10">
+        <div className="max-w-2xl mx-auto flex items-center justify-between">
+          <Button variant="ghost" size="sm" className="gap-1.5 -ml-2" onClick={() => setLoc("/dashboard")}>
+            <ChevronLeft className="h-4 w-4" />
+            Dashboard
+          </Button>
+          <div className="flex items-center gap-2">
+            <div className="bg-primary/10 p-1.5 rounded-lg">
+              <Brain className="h-4 w-4 text-primary" />
             </div>
-            <div className="flex items-center gap-2">
-              <Badge variant="secondary" className="gap-1 text-xs">
-                <Clock className="h-3 w-3" />
-                ~{totalMinutes} min
-              </Badge>
-            </div>
+            <span className="text-sm font-medium">Learning Session</span>
           </div>
-
-          {/* Progress Bar */}
-          <div className="flex items-center gap-3">
-            <div className="flex-1">
-              <div className="flex items-center justify-between text-xs mb-1">
-                <span className="text-muted-foreground">Path Progress</span>
-                <span className="font-medium">{progress.percentComplete}%</span>
-              </div>
-              <Progress value={progress.percentComplete} className="h-2" />
-            </div>
-          </div>
+          <div className="w-[88px]" />
         </div>
       </header>
 
-      <main className="max-w-3xl mx-auto px-4 py-6 space-y-4">
-        {/* Session Overview */}
-        <div className="flex items-center gap-3 text-sm mb-2">
-          <Flame className="h-4 w-4 text-orange-500" />
-          <span className="font-medium">{steps.length} steps for today</span>
-          <span className="text-muted-foreground">• {progress.completedSteps} of {progress.totalSteps} completed overall</span>
-        </div>
+      <main className="max-w-2xl mx-auto px-4 py-8 space-y-6">
+        {primaryStep ? (
+          <>
+            {/* Hero step card */}
+            {(() => {
+              const config = stepTypeConfig[primaryStep.stepType] ?? stepTypeConfig.read_material;
+              const Icon = config.icon;
+              const isInProgress = primaryStep.status === "in_progress";
 
-        {/* Steps */}
-        <div className="space-y-3">
-          {steps.map((step: any, index: number) => {
-            const config = stepTypeConfig[step.stepType] || stepTypeConfig.read_material;
-            const Icon = config.icon;
-            const isLocked = step.status === "locked";
-            const isCompleted = step.status === "completed";
-            const isInProgress = step.status === "in_progress";
-            const isAvailable = step.status === "available";
-
-            return (
-              <Card
-                key={step.id}
-                className={`transition-all ${
-                  isCompleted
-                    ? "border-l-4 border-l-emerald-400 opacity-70"
-                    : isInProgress
-                    ? "border-l-4 border-l-primary ring-1 ring-primary/20"
-                    : isAvailable
-                    ? "border-l-4 border-l-blue-400 cursor-pointer hover:shadow-md"
-                    : "opacity-50"
-                }`}
-                onClick={() => !isLocked && handleStepAction(step)}
-              >
-                <CardContent className="py-4 px-5">
-                  <div className="flex items-start gap-4">
-                    {/* Status Indicator */}
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-                      isCompleted ? "bg-emerald-100" :
-                      isInProgress ? "bg-primary/10" :
-                      isAvailable ? config.bg : "bg-muted"
-                    }`}>
-                      {isCompleted ? (
-                        <CheckCircle2 className="h-5 w-5 text-emerald-600" />
-                      ) : isLocked ? (
-                        <Lock className="h-4 w-4 text-muted-foreground" />
-                      ) : (
-                        <Icon className={`h-5 w-5 ${isInProgress || isAvailable ? config.color : "text-muted-foreground"}`} />
-                      )}
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs font-medium text-muted-foreground">Step {index + 1}</span>
-                        <Badge variant="outline" className={`text-[10px] h-5 ${config.bg} ${config.color}`}>
-                          {config.label}
-                        </Badge>
-                        {isInProgress && (
-                          <Badge variant="default" className="text-[10px] h-5 gap-1">
-                            <PlayCircle className="h-3 w-3" />
-                            In Progress
-                          </Badge>
-                        )}
+              return (
+                <Card className="border-primary/20 shadow-sm overflow-hidden">
+                  <div className="h-1 bg-gradient-to-r from-primary to-primary/40" />
+                  <CardContent className="py-6 px-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className={`w-11 h-11 rounded-xl ${config.bg} flex items-center justify-center shrink-0`}>
+                        <Icon className={`h-5 w-5 ${config.color}`} />
                       </div>
-                      <h3 className={`font-semibold text-sm ${isCompleted ? "line-through text-muted-foreground" : ""}`}>
-                        {step.title}
-                      </h3>
-                      {step.description && (
-                        <p className="text-xs text-muted-foreground mt-1">{step.description}</p>
-                      )}
-                      {step.node && (
-                        <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
-                          <TrendingUp className="h-3 w-3" />
-                          <span>Mastery: {Math.round((step.node.masteryLevel ?? 0) * 100)}%</span>
-                        </div>
-                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-primary">
+                          {isInProgress ? "Continue Where You Left Off" : "Your Next Step"}
+                        </p>
+                        <p className={`text-xs font-medium ${config.color}`}>{config.label}</p>
+                      </div>
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
+                        <Clock className="h-3 w-3" />
+                        {primaryStep.estimatedMinutes}m
+                      </div>
                     </div>
 
-                    {/* Action */}
-                    <div className="flex flex-col items-end gap-2 shrink-0">
-                      <span className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {step.estimatedMinutes}m
-                      </span>
+                    <h1 className="font-bold text-xl leading-snug mb-2">{primaryStep.title}</h1>
+                    {primaryStep.description && (
+                      <p className="text-sm text-muted-foreground mb-4">{primaryStep.description}</p>
+                    )}
+
+                    {coachingMessage && (
+                      <div className="bg-muted/50 rounded-lg p-3 mb-5 border-l-2 border-primary/40">
+                        <div className="flex items-start gap-2">
+                          <Sparkles className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
+                          <p className="text-xs text-muted-foreground leading-relaxed">{coachingMessage}</p>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex gap-2">
+                      <Button
+                        className="flex-1 gap-2"
+                        size="lg"
+                        onClick={() => handleStepAction(primaryStep)}
+                        disabled={startStep.isPending}
+                      >
+                        {startStep.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                        {config.action}
+                        <ArrowRight className="h-4 w-4" />
+                      </Button>
                       {isInProgress && (
                         <Button
-                          size="sm"
                           variant="outline"
-                          className="h-7 text-xs gap-1"
-                          onClick={(e) => { e.stopPropagation(); handleCompleteStep(step); }}
+                          size="lg"
+                          className="gap-1.5"
+                          onClick={handleCompletePrimary}
                           disabled={completeStep.isPending}
                         >
-                          {completeStep.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle2 className="h-3 w-3" />}
-                          Complete
+                          {completeStep.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+                          Done
                         </Button>
-                      )}
-                      {isAvailable && !isInProgress && (
-                        <Button size="sm" className="h-7 text-xs gap-1">
-                          {config.action}
-                          <ChevronRight className="h-3 w-3" />
-                        </Button>
-                      )}
-                      {isCompleted && (
-                        <CheckCircle2 className="h-5 w-5 text-emerald-500" />
                       )}
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+                  </CardContent>
+                </Card>
+              );
+            })()}
 
-        {/* All Done / Next Actions */}
-        {steps.length === 0 && (
-          <Card className="border-dashed">
-            <CardContent className="py-8 text-center">
-              <CheckCircle2 className="h-8 w-8 text-emerald-500 mx-auto mb-3" />
-              <h3 className="font-semibold mb-1">All Steps Complete!</h3>
+            {/* Coming up */}
+            {upcomingSteps.length > 0 && (
+              <div>
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">After This</p>
+                <div className="space-y-2">
+                  {upcomingSteps.slice(0, 3).map((step) => {
+                    const conf = stepTypeConfig[step.stepType] ?? stepTypeConfig.read_material;
+                    const ConfIcon = conf.icon;
+                    return (
+                      <div key={step.id} className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 border border-transparent">
+                        <div className={`w-8 h-8 rounded-md ${conf.bg} flex items-center justify-center shrink-0`}>
+                          <ConfIcon className={`h-4 w-4 ${conf.color}`} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{step.title}</p>
+                          <p className="text-[10px] text-muted-foreground">{step.estimatedMinutes}m · {conf.label}</p>
+                        </div>
+                        <Badge variant="outline" className="text-[10px]">queued</Badge>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Journey progress */}
+            <div className="pt-2 space-y-2 border-t">
+              <div className="flex items-center justify-between text-sm pt-2">
+                <span className="font-medium text-xs text-muted-foreground">Path: {path.title}</span>
+                <span className="text-xs text-muted-foreground">
+                  {progress.completedSteps} / {progress.totalSteps} done · {progress.percentComplete}%
+                </span>
+              </div>
+              <Progress value={progress.percentComplete} className="h-1.5" />
+            </div>
+          </>
+        ) : (
+          <Card className="border-emerald-200 bg-emerald-50/40">
+            <CardContent className="py-10 text-center">
+              <CheckCircle2 className="h-10 w-10 text-emerald-500 mx-auto mb-3" />
+              <h2 className="font-bold text-lg mb-1">You're caught up!</h2>
               <p className="text-sm text-muted-foreground mb-4">
-                Great work today. Come back tomorrow for your next session.
+                Great work. Spaced reviews will unlock automatically.
               </p>
               <Button variant="outline" size="sm" onClick={() => setLoc("/dashboard")}>
                 Back to Dashboard

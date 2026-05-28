@@ -197,6 +197,66 @@ router.post("/:id/complete", async (req, res) => {
   if (detectedDifficulty === "beginner") recommendedPathType = "gentle";
   else if (detectedDifficulty === "advanced") recommendedPathType = "intensive";
 
+  // Detect cognitive learning profile from answer patterns (evidence-based, not VARK)
+  const recallAnswers = scoredAnswers.filter(a => (questionMap.get(a.questionId) as any)?.type === "recall");
+  const comprehensionAnswers = scoredAnswers.filter(a => (questionMap.get(a.questionId) as any)?.type === "comprehension");
+  const applicationAnswers = scoredAnswers.filter(a => (questionMap.get(a.questionId) as any)?.type === "application");
+
+  const calcTypeScore = (arr: typeof scoredAnswers) =>
+    arr.length > 0 ? Math.round(arr.filter(a => a.correct).length / arr.length * 100) : null;
+
+  const recallTypeScore = calcTypeScore(recallAnswers);
+  const comprehensionTypeScore = calcTypeScore(comprehensionAnswers);
+  const applicationTypeScore = calcTypeScore(applicationAnswers);
+
+  // Processing style: conceptual (big-picture first) vs sequential (step-by-step) — based on Cognitive Style Theory
+  const processingStyle: "sequential" | "conceptual" =
+    (applicationTypeScore !== null && recallTypeScore !== null && applicationTypeScore >= recallTypeScore)
+      ? "conceptual" : "sequential";
+
+  // Pace: based on avg time per question (Kahneman System 1/System 2)
+  const avgTimePerQuestion = scoredAnswers.reduce((sum, a) => sum + (a.timeSpentSeconds || 0), 0) / Math.max(scoredAnswers.length, 1);
+  const pace: "intuitive" | "measured" | "deliberate" =
+    avgTimePerQuestion > 30 ? "deliberate" : avgTimePerQuestion < 10 ? "intuitive" : "measured";
+
+  // Strength modality: which Bloom's level they performed best at
+  const typeScoreList = [
+    { type: "recall", score: recallTypeScore },
+    { type: "comprehension", score: comprehensionTypeScore },
+    { type: "application", score: applicationTypeScore },
+  ].filter(x => x.score !== null).sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
+  const strengthModality = (typeScoreList[0]?.type ?? "comprehension") as "recall" | "comprehension" | "application";
+
+  // Confidence pattern: cognitive load / fatigue detection
+  const mid = Math.floor(scoredAnswers.length / 2);
+  const firstHalfAcc = mid > 0 ? scoredAnswers.slice(0, mid).filter(a => a.correct).length / mid : 0;
+  const secondHalfLen = scoredAnswers.length - mid;
+  const secondHalfAcc = secondHalfLen > 0 ? scoredAnswers.slice(mid).filter(a => a.correct).length / secondHalfLen : 0;
+  const confidencePattern: "improving" | "fatiguing" | "consistent" =
+    secondHalfAcc > firstHalfAcc + 0.2 ? "improving"
+    : secondHalfAcc < firstHalfAcc - 0.2 ? "fatiguing"
+    : "consistent";
+
+  // Confidence in the inference depends on sample size per axis
+  const minTypeCount = Math.min(recallAnswers.length, comprehensionAnswers.length, applicationAnswers.length);
+  const totalCount = scoredAnswers.length;
+  const inferenceConfidence: "low" | "medium" | "high" =
+    minTypeCount >= 3 && totalCount >= 12 ? "high"
+    : totalCount >= 8 ? "medium"
+    : "low";
+
+  const learningProfile = {
+    processingStyle,
+    pace,
+    strengthModality,
+    confidencePattern,
+    typeScores: { recall: recallTypeScore, comprehension: comprehensionTypeScore, application: applicationTypeScore },
+    avgTimePerQuestion: Math.round(avgTimePerQuestion),
+    inferenceConfidence,
+    sampleSize: { total: totalCount, recall: recallAnswers.length, comprehension: comprehensionAnswers.length, application: applicationAnswers.length },
+    schemaVersion: 1,
+  };
+
   // Fetch concept names for the response
   const conceptIdList = assessment.conceptIds ?? [];
   const conceptRows = conceptIdList.length > 0
@@ -213,6 +273,7 @@ router.post("/:id/complete", async (req, res) => {
     accuracyByConcept,
     detectedDifficulty,
     recommendedPathType,
+    learningProfile,
     conceptNameMap,
   };
 
