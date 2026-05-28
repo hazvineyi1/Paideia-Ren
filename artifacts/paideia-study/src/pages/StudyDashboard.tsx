@@ -9,7 +9,6 @@ import {
   useDailySession,
   useStartPathStep,
   useStudyProfile,
-  useLearningStyleProfile,
 } from "@/hooks/use-study-journey";
 import { useListStudyMaterials, customFetch } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -58,7 +57,6 @@ export default function StudyDashboard() {
   const { user, logout } = useStudyAuth();
   const { data: sessionData, isLoading } = useDailySession();
   const { data: profile } = useStudyProfile();
-  const { data: learningStyle, isLoading: lsLoading } = useLearningStyleProfile();
   const { data: materials } = useListStudyMaterials();
   const startStep = useStartPathStep();
   const queryClient = useQueryClient();
@@ -101,11 +99,8 @@ export default function StudyDashboard() {
     }
   };
 
-  // Learning-styles gate removed — the spec ("The Coach") explicitly forbids the VARK/modality
-  // framing. Coach personality is now captured during intake instead.
-  void lsLoading; void learningStyle;
-
   // Single onboarding gate: send incomplete profiles straight to intake.
+  // (The legacy learning-style gate was removed — The Coach spec forbids VARK/modality framing.)
   // Wait for profile data to load to avoid a flash-redirect on first paint.
   useEffect(() => {
     if (profile && !profile.diagnosticComplete) {

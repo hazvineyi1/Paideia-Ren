@@ -25,7 +25,6 @@ import StudyKnowledgeMap from "@/pages/StudyKnowledgeMap";
 import StudyMaterialView from "@/pages/StudyMaterialView";
 import StudyAssessment from "@/pages/StudyAssessment";
 import StudyReadStep from "@/pages/StudyReadStep";
-import StudyLearningStyle from "@/pages/StudyLearningStyle";
 import StudyStrategy from "@/pages/StudyStrategy";
 import StudyProgress from "@/pages/StudyProgress";
 import StudyIntake from "@/pages/StudyIntake";
@@ -79,7 +78,6 @@ function Router() {
       <Route path="/knowledge-map" component={() => <Protected component={StudyKnowledgeMap} />} />
       <Route path="/assessment/:id" component={() => <Protected component={StudyAssessment} />} />
       <Route path="/read-step/:pathId/:stepId" component={() => <Protected component={StudyReadStep} />} />
-      <Route path="/learning-style" component={() => <Protected component={StudyLearningStyle} />} />
       <Route path="/intake" component={() => <Protected component={StudyIntake} />} />
       <Route path="/start-over" component={() => <Protected component={StudyStartOver} />} />
       <Route path="/strategy/:materialId" component={() => <Protected component={StudyStrategy} />} />

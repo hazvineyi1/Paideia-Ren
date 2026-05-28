@@ -124,38 +124,6 @@ export function useUpdateStudyProfile() {
   });
 }
 
-// Learning Style (how-the-learner-learns diagnostic, run BEFORE material)
-export function useLearningStyleProfile() {
-  return useQuery({
-    queryKey: ["study", "learning-style", "profile"],
-    queryFn: () => fetchApi("/study/learning-style/profile"),
-  });
-}
-
-export function useLearningStyleTasks() {
-  return useQuery({
-    queryKey: ["study", "learning-style", "tasks"],
-    queryFn: () => fetchApi("/study/learning-style/tasks"),
-  });
-}
-
-export function useSubmitLearningStyle() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (body: {
-      answers: Record<string, string>;
-      miniTaskAnswers: Record<string, Array<{ questionId: string; selectedOptionIndex: number }>>;
-    }) =>
-      fetchApi("/study/learning-style/profile", {
-        method: "POST",
-        body: JSON.stringify(body),
-      }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["study", "learning-style"] });
-    },
-  });
-}
-
 // Strategy (generated after material upload, personalized by learning-style profile)
 export function useMaterialStrategy(materialId?: string) {
   return useQuery({

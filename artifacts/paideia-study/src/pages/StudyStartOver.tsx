@@ -72,8 +72,8 @@ export default function StudyStartOver() {
 
   const finish = () => {
     if (!done) return;
-    // Both diagnostic and everything wipe the learning-style profile → the dashboard's
-    // gate will catch and redirect to /learning-style.
+    // Diagnostic and everything both clear the intake fields → the dashboard's
+    // single onboarding gate will then redirect to /intake.
     setLoc("/dashboard");
   };
 

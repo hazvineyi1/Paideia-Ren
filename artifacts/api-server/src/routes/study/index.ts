@@ -14,7 +14,6 @@ import knowledgeRouter from "./knowledge.js";
 import adaptiveRouter from "./adaptive.js";
 import assessmentRouter from "./assessment.js";
 import pathsRouter from "./paths.js";
-import learningStyleRouter from "./learning-style.js";
 import strategyRouter from "./strategy.js";
 
 const router: IRouter = Router();
@@ -34,7 +33,6 @@ router.use("/knowledge", knowledgeRouter);
 router.use("/adaptive", adaptiveRouter);
 router.use("/assessments", assessmentRouter);
 router.use("/paths", pathsRouter);
-router.use("/learning-style", learningStyleRouter);
 router.use("/strategy", strategyRouter);
 
 export default router;
