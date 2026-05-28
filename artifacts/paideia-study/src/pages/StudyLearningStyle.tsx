@@ -264,8 +264,10 @@ export default function StudyLearningStyle() {
                   return (
                     <button
                       key={opt.id}
+                      type="button"
                       onClick={() => setAnswers((a) => ({ ...a, [currentQuestion.id]: opt.id }))}
-                      className={`w-full text-left p-3 rounded-lg border transition-all ${
+                      style={{ WebkitTapHighlightColor: "rgba(0,0,0,0.05)", touchAction: "manipulation" }}
+                      className={`w-full text-left p-3 rounded-lg border transition-all cursor-pointer touch-manipulation select-none active:scale-[0.99] ${
                         selected
                           ? "border-primary bg-primary/5 ring-1 ring-primary/20"
                           : "border-border hover:border-primary/30 hover:bg-accent/50"
@@ -317,13 +319,15 @@ export default function StudyLearningStyle() {
                             return (
                               <button
                                 key={idx}
+                                type="button"
                                 onClick={() =>
                                   setMiniAnswers((m) => ({
                                     ...m,
                                     [currentMini.id]: { ...(m[currentMini.id] ?? {}), [q.id]: idx },
                                   }))
                                 }
-                                className={`w-full text-left p-2.5 rounded-lg border text-sm transition-all ${
+                                style={{ WebkitTapHighlightColor: "rgba(0,0,0,0.05)", touchAction: "manipulation" }}
+                                className={`w-full text-left p-2.5 rounded-lg border text-sm transition-all cursor-pointer touch-manipulation select-none active:scale-[0.99] ${
                                   selected
                                     ? "border-primary bg-primary/5"
                                     : "border-border hover:border-primary/30 hover:bg-accent/50"
