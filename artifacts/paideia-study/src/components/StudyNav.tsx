@@ -2,7 +2,7 @@ import { useLocation } from "wouter";
 import { useStudyAuth } from "@/hooks/use-study-auth";
 import {
   LayoutDashboard, BookOpen, TrendingUp,
-  LogOut, User, ChevronDown, Network,
+  LogOut, User, ChevronDown, RotateCcw,
   MessageCircle,
 } from "lucide-react";
 import {
@@ -75,8 +75,8 @@ export default function StudyNav() {
               <DropdownMenuItem onClick={() => setLoc("/tutor")}>
                 <MessageCircle className="h-3.5 w-3.5 mr-2" /> AI tutor
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setLoc("/knowledge-map")}>
-                <Network className="h-3.5 w-3.5 mr-2" /> Knowledge map
+              <DropdownMenuItem onClick={() => setLoc("/start-over")}>
+                <RotateCcw className="h-3.5 w-3.5 mr-2" /> Test &amp; start again
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => setLoc("/profile")}>

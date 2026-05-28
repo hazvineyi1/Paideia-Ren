@@ -4,6 +4,10 @@ import {
   db,
   studyLearnerProfilesTable,
   studyAssessmentsTable,
+  studyLearningPathsTable,
+  studyPracticeSessionsTable,
+  studyMockExamsTable,
+  studyLearningStyleProfilesTable,
 } from "@workspace/db";
 import { and, desc, eq } from "drizzle-orm";
 import { isLearningProfile } from "../../lib/prompts.js";
@@ -117,6 +121,64 @@ router.patch("/", async (req, res) => {
   }
 
   res.json(profile);
+});
+
+// POST /study/profile/reset — test again / start over.
+// scope:
+//   "progress"   — wipe study artifacts (paths, practice, exams). Keep materials, profile, learning-style.
+//   "diagnostic" — also clear the 5 intake fields + delete learning-style profile so both gates re-run.
+//   "everything" — both of the above.
+// We never touch materials/concepts — those are the learner's uploaded source content.
+const resetSchema = z.object({
+  scope: z.enum(["progress", "diagnostic", "everything"]),
+});
+
+router.post("/reset", async (req, res) => {
+  const userId = req.studyUser!.id;
+  const parsed = resetSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Invalid scope. Expected 'progress', 'diagnostic', or 'everything'." });
+    return;
+  }
+  const { scope } = parsed.data;
+  const wipeProgress = scope === "progress" || scope === "everything";
+  const wipeDiagnostic = scope === "diagnostic" || scope === "everything";
+
+  // Wrap in a transaction so partial resets can never leave the learner in a half-cleared
+  // state (e.g., paths deleted but exams still present). All-or-nothing.
+  try {
+    await db.transaction(async (tx) => {
+      if (wipeProgress) {
+        // Path steps cascade-delete from studyLearningPathsTable.
+        await tx.delete(studyLearningPathsTable).where(eq(studyLearningPathsTable.userId, userId));
+        await tx.delete(studyPracticeSessionsTable).where(eq(studyPracticeSessionsTable.userId, userId));
+        await tx.delete(studyMockExamsTable).where(eq(studyMockExamsTable.userId, userId));
+      }
+      if (wipeDiagnostic) {
+        await tx
+          .update(studyLearnerProfilesTable)
+          .set({
+            examTarget: null,
+            examDate: null,
+            hoursPerWeek: null,
+            baselineLevel: null,
+            calibrationSelfRating: null,
+            failureMode: null,
+            updatedAt: new Date(),
+          })
+          .where(eq(studyLearnerProfilesTable.userId, userId));
+        await tx.delete(studyLearningStyleProfilesTable).where(eq(studyLearningStyleProfilesTable.userId, userId));
+        // Assessments hold the learning-style results; remove completed ones so the gate re-triggers.
+        await tx.delete(studyAssessmentsTable).where(eq(studyAssessmentsTable.userId, userId));
+      }
+    });
+  } catch (err) {
+    console.error("[reset] transaction failed", err);
+    res.status(500).json({ error: "Reset failed. No data was changed." });
+    return;
+  }
+
+  res.json({ success: true, scope });
 });
 
 export default router;

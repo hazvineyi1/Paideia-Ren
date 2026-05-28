@@ -217,9 +217,18 @@ export default function StudyDashboard() {
                   onClick={handleBegin}
                   disabled={startStep.isPending}
                 >
-                  {primaryStep.status === "in_progress" ? "Continue This Step" : "Begin This Step"}
+                  {primaryStep.status === "in_progress" ? "Continue this step" : "Begin this step"}
                   <ArrowRight className="h-4 w-4" />
                 </Button>
+
+                {/* Dialogue affordance — the learner should never feel stuck. One tap to ask. */}
+                <button
+                  type="button"
+                  onClick={() => setLoc("/tutor")}
+                  className="w-full mt-2 inline-flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-primary py-1.5 rounded-md"
+                >
+                  <MessageCircle className="h-3 w-3" /> Talk this through with your tutor first
+                </button>
               </CardContent>
             </Card>
 
@@ -262,14 +271,28 @@ export default function StudyDashboard() {
             )}
           </>
         ) : hasActivePath && !primaryStep ? (
-          // Path active but nothing available right now
+          // Path active but nothing available right now — explicit "come back when, bring what" guidance
+          // so the learner doesn't have to guess what to do with the down-time.
           <Card className="border-emerald-200 bg-emerald-50/40">
             <CardContent className="py-8 text-center">
               <CheckCircle2 className="h-10 w-10 text-emerald-500 mx-auto mb-3" />
-              <h2 className="font-bold text-lg mb-1">You're caught up!</h2>
-              <p className="text-sm text-muted-foreground">
-                No steps available right now. Spaced reviews will unlock automatically.
+              <h2 className="font-bold text-lg mb-1">You're done for now</h2>
+              <p className="text-sm text-muted-foreground mb-4">
+                Rest matters as much as the work. Your next review will unlock automatically when memory needs the reinforcement.
               </p>
+              <div className="text-left max-w-sm mx-auto space-y-2 text-sm mb-4">
+                <div className="rounded-lg bg-white/70 border border-emerald-100 px-3 py-2">
+                  <div className="text-[11px] uppercase tracking-wider text-emerald-700 font-semibold mb-0.5">Come back</div>
+                  <div className="text-gray-800">When you feel ready — your next review unlocks automatically once spaced repetition decides you'll benefit most.</div>
+                </div>
+                <div className="rounded-lg bg-white/70 border border-emerald-100 px-3 py-2">
+                  <div className="text-[11px] uppercase tracking-wider text-emerald-700 font-semibold mb-0.5">Bring with you</div>
+                  <div className="text-gray-800">Just yourself. No prep needed — your AI coach will pick the next step.</div>
+                </div>
+              </div>
+              <Button variant="outline" size="sm" onClick={() => setLoc("/tutor")} className="gap-1.5">
+                <MessageCircle className="h-3.5 w-3.5" /> Ask about anything you covered
+              </Button>
             </CardContent>
           </Card>
         ) : materials && materials.length > 0 ? (
