@@ -87,7 +87,7 @@ router.get("/recommendations", async (req, res) => {
       description: `${dueCards.length} cards are due for spaced repetition review.`,
       priority: 10,
       action: "/flashcards",
-      reason: "Forgetting curve — review at optimal retention window",
+      reason: "Forgetting curve - review at optimal retention window",
     });
   }
 
@@ -98,7 +98,7 @@ router.get("/recommendations", async (req, res) => {
       description: `${weakNodes.length} concepts need more practice: ${weakNodes.slice(0, 3).map((n) => n.label).join(", ")}`,
       priority: 9,
       action: "/practice",
-      reason: "Mastery below 50% — targeted practice recommended",
+      reason: "Mastery below 50% - targeted practice recommended",
     });
   }
 
@@ -123,7 +123,7 @@ router.get("/recommendations", async (req, res) => {
       description: "Generate adaptive questions from your materials.",
       priority: 7,
       action: "/practice",
-      reason: "No practice in 2+ days — active recall strengthens memory",
+      reason: "No practice in 2+ days - active recall strengthens memory",
     });
   }
 

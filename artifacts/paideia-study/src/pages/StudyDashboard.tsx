@@ -138,7 +138,7 @@ export default function StudyDashboard() {
           </div>
         ) : hasActivePath && primaryStep && stepConfig ? (
           <>
-            {/* AI Coach — single Next Step card */}
+            {/* AI Coach - single Next Step card */}
             <Card className="border-primary/20 overflow-hidden shadow-sm">
               <div className="h-1 bg-gradient-to-r from-primary to-primary/40" />
               <CardContent className="py-5 px-5">
@@ -245,7 +245,7 @@ export default function StudyDashboard() {
             </CardContent>
           </Card>
         ) : (
-          // No path yet — onboarding
+          // No path yet - onboarding
           <Card className="border-dashed border-primary/30 bg-primary/5">
             <CardContent className="py-10 text-center">
               <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
@@ -253,7 +253,7 @@ export default function StudyDashboard() {
               </div>
               <h2 className="text-xl font-bold mb-2">Start Your Learning Journey</h2>
               <p className="text-sm text-muted-foreground mb-6 max-w-sm mx-auto">
-                Tell us what you're preparing for and upload your materials. AI profiles how you learn and builds your optimal path — you just follow it.
+                Tell us what you're preparing for and upload your materials. AI profiles how you learn and builds your optimal path - you just follow it.
               </p>
               <Button size="lg" className="gap-2" onClick={() => setLoc("/materials/new")}>
                 <BookOpen className="h-4 w-4" />

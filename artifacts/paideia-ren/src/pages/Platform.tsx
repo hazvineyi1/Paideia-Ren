@@ -15,13 +15,13 @@ const steps = [
     number: "01",
     title: "Recognize",
     subtitle: "Cognitive diagnostic",
-    description: "Every learner begins with a short adaptive diagnostic. Rather than asking how they prefer to learn — a self-report approach the research has discredited — the system infers a cognitive profile from how they actually answer: accuracy across Bloom levels (recall, comprehension, application), response timing, and how performance trends across a session. The profile is labeled with its own confidence so early signals are never treated as fixed traits.",
+    description: "Every learner begins with a short adaptive diagnostic. Rather than asking how they prefer to learn - a self-report approach the research has discredited - the system infers a cognitive profile from how they actually answer: accuracy across Bloom levels (recall, comprehension, application), response timing, and how performance trends across a session. The profile is labeled with its own confidence so early signals are never treated as fixed traits.",
   },
   {
     number: "02",
     title: "Adapt",
     subtitle: "Sequencing and pacing",
-    description: "Content reshapes itself in real time — not by switching sensory channel, but by adjusting what the learner sees next. A learner who is strong at recall but weak at application gets more worked examples before novel problems. A learner who fatigues mid-session gets shorter chunks. A fast, accurate learner skips ahead. The curriculum stays constant. The path changes.",
+    description: "Content reshapes itself in real time - not by switching sensory channel, but by adjusting what the learner sees next. A learner who is strong at recall but weak at application gets more worked examples before novel problems. A learner who fatigues mid-session gets shorter chunks. A fast, accurate learner skips ahead. The curriculum stays constant. The path changes.",
   },
   {
     number: "03",
@@ -66,7 +66,7 @@ const demoItems: DemoItem[] = [
       "Mass increases briefly, then drops sharply on day 14",
     ],
     correctIndex: 2,
-    explanation: "Without enough light, photosynthesis slows but respiration continues — the plant consumes stored glucose, so mass falls.",
+    explanation: "Without enough light, photosynthesis slows but respiration continues - the plant consumes stored glucose, so mass falls.",
   },
 ];
 
@@ -173,7 +173,7 @@ export default function Platform() {
               See the system adapt.
             </h2>
             <p className="text-[17px] text-foreground/80 leading-[1.75] mb-3 text-center">
-              Answer two short questions. The system infers a profile from <em>how</em> you answer — accuracy across question types and response timing — not from a self-report quiz.
+              Answer two short questions. The system infers a profile from <em>how</em> you answer - accuracy across question types and response timing - not from a self-report quiz.
             </p>
             <p className="text-[13px] text-muted-foreground mb-12 text-center">
               Two items is only an early signal. The full diagnostic uses many more.
@@ -234,15 +234,15 @@ export default function Platform() {
                     </div>
 
                     <p className="text-[17px] text-foreground/80 leading-[1.75] mb-6">
-                      {processingStyle === "conceptual" && "You handled an application item more confidently than a recall item — a pattern that suggests you reason from principles. The full system would lead with worked examples and let definitions emerge from cases."}
-                      {processingStyle === "sequential" && "You handled the recall item more confidently than the application item — a pattern that suggests you prefer to anchor facts before extending them. The full system would front-load definitions and scaffold up to application problems."}
+                      {processingStyle === "conceptual" && "You handled an application item more confidently than a recall item - a pattern that suggests you reason from principles. The full system would lead with worked examples and let definitions emerge from cases."}
+                      {processingStyle === "sequential" && "You handled the recall item more confidently than the application item - a pattern that suggests you prefer to anchor facts before extending them. The full system would front-load definitions and scaffold up to application problems."}
                       {processingStyle === "mixed" && "Your two items moved together. The full system needs more evidence before specializing - it would run more diagnostic items first rather than commit to a sequencing strategy."}
                     </p>
 
                     <div className="bg-secondary p-6 mb-8 border-l-2 border-accent">
                       <p className="text-[13px] font-semibold uppercase tracking-widest text-muted-foreground mb-3">Honesty note</p>
                       <p className="text-[15px] text-foreground/80 leading-[1.6]">
-                        This is a two-item demo. Real profiles use many more items, track how performance trends across a session, and carry a confidence score so the system never overcommits on thin evidence. We deliberately do not use VARK-style sensory preferences — that model has not held up in peer-reviewed research.
+                        This is a two-item demo. Real profiles use many more items, track how performance trends across a session, and carry a confidence score so the system never overcommits on thin evidence. We deliberately do not use VARK-style sensory preferences - that model has not held up in peer-reviewed research.
                       </p>
                     </div>
                     <button onClick={resetDemo} data-testid="demo-reset"

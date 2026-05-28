@@ -93,7 +93,7 @@ export default function StudyProfile() {
         <div>
           <h1 className="text-2xl font-bold mb-1">Learner Profile</h1>
           <p className="text-sm text-muted-foreground mb-5">
-            Your cognitive fingerprint shapes how Paideia adapts everything — from flashcard scheduling to question difficulty.
+            Your cognitive fingerprint shapes how Paideia adapts everything - from flashcard scheduling to question difficulty.
           </p>
         </div>
 
@@ -122,21 +122,21 @@ export default function StudyProfile() {
                           <Layers className="h-3.5 w-3.5 text-muted-foreground" />
                           <span className="text-[11px] uppercase tracking-wide text-muted-foreground">Processing</span>
                         </div>
-                        <p className="text-sm font-medium capitalize">{lp?.processingStyle ?? "—"}</p>
+                        <p className="text-sm font-medium capitalize">{lp?.processingStyle ?? "-"}</p>
                       </div>
                       <div className="p-3 rounded-lg bg-muted/40">
                         <div className="flex items-center gap-1.5 mb-1">
                           <Gauge className="h-3.5 w-3.5 text-muted-foreground" />
                           <span className="text-[11px] uppercase tracking-wide text-muted-foreground">Pace</span>
                         </div>
-                        <p className="text-sm font-medium capitalize">{lp?.pace ?? "—"}</p>
+                        <p className="text-sm font-medium capitalize">{lp?.pace ?? "-"}</p>
                       </div>
                       <div className="p-3 rounded-lg bg-muted/40 col-span-2">
                         <div className="flex items-center gap-1.5 mb-1">
                           <TrendIcon className="h-3.5 w-3.5 text-muted-foreground" />
                           <span className="text-[11px] uppercase tracking-wide text-muted-foreground">Within-session confidence</span>
                         </div>
-                        <p className="text-sm font-medium capitalize">{lp?.confidencePattern ?? "—"}</p>
+                        <p className="text-sm font-medium capitalize">{lp?.confidencePattern ?? "-"}</p>
                       </div>
                     </div>
 

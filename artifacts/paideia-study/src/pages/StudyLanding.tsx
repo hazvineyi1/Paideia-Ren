@@ -69,7 +69,7 @@ export default function StudyLanding() {
           <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-xl mx-auto leading-relaxed">
             Upload any material. AI builds your personal knowledge graph,
             adapts to your cognitive style, and guides you along the optimal
-            learning path — every single day.
+            learning path - every single day.
           </p>
           <div className="flex items-center justify-center gap-3">
             <Button size="lg" className="gap-2" onClick={() => setLoc("/signup")}>
@@ -92,7 +92,7 @@ export default function StudyLanding() {
               <Badge variant="outline" className="mb-4">Any Content</Badge>
               <h2 className="text-3xl font-bold mb-3">Ingest Everything You Learn From</h2>
               <p className="text-muted-foreground max-w-lg mx-auto">
-                Paste notes, upload PDFs, drop images, share URLs, record audio —
+                Paste notes, upload PDFs, drop images, share URLs, record audio -
                 our AI processes it all into structured, connected knowledge.
               </p>
             </div>
@@ -116,7 +116,7 @@ export default function StudyLanding() {
                 <p className="text-muted-foreground mb-6 leading-relaxed">
                   As you add materials, AI extracts concepts and maps relationships
                   between them. See prerequisites, related topics, and extension concepts
-                  — creating your personal knowledge web.
+                  - creating your personal knowledge web.
                 </p>
                 <ul className="space-y-3">
                   {[
@@ -186,7 +186,7 @@ export default function StudyLanding() {
               <h2 className="text-3xl font-bold mb-3">Learns How You Learn</h2>
               <p className="text-muted-foreground max-w-lg mx-auto">
                 Not everyone learns the same way. Our AI detects your cognitive style,
-                attention patterns, and optimal pace — then personalizes everything.
+                attention patterns, and optimal pace - then personalizes everything.
               </p>
             </div>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">

@@ -19,12 +19,12 @@ const features = [
   {
     icon: Brain,
     title: "Socratic mode",
-    description: "Flip a switch and the tutor stops explaining. Instead, it asks you questions that make you think deeper — definitions, examples, assumptions, and consequences.",
+    description: "Flip a switch and the tutor stops explaining. Instead, it asks you questions that make you think deeper - definitions, examples, assumptions, and consequences.",
   },
   {
     icon: Sparkles,
     title: "Adapts to how you think",
-    description: "A short diagnostic infers your cognitive profile from how you actually answer — accuracy across question types and response timing. No self-report quiz, no VARK. The tutor sequences explanations and pacing to fit.",
+    description: "A short diagnostic infers your cognitive profile from how you actually answer - accuracy across question types and response timing. No self-report quiz, no VARK. The tutor sequences explanations and pacing to fit.",
   },
 ];
 
@@ -63,7 +63,7 @@ export default function StudyTutor() {
               transition={{ duration: 0.8, delay: 0.3 }}
               className="text-[17px] text-foreground/80 leading-[1.75] mb-10 max-w-[560px]"
             >
-              The Paideia-Ren Study Tutor is a conversational AI that answers questions about your actual class material — not generic internet answers. It cites your worksheets, quizzes, and lesson plans, and adapts to how you learn best.
+              The Paideia-Ren Study Tutor is a conversational AI that adapts to how you actually think. It paces explanations, scaffolds the next step, and refines its read of you as you study, rather than handing you finished answers.
             </motion.p>
             <motion.div
               initial={{ opacity: 0 }}
@@ -76,14 +76,6 @@ export default function StudyTutor() {
                 size="lg"
                 className="bg-primary hover:bg-primary/90 text-white px-8 h-14 text-base rounded-none"
               >
-                <a href="/app/student/login">Open Study Tutor</a>
-              </Button>
-              <Button
-                asChild
-                size="lg"
-                variant="outline"
-                className="border-primary text-primary hover:bg-primary/5 px-8 h-14 text-base rounded-none"
-              >
                 <a href="/app/student/login">Student sign-in</a>
               </Button>
             </motion.div>
@@ -95,27 +87,28 @@ export default function StudyTutor() {
             transition={{ duration: 0.8, delay: 0.3 }}
           >
             <Card className="bg-white rounded-none border shadow-sm p-8 space-y-5">
-              <div className="flex items-start gap-3">
-                <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                  <span className="text-primary text-sm font-semibold">AI</span>
-                </div>
-                <div className="bg-muted rounded-lg rounded-tl-none px-4 py-3 text-sm max-w-[85%]">
-                  <p className="text-foreground leading-relaxed">
-                    What is photosynthesis and how does it relate to the worksheet we did last week?
-                  </p>
-                </div>
-              </div>
               <div className="flex items-start gap-3 flex-row-reverse">
                 <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center shrink-0">
                   <span className="text-white text-xs font-bold">S</span>
                 </div>
                 <div className="bg-primary/10 rounded-lg rounded-tr-none px-4 py-3 text-sm max-w-[85%]">
                   <p className="text-foreground leading-relaxed">
-                    Photosynthesis is the process plants use to convert sunlight into energy. Based on your Worksheet 3 on plant biology, plants take in CO2 and release oxygen...
+                    I keep getting quadratic equations wrong. Can you just give me the formula?
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                  <span className="text-primary text-sm font-semibold">AI</span>
+                </div>
+                <div className="bg-muted rounded-lg rounded-tl-none px-4 py-3 text-sm max-w-[85%]">
+                  <p className="text-foreground leading-relaxed">
+                    I could, but your profile says you retain better when we build up first. Quick check: in x squared plus 5x plus 6, what two numbers multiply to 6 and add to 5? Start there and I'll meet you at the formula.
                   </p>
                   <div className="flex flex-wrap gap-2 mt-3">
-                    <span className="text-[11px] px-2 py-1 rounded-full bg-white border text-muted-foreground">Concept: Photosynthesis</span>
-                    <span className="text-[11px] px-2 py-1 rounded-full bg-white border text-muted-foreground">Source: Worksheet 3</span>
+                    <span className="text-[11px] px-2 py-1 rounded-full bg-white border text-muted-foreground">Pace: deliberate</span>
+                    <span className="text-[11px] px-2 py-1 rounded-full bg-white border text-muted-foreground">Style: sequential</span>
+                    <span className="text-[11px] px-2 py-1 rounded-full bg-white border text-muted-foreground">Gap: factoring</span>
                   </div>
                 </div>
               </div>
@@ -160,10 +153,10 @@ export default function StudyTutor() {
               Four signals. One tutor that adapts.
             </h2>
             <p className="text-[17px] text-foreground/80 leading-[1.75] mb-3">
-              A short diagnostic reads four cognitive signals from <em>how</em> you answer — not from a self-report quiz. The Study Tutor uses them to sequence explanations, pick the next step, and pace the session. The profile carries its own confidence score and refines as you study.
+              A short diagnostic reads four cognitive signals from <em>how</em> you answer, not from a self-report quiz. The Study Tutor uses them to sequence explanations, pick the next step, and pace the session. The profile carries its own confidence score and refines as you study.
             </p>
             <p className="text-[13px] text-muted-foreground mb-12">
-              We deliberately don't use VARK (visual/auditory/reading/kinesthetic) — that model has not held up in peer-reviewed research.
+              We deliberately don't use VARK (visual/auditory/reading/kinesthetic), because that model has not held up in peer-reviewed research.
             </p>
           </motion.div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -201,7 +194,7 @@ export default function StudyTutor() {
               className="bg-accent hover:bg-accent/90 text-white px-10 h-14 text-base rounded-none"
             >
               <a href="/app/student/login">
-                Open Study Tutor <ArrowRight size={16} className="ml-2" />
+                Student sign-in <ArrowRight size={16} className="ml-2" />
               </a>
             </Button>
           </motion.div>

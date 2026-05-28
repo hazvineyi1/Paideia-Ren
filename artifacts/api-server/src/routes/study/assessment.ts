@@ -209,7 +209,7 @@ router.post("/:id/complete", async (req, res) => {
   const comprehensionTypeScore = calcTypeScore(comprehensionAnswers);
   const applicationTypeScore = calcTypeScore(applicationAnswers);
 
-  // Processing style: conceptual (big-picture first) vs sequential (step-by-step) — based on Cognitive Style Theory.
+  // Processing style: conceptual (big-picture first) vs sequential (step-by-step) - based on Cognitive Style Theory.
   // If we cannot tell from accuracy alone we say "mixed" rather than forcing a label.
   const processingStyle: "sequential" | "conceptual" | "mixed" =
     (applicationTypeScore === null || recallTypeScore === null)

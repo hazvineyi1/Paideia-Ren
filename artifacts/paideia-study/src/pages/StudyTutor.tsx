@@ -55,7 +55,7 @@ export default function StudyTutor() {
         <div className="mb-6">
           <h1 className="text-2xl font-bold mb-1">AI Socratic Tutor</h1>
           <p className="text-sm text-muted-foreground">
-            Grounded in your knowledge graph and learning profile. Ask anything — or pick a quick start below.
+            Grounded in your knowledge graph and learning profile. Ask anything - or pick a quick start below.
           </p>
         </div>
 

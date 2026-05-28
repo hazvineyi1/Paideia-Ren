@@ -41,7 +41,7 @@ export function ShareResourceDialog({
       });
       setDone(res.recipientExists
         ? "Sent. They'll see it in their Shared inbox next time they sign in."
-        : "Sent. The recipient doesn't have an account yet — they'll see it as soon as they sign up with this email and get approved.");
+        : "Sent. The recipient doesn't have an account yet - they'll see it as soon as they sign up with this email and get approved.");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Could not share");
     } finally { setBusy(false); }

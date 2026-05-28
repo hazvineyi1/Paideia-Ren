@@ -35,7 +35,7 @@ export function ClassProfileSelector({
         <SelectTrigger><SelectValue placeholder="Pick a class to auto-fill" /></SelectTrigger>
         <SelectContent>
           {profiles.map((p) => (
-            <SelectItem key={p.id} value={p.id}>{p.name} — {p.subject} · {p.yearGroup}</SelectItem>
+            <SelectItem key={p.id} value={p.id}>{p.name} - {p.subject} · {p.yearGroup}</SelectItem>
           ))}
         </SelectContent>
       </Select>

@@ -70,7 +70,7 @@ export default function StudyMaterialNew() {
         try {
           await updateProfile.mutateAsync({ examTarget: goal });
         } catch {
-          // non-fatal — continue with material creation
+          // non-fatal - continue with material creation
         }
       }
 
@@ -230,7 +230,7 @@ export default function StudyMaterialNew() {
           </p>
         </div>
 
-        {/* Learning Goal — sets context for everything */}
+        {/* Learning Goal - sets context for everything */}
         <Card className="mb-5 border-primary/20 bg-primary/5">
           <CardContent className="py-5 px-5">
             <div className="flex items-center gap-2 mb-2">
@@ -238,7 +238,7 @@ export default function StudyMaterialNew() {
               <Label htmlFor="goal" className="text-sm font-semibold m-0">What are you preparing for?</Label>
             </div>
             <p className="text-xs text-muted-foreground mb-3">
-              The AI uses this to focus every step on your goal — exam, certification, project, or topic mastery.
+              The AI uses this to focus every step on your goal - exam, certification, project, or topic mastery.
             </p>
             <Input
               id="goal"
@@ -260,7 +260,7 @@ export default function StudyMaterialNew() {
           <Label htmlFor="title" className="text-sm font-medium">Material title</Label>
           <Input
             id="title"
-            placeholder="e.g., Scrum Guide 2020 — Chapter 1"
+            placeholder="e.g., Scrum Guide 2020 - Chapter 1"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             className="mt-1.5"
@@ -399,7 +399,7 @@ export default function StudyMaterialNew() {
           ) : (
             <>
               <Sparkles className="h-4 w-4" />
-              Start Learning — Generate Concepts & Path
+              Start Learning - Generate Concepts & Path
             </>
           )}
         </Button>

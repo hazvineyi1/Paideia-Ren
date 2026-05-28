@@ -56,7 +56,7 @@ export default function WhereWeWork() {
         </div>
       </section>
 
-      {/* In design — quiet line */}
+      {/* In design - quiet line */}
       <section className="pb-[120px]">
         <div className="max-w-[820px] mx-auto px-6">
           <motion.div {...fadeUp} className="border-l-2 border-gold pl-6">

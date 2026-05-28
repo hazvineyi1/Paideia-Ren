@@ -21,9 +21,9 @@ function generateCoachingMessage(step: any, assessmentResults: any | null, nodes
   let whyPart: string;
   if (accuracy !== null && accuracy !== undefined) {
     if (accuracy < 40) {
-      whyPart = `You scored ${accuracy}% on ${conceptName} in your diagnostic — your highest-priority gap. The AI starts here to build a solid foundation.`;
+      whyPart = `You scored ${accuracy}% on ${conceptName} in your diagnostic - your highest-priority gap. The AI starts here to build a solid foundation.`;
     } else if (accuracy < 65) {
-      whyPart = `You showed ${accuracy}% understanding of ${conceptName}. There's more to unlock — this step deepens it.`;
+      whyPart = `You showed ${accuracy}% understanding of ${conceptName}. There's more to unlock - this step deepens it.`;
     } else {
       whyPart = `You scored ${accuracy}% on ${conceptName}. This review reinforces retention before moving on.`;
     }
@@ -33,7 +33,7 @@ function generateCoachingMessage(step: any, assessmentResults: any | null, nodes
       flashcard_review: `Active recall of ${conceptName} at this stage strengthens long-term retention.`,
       practice_questions: `Applying ${conceptName} in varied contexts builds durable, transferable knowledge.`,
       tutor_session: `Deep exploration of ${conceptName} will surface and close any remaining gaps.`,
-      mastery_check: `You've built up ${conceptName} — this check confirms you're ready to progress.`,
+      mastery_check: `You've built up ${conceptName} - this check confirms you're ready to progress.`,
       spaced_review: `Revisiting ${conceptName} at the optimal interval prevents forgetting.`,
     };
     whyPart = reasons[step.stepType as string] || `The AI determined this is your optimal next step right now.`;
@@ -41,14 +41,14 @@ function generateCoachingMessage(step: any, assessmentResults: any | null, nodes
 
   let profilePart = "";
   if (learningProfile?.processingStyle === "sequential") {
-    profilePart = " Your profile shows you build knowledge step by step — following the AI sequence is optimal for you.";
+    profilePart = " Your profile shows you build knowledge step by step - following the AI sequence is optimal for you.";
   } else if (learningProfile?.processingStyle === "conceptual") {
-    profilePart = " Your profile shows you grasp the big picture first — connect this to the broader concept map as you go.";
+    profilePart = " Your profile shows you grasp the big picture first - connect this to the broader concept map as you go.";
   }
   if (learningProfile?.confidencePattern === "fatiguing") {
-    profilePart += " Keep this session short and focused — your accuracy fades when sessions run long.";
+    profilePart += " Keep this session short and focused - your accuracy fades when sessions run long.";
   } else if (learningProfile?.confidencePattern === "improving") {
-    profilePart += " You warm up as you go — push through any initial resistance.";
+    profilePart += " You warm up as you go - push through any initial resistance.";
   }
 
   return whyPart + profilePart;

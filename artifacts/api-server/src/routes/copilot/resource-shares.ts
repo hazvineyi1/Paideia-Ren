@@ -63,7 +63,7 @@ router.post("/", async (req, res) => {
   }
   const title = await loadResourceTitle(parsed.data.resourceType, parsed.data.resourceId, teacherId);
   if (!title) { res.status(404).json({ error: "Resource not found in your library." }); return; }
-  // Look up recipient teacher (may not exist yet — share still recorded).
+  // Look up recipient teacher (may not exist yet - share still recorded).
   const recipient = (await db.select({ id: teachersTable.id }).from(teachersTable).where(eq(teachersTable.email, emailLower)).limit(1))[0];
   const [row] = await db
     .insert(resourceSharesTable)

@@ -11,14 +11,14 @@ Marketing site (`paideia-ren`), teacher app (`paideia-app`), student study app
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server
-- `pnpm --filter @workspace/paideia-app run dev` — teacher web app
-- `pnpm --filter @workspace/paideia-ren run dev` — marketing site
-- `pnpm --filter @workspace/paideia-study run dev` — student study app (port auto-assigned)
-- `pnpm run typecheck` — full typecheck across all packages
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
+- `pnpm --filter @workspace/api-server run dev` - run the API server
+- `pnpm --filter @workspace/paideia-app run dev` - teacher web app
+- `pnpm --filter @workspace/paideia-ren run dev` - marketing site
+- `pnpm --filter @workspace/paideia-study run dev` - student study app (port auto-assigned)
+- `pnpm run typecheck` - full typecheck across all packages
+- `pnpm --filter @workspace/db run push` - push DB schema changes (dev only)
 - Required env: `DATABASE_URL`, `OPENAI_API_KEY`, `ADMIN_EMAILS`
-  (comma-separated founder emails — these accounts get the `/admin` portal
+  (comma-separated founder emails - these accounts get the `/admin` portal
   and bypass the free-tier generation quota)
 - Stripe is wired via the Replit Stripe connector (no env keys needed in
   dev). To seed the Unlimited subscription product in Stripe, run:
@@ -47,7 +47,7 @@ Marketing site (`paideia-ren`), teacher app (`paideia-app`), student study app
 
 - Founder-approval signup gate. New teachers land in `status='pending'`
   and see an Awaiting Approval screen; founder approves/suspends in
-  `/admin`. No outbound email — all founder ↔ teacher comms happen
+  `/admin`. No outbound email - all founder ↔ teacher comms happen
   inside the founder admin portal.
 - Share-a-resource is by email. Recipients claim a copy from
   `/shared`, which duplicates the resource into their library.
@@ -105,7 +105,7 @@ own deployable web service:
 ## User preferences
 
 - No em dashes anywhere in user-facing copy.
-- No outbound email — keep all messaging inside the founder admin
+- No outbound email - keep all messaging inside the founder admin
   portal.
 - Brand colours and font pair (Cormorant Garamond + Inter) are
   authoritative; don't substitute without asking.
@@ -118,7 +118,7 @@ own deployable web service:
   paideia-app may both need a typecheck; run `pnpm run typecheck`.
 - Parent drafts have no `title` or `subject` column; the library
   derives a synthetic title from `studentName`.
-- Rate limiter is in-memory only — fine for a single-node deployment;
+- Rate limiter is in-memory only - fine for a single-node deployment;
   swap for Redis if you scale horizontally.
 
 ## Pointers

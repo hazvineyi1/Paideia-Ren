@@ -44,7 +44,7 @@ export default function StudentProfile() {
 
       <div className="grid grid-cols-3 gap-4 mb-10">
         <Stat label="Assessments captured" value={subs.length} />
-        <Stat label="Auto-graded average" value={avg !== null ? `${avg}%` : "—"} />
+        <Stat label="Auto-graded average" value={avg !== null ? `${avg}%` : "-"} />
         <Stat label="Items awaiting review" value={subs.reduce((a, x) => a + x.submission.needsReviewCount, 0)} />
       </div>
 

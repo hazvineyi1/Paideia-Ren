@@ -148,7 +148,7 @@ export default function StudyAssessment() {
                 <div className="flex-1">
                   <h3 className="font-semibold text-sm mb-1">AI's Decision</h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    You scored <span className="font-semibold text-foreground">{score}%</span> — {detectedDifficulty === "advanced" ? "strong grasp" : detectedDifficulty === "intermediate" ? "decent foundation" : "building from fundamentals"}.
+                    You scored <span className="font-semibold text-foreground">{score}%</span> - {detectedDifficulty === "advanced" ? "strong grasp" : detectedDifficulty === "intermediate" ? "decent foundation" : "building from fundamentals"}.
                     The AI has scheduled <span className="font-semibold text-foreground">{weakConcepts.length > 0 ? weakConcepts.length : "no"} weak concept{weakConcepts.length !== 1 ? "s" : ""}</span> first
                     {strongConcepts.length > 0 ? ` and will briefly revisit ${strongConcepts.length} mastered concept${strongConcepts.length !== 1 ? "s" : ""} for retention.` : "."}
                     Path type: <span className="font-semibold text-foreground">{pathTypeLabel}</span>.
@@ -196,7 +196,7 @@ export default function StudyAssessment() {
             </Card>
           </div>
 
-          {/* Learning Profile — cognitive science-based */}
+          {/* Learning Profile - cognitive science-based */}
           {learningProfile && (
             <Card className="mb-5 border-primary/20">
               <CardContent className="py-5 px-5">
@@ -214,9 +214,9 @@ export default function StudyAssessment() {
                   </Badge>
                 </div>
                 <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
-                  Inferred from how you answered — your response patterns across question types, timing, and accuracy trend. Not a self-report quiz, and not VARK. The AI uses these signals to sequence your path and will refine them as you progress.
+                  Inferred from how you answered - your response patterns across question types, timing, and accuracy trend. Not a self-report quiz, and not VARK. The AI uses these signals to sequence your path and will refine them as you progress.
                   {(learningProfile.inferenceConfidence === "low" || learningProfile.inferenceConfidence === "developing") && (
-                    <span className="block mt-1 text-amber-700"> ⚠ Based on {learningProfile.sampleSize ?? sampleSizeBreakdown?.total ?? 0} questions — treat these as initial hints that will sharpen as you do more.</span>
+                    <span className="block mt-1 text-amber-700"> ⚠ Based on {learningProfile.sampleSize ?? sampleSizeBreakdown?.total ?? 0} questions - treat these as initial hints that will sharpen as you do more.</span>
                   )}
                 </p>
                 {(() => {
@@ -241,10 +241,10 @@ export default function StudyAssessment() {
                     <p className="text-sm font-semibold capitalize">{learningProfile.pace}</p>
                     <p className="text-[11px] text-muted-foreground mt-1">
                       {learningProfile.pace === "deliberate"
-                        ? `Avg ${avgTimePerQuestion ?? "—"}s/question — you think things through.`
+                        ? `Avg ${avgTimePerQuestion ?? "-"}s/question - you think things through.`
                         : learningProfile.pace === "quick"
-                        ? `Avg ${avgTimePerQuestion ?? "—"}s/question — quick pattern recognition.`
-                        : `Avg ${avgTimePerQuestion ?? "—"}s/question — balanced reflection.`}
+                        ? `Avg ${avgTimePerQuestion ?? "-"}s/question - quick pattern recognition.`
+                        : `Avg ${avgTimePerQuestion ?? "-"}s/question - balanced reflection.`}
                     </p>
                   </div>
                   <div className="p-3 rounded-lg bg-muted/40">
@@ -263,10 +263,10 @@ export default function StudyAssessment() {
                     <p className="text-sm font-semibold capitalize">{learningProfile.confidencePattern}</p>
                     <p className="text-[11px] text-muted-foreground mt-1">
                       {learningProfile.confidencePattern === "improving"
-                        ? "You warm up — your accuracy grew through the quiz."
+                        ? "You warm up - your accuracy grew through the quiz."
                         : learningProfile.confidencePattern === "fatiguing"
-                        ? "Best to keep sessions short — accuracy faded over time."
-                        : "Steady performance — consistent attention throughout."}
+                        ? "Best to keep sessions short - accuracy faded over time."
+                        : "Steady performance - consistent attention throughout."}
                     </p>
                   </div>
                 </div>
@@ -276,14 +276,14 @@ export default function StudyAssessment() {
             </Card>
           )}
 
-          {/* Concept Breakdown — Prioritized */}
+          {/* Concept Breakdown - Prioritized */}
           {conceptAccuracies.length > 0 && (
             <Card className="mb-5">
               <CardContent className="py-5 px-5">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="font-semibold text-sm flex items-center gap-2">
                     <TrendingUp className="h-4 w-4 text-primary" />
-                    Concept Priority — Weakest First
+                    Concept Priority - Weakest First
                   </h3>
                   <span className="text-[10px] text-muted-foreground">Order = study sequence</span>
                 </div>
@@ -311,7 +311,7 @@ export default function StudyAssessment() {
                           />
                         </div>
                         <p className="text-[10px] text-muted-foreground mt-1">
-                          {isWeak ? "Needs focused study — assigned first in your path" : isStrong ? "Solid — brief retention review scheduled" : "Moderate — standard practice sequence"}
+                          {isWeak ? "Needs focused study - assigned first in your path" : isStrong ? "Solid - brief retention review scheduled" : "Moderate - standard practice sequence"}
                         </p>
                       </div>
                     );
@@ -457,7 +457,7 @@ export default function StudyAssessment() {
                 )}
                 <div>
                   <p className={`text-sm font-medium ${answers[answers.length - 1]?.correct ? "text-emerald-700" : "text-amber-700"}`}>
-                    {answers[answers.length - 1]?.correct ? "Correct!" : "Not quite — here's why:"}
+                    {answers[answers.length - 1]?.correct ? "Correct!" : "Not quite - here's why:"}
                   </p>
                   <p className="text-sm text-muted-foreground mt-1">{currentQuestion.explanation}</p>
                 </div>
