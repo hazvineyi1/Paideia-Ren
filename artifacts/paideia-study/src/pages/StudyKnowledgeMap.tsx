@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,46 +8,69 @@ import {
   useStudyKnowledgeGraph,
   useStudyKnowledgeGenerate,
   type KnowledgeNode,
-  type KnowledgeEdge,
 } from "@/hooks/use-study-api";
 import { useListStudyMaterials } from "@workspace/api-client-react";
 import StudyNav from "@/components/StudyNav";
 import {
   Network, Brain, ZoomIn, ZoomOut, Maximize2,
-  Target, BookOpen, ChevronRight, Filter, Search, Layers, Plus, Loader2,
+  Target, BookOpen, Search, Plus, Loader2, MessageCircle, Sparkles, X,
 } from "lucide-react";
 
-// Assign deterministic positions based on node index
-function getNodePosition(index: number, total: number) {
-  const cols = Math.ceil(Math.sqrt(total));
-  const col = index % cols;
-  const row = Math.floor(index / cols);
-  const spacing = 160;
-  return {
-    x: 150 + col * spacing + (row % 2) * (spacing / 2),
-    y: 120 + row * spacing * 0.8,
-  };
-}
+const CAT_PALETTE = [
+  "#6366f1", "#10b981", "#f59e0b", "#ec4899", "#8b5cf6",
+  "#14b8a6", "#ef4444", "#3b82f6", "#22c55e", "#f97316",
+];
 
-const COLORS: Record<string, string> = {
-  Biology: "#3b82f6",
-  Genetics: "#10b981",
-  Biochemistry: "#f59e0b",
-  Chemistry: "#8b5cf6",
-  "Cell Biology": "#3b82f6",
-  Physiology: "#10b981",
-  General: "#666666",
-};
-
-function getMasteryColor(mastery: number) {
-  if (mastery >= 80) return "#10b981";
-  if (mastery >= 60) return "#3b82f6";
-  if (mastery >= 40) return "#f59e0b";
+function masteryColor(m: number) {
+  if (m >= 0.8) return "#10b981";
+  if (m >= 0.6) return "#3b82f6";
+  if (m >= 0.4) return "#f59e0b";
   return "#ef4444";
 }
 
-function getMasteryFill(mastery: number) {
-  return `${getMasteryColor(mastery)}20`;
+// Deterministic categorical layout: one cluster per category arranged around
+// the canvas center, nodes within a cluster placed via sunflower spiral so
+// they are evenly distributed without overlap or randomness.
+function useLayout(nodes: KnowledgeNode[]) {
+  return useMemo(() => {
+    const W = 1000, H = 700, CX = W / 2, CY = H / 2;
+    const byCat = new Map<string, KnowledgeNode[]>();
+    for (const n of nodes) {
+      const k = n.category || "General";
+      if (!byCat.has(k)) byCat.set(k, []);
+      byCat.get(k)!.push(n);
+    }
+    const cats = [...byCat.keys()];
+    const positions = new Map<string, { x: number; y: number; cluster: string }>();
+
+    if (cats.length <= 1) {
+      const items = byCat.get(cats[0] ?? "General") ?? [];
+      const r = Math.min(W, H) * 0.34;
+      const phi = Math.PI * (3 - Math.sqrt(5));
+      items.forEach((n, j) => {
+        const dist = items.length === 1 ? 0 : r * Math.sqrt((j + 0.5) / items.length);
+        const a = phi * j;
+        positions.set(n.id, { x: CX + Math.cos(a) * dist, y: CY + Math.sin(a) * dist, cluster: cats[0] ?? "General" });
+      });
+      return { positions, W, H };
+    }
+
+    const clusterRadius = Math.min(W, H) * 0.32;
+    cats.forEach((cat, i) => {
+      const angle = (i / cats.length) * Math.PI * 2 - Math.PI / 2;
+      const ccx = CX + Math.cos(angle) * clusterRadius;
+      const ccy = CY + Math.sin(angle) * clusterRadius;
+      const items = byCat.get(cat)!;
+      const localR = 24 + Math.sqrt(items.length) * 18;
+      const phi = Math.PI * (3 - Math.sqrt(5));
+      items.forEach((n, j) => {
+        const dist = items.length === 1 ? 0 : localR * Math.sqrt((j + 0.5) / items.length);
+        const a = phi * j;
+        positions.set(n.id, { x: ccx + Math.cos(a) * dist, y: ccy + Math.sin(a) * dist, cluster: cat });
+      });
+    });
+    return { positions, W, H };
+  }, [nodes]);
 }
 
 export default function StudyKnowledgeMap() {
@@ -57,375 +80,330 @@ export default function StudyKnowledgeMap() {
   const { data: materials } = useListStudyMaterials();
 
   const [scale, setScale] = useState(1);
-  const [pan, setPan] = useState({ x: 0, y: 0 });
-  const [selectedNode, setSelectedNode] = useState<KnowledgeNode | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [selectedNode, setSelectedNode] = useState<KnowledgeNode | null>(null);
   const [generatingFor, setGeneratingFor] = useState<string | null>(null);
-  const svgRef = useRef<SVGSVGElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
 
-  // Build positioned nodes from API data + fallback to sample data
-  const nodes: Array<KnowledgeNode & { x: number; y: number }> = useMemo(() => {
-    const apiNodes = kgraph?.nodes ?? [];
-    if (apiNodes.length > 0) {
-      return apiNodes.map((n, i) => ({
-        ...n,
-        ...getNodePosition(i, apiNodes.length),
-      }));
-    }
-    return [];
-  }, [kgraph]);
-
+  const nodes = kgraph?.nodes ?? [];
   const edges = kgraph?.edges ?? [];
+  const { positions, W, H } = useLayout(nodes);
 
-  const categories = useMemo(() => [...new Set(nodes.map((n) => n.category || "General"))], [nodes]);
-
-  const filteredNodes = nodes.filter((n) => {
-    const matchesSearch = !searchQuery || n.label.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = !categoryFilter || (n.category || "General") === categoryFilter;
-    return matchesSearch && matchesCategory;
-  });
-
-  const handleWheel = (e: React.WheelEvent) => {
-    e.preventDefault();
-    const delta = e.deltaY > 0 ? 0.9 : 1.1;
-    setScale((s) => Math.max(0.3, Math.min(3, s * delta)));
-  };
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    const target = e.target as Element;
-    if (target.tagName.toLowerCase() === "svg" || target.closest("svg") === svgRef.current) {
-      setIsDragging(true);
-      setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
+  const categories = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const n of nodes) {
+      const k = n.category || "General";
+      m.set(k, (m.get(k) ?? 0) + 1);
     }
+    return [...m.entries()].sort((a, b) => b[1] - a[1]);
+  }, [nodes]);
+
+  const catColor = useMemo(() => {
+    const m = new Map<string, string>();
+    categories.forEach(([cat], i) => m.set(cat, CAT_PALETTE[i % CAT_PALETTE.length]));
+    return m;
+  }, [categories]);
+
+  const q = searchQuery.trim().toLowerCase();
+  const matchesFilter = (n: KnowledgeNode) => {
+    if (categoryFilter && (n.category || "General") !== categoryFilter) return false;
+    if (q && !n.label.toLowerCase().includes(q)) return false;
+    return true;
   };
 
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging) return;
-    setPan({ x: e.clientX - dragStart.x, y: e.clientY - dragStart.y });
-  };
-
-  const handleMouseUp = () => setIsDragging(false);
+  const avgMastery = nodes.length > 0 ? Math.round((nodes.reduce((s, n) => s + (n.masteryLevel || 0), 0) / nodes.length) * 100) : 0;
+  const masteredCount = nodes.filter((n) => (n.masteryLevel || 0) >= 0.8).length;
+  const weakCount = nodes.filter((n) => (n.masteryLevel || 0) < 0.5).length;
 
   const handleGenerate = async (materialId: string) => {
     setGeneratingFor(materialId);
     try {
       await generateMutation.mutateAsync({ materialId });
       await refetch();
-    } catch (err) {
-      alert("Failed to generate knowledge graph.");
+    } catch {
+      alert("Couldn't generate the knowledge map. Please try again.");
     } finally {
       setGeneratingFor(null);
     }
   };
 
-  const avgMastery = nodes.length > 0 ? Math.round(nodes.reduce((sum, n) => sum + (n.masteryLevel || 0) * 100, 0) / nodes.length) : 0;
-  const masteredCount = nodes.filter((n) => (n.masteryLevel || 0) >= 0.8).length;
-  const weakCount = nodes.filter((n) => (n.masteryLevel || 0) < 0.5).length;
+  // Render edges as gentle curves so dense areas read better
+  const edgePaths = useMemo(() => {
+    return edges
+      .map((e) => {
+        const a = positions.get(e.sourceNodeId);
+        const b = positions.get(e.targetNodeId);
+        if (!a || !b) return null;
+        const mx = (a.x + b.x) / 2;
+        const my = (a.y + b.y) / 2;
+        const dx = b.x - a.x, dy = b.y - a.y;
+        const offset = (a.cluster === b.cluster ? 0.08 : 0.18) * Math.sqrt(dx * dx + dy * dy);
+        // perpendicular control point
+        const px = mx + (-dy / (Math.hypot(dx, dy) || 1)) * offset;
+        const py = my + (dx / (Math.hypot(dx, dy) || 1)) * offset;
+        return { ...e, a, b, d: `M${a.x},${a.y} Q${px},${py} ${b.x},${b.y}` };
+      })
+      .filter(Boolean) as Array<{ id: string; sourceNodeId: string; targetNodeId: string; relationType: string; a: { x: number; y: number }; b: { x: number; y: number }; d: string }>;
+  }, [edges, positions]);
 
-  // Build edge lines
-  const edgeLines = edges
-    .map((e) => {
-      const source = nodes.find((n) => n.id === e.sourceNodeId);
-      const target = nodes.find((n) => n.id === e.targetNodeId);
-      if (!source || !target) return null;
-      return { source, target, relationType: e.relationType, strength: e.strength };
-    })
-    .filter(Boolean);
+  const fitView = () => setScale(1);
+  const zoomIn = () => setScale((s) => Math.min(2.4, s * 1.2));
+  const zoomOut = () => setScale((s) => Math.max(0.5, s / 1.2));
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      {/* Header */}
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       <StudyNav />
-      <header className="border-b px-4 py-2 flex items-center justify-between bg-background/95 backdrop-blur-sm shrink-0 sticky top-12 z-40">
-        <div className="flex items-center gap-2">
-          <Network className="h-4 w-4 text-primary" />
-          <h1 className="font-semibold text-sm">Knowledge Map</h1>
-        </div>
-        <div className="flex items-center gap-2">
-          {nodes.length === 0 && materials && materials.length > 0 && (
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground hidden sm:inline">Generate from:</span>
-              <select
-                className="h-8 rounded-md border border-input bg-background px-2 text-xs"
-                onChange={(e) => { if (e.target.value) handleGenerate(e.target.value); }}
-                value=""
-              >
-                <option value="">Select material...</option>
-                {materials.map((m) => (
-                  <option key={m.id} value={m.id}>{m.title}</option>
-                ))}
-              </select>
-              {generatingFor && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
-            </div>
-          )}
-          <Button variant="ghost" size="sm" onClick={() => { setScale(1); setPan({ x: 0, y: 0 }); }}>
-            <Maximize2 className="h-4 w-4" />
-          </Button>
-        </div>
-      </header>
 
-      {/* Stats Bar */}
-      <div className="shrink-0 border-b px-4 py-2 flex items-center gap-6 bg-muted/30">
-        <div className="flex items-center gap-1.5">
-          <Brain className="h-3.5 w-3.5 text-primary" />
-          <span className="text-xs font-medium">{nodes.length} concepts</span>
+      <div className="max-w-5xl w-full mx-auto px-4 pt-4 pb-3">
+        <div className="flex items-center gap-2 mb-1">
+          <Sparkles className="w-4 h-4 text-blue-600" />
+          <span className="text-xs uppercase tracking-wider text-blue-700 font-semibold">AI knowledge map</span>
         </div>
-        <div className="flex items-center gap-1.5">
-          <Target className="h-3.5 w-3.5 text-emerald-500" />
-          <span className="text-xs font-medium">{masteredCount} mastered</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <BookOpen className="h-3.5 w-3.5 text-orange-500" />
-          <span className="text-xs font-medium">{weakCount} weak areas</span>
-        </div>
-        <div className="hidden sm:flex items-center gap-2 ml-auto">
-          <span className="text-xs text-muted-foreground">Avg mastery</span>
-          <Progress value={avgMastery} className="w-24 h-1.5" />
-          <span className="text-xs font-medium">{avgMastery}%</span>
-        </div>
+        <h1 className="text-2xl font-bold text-gray-900 mb-1">What you know, at a glance</h1>
+        <p className="text-sm text-gray-600">
+          Concepts are grouped by area, sized by review count, and colored by your current mastery.
+        </p>
       </div>
 
-      <div className="flex-1 flex overflow-hidden">
-        {/* Sidebar */}
-        <aside className="w-[260px] border-r bg-muted/10 flex flex-col shrink-0 overflow-y-auto">
-          {/* Search */}
-          <div className="p-3 border-b">
-            <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-              <input
-                type="text"
-                placeholder="Search concepts..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full h-8 rounded-md border border-input bg-background pl-8 pr-3 text-sm"
-              />
-            </div>
-          </div>
+      {/* Stats strip */}
+      <div className="max-w-5xl w-full mx-auto px-4 mb-3 grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <Card><CardContent className="p-3">
+          <div className="text-[10px] uppercase tracking-wider text-gray-500">Concepts</div>
+          <div className="text-xl font-bold text-gray-900 flex items-center gap-1.5"><Brain className="w-4 h-4 text-blue-600" />{nodes.length}</div>
+        </CardContent></Card>
+        <Card><CardContent className="p-3">
+          <div className="text-[10px] uppercase tracking-wider text-gray-500">Mastered</div>
+          <div className="text-xl font-bold text-emerald-600 flex items-center gap-1.5"><Target className="w-4 h-4" />{masteredCount}</div>
+        </CardContent></Card>
+        <Card><CardContent className="p-3">
+          <div className="text-[10px] uppercase tracking-wider text-gray-500">Weak areas</div>
+          <div className="text-xl font-bold text-orange-600 flex items-center gap-1.5"><BookOpen className="w-4 h-4" />{weakCount}</div>
+        </CardContent></Card>
+        <Card><CardContent className="p-3">
+          <div className="text-[10px] uppercase tracking-wider text-gray-500">Avg mastery</div>
+          <div className="flex items-center gap-2"><span className="text-xl font-bold text-gray-900">{avgMastery}%</span><Progress value={avgMastery} className="h-1.5 flex-1" /></div>
+        </CardContent></Card>
+      </div>
 
-          {/* Categories */}
-          <div className="p-3">
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
-              <Filter className="h-3 w-3" />
-              Categories
-            </h3>
-            <div className="space-y-1">
+      {/* Controls */}
+      {nodes.length > 0 && (
+        <div className="max-w-5xl w-full mx-auto px-4 mb-3 flex flex-col sm:flex-row gap-2 sm:items-center">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search concepts…"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full h-10 rounded-lg border border-gray-200 bg-white pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div className="flex gap-1.5 overflow-x-auto scrollbar-none -mx-1 px-1">
+            <button
+              onClick={() => setCategoryFilter(null)}
+              className={`shrink-0 px-3 h-8 rounded-full text-xs font-medium border transition-colors ${!categoryFilter ? "bg-gray-900 text-white border-gray-900" : "bg-white text-gray-700 border-gray-200 hover:border-gray-400"}`}
+            >
+              All
+            </button>
+            {categories.map(([cat, count]) => (
               <button
-                onClick={() => setCategoryFilter(null)}
-                className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${!categoryFilter ? "bg-primary/10 text-primary font-medium" : "hover:bg-muted"}`}
+                key={cat}
+                onClick={() => setCategoryFilter(categoryFilter === cat ? null : cat)}
+                className={`shrink-0 px-3 h-8 rounded-full text-xs font-medium border flex items-center gap-1.5 transition-colors ${categoryFilter === cat ? "bg-gray-900 text-white border-gray-900" : "bg-white text-gray-700 border-gray-200 hover:border-gray-400"}`}
               >
-                <div className="flex items-center gap-2">
-                  <Layers className="h-3.5 w-3.5" />
-                  All Categories
-                  <span className="ml-auto text-xs text-muted-foreground">{nodes.length}</span>
-                </div>
+                <span className="w-2 h-2 rounded-full" style={{ background: catColor.get(cat) }} />
+                <span className="truncate max-w-[140px]">{cat}</span>
+                <span className="opacity-60">{count}</span>
               </button>
-              {categories.map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setCategoryFilter(cat)}
-                  className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${categoryFilter === cat ? "bg-primary/10 text-primary font-medium" : "hover:bg-muted"}`}
-                >
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[cat] || "#666" }} />
-                    {cat}
-                    <span className="ml-auto text-xs text-muted-foreground">
-                      {nodes.filter((n) => (n.category || "General") === cat).length}
-                    </span>
-                  </div>
-                </button>
-              ))}
-            </div>
+            ))}
           </div>
+        </div>
+      )}
 
-          {/* Selected Node Detail */}
-          {selectedNode ? (
-            <div className="p-3 mt-auto border-t">
-              <Card className="border-primary/20">
-                <CardContent className="py-3 px-4">
-                  <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <Badge
-                        variant="outline"
-                        className="text-[10px] h-5 mb-1.5"
-                        style={{ borderColor: COLORS[selectedNode.category || "General"] || "#666", color: COLORS[selectedNode.category || "General"] || "#666" }}
-                      >
-                        {selectedNode.category || "General"}
-                      </Badge>
-                      <h3 className="font-semibold text-sm">{selectedNode.label}</h3>
-                    </div>
-                    <div
-                      className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold"
-                      style={{ backgroundColor: getMasteryFill((selectedNode.masteryLevel || 0) * 100), color: getMasteryColor((selectedNode.masteryLevel || 0) * 100) }}
-                    >
-                      {Math.round((selectedNode.masteryLevel || 0) * 100)}%
-                    </div>
-                  </div>
-                  <p className="text-xs text-muted-foreground leading-relaxed mb-3">
-                    {selectedNode.description || "No description available."}
-                  </p>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-muted-foreground">Confidence</span>
-                      <span className="font-medium">{Math.round((selectedNode.confidenceScore || 0) * 100)}%</span>
-                    </div>
-                    <Progress value={(selectedNode.confidenceScore || 0) * 100} className="h-1" />
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-muted-foreground">Reviews</span>
-                      <span className="font-medium">{selectedNode.reviewCount}</span>
-                    </div>
-                  </div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="w-full mt-3 text-xs"
-                    onClick={() => setLoc("/practice")}
-                  >
-                    <Target className="h-3 w-3 mr-1.5" />
-                    Practice This Concept
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
-          ) : null}
-        </aside>
-
-        {/* Graph Canvas */}
-        <div className="flex-1 relative overflow-hidden" ref={containerRef}>
+      {/* Canvas */}
+      <div className="max-w-5xl w-full mx-auto px-4 pb-6 flex-1">
+        <div className="relative rounded-xl border border-gray-200 bg-white overflow-hidden shadow-sm" style={{ minHeight: 480 }}>
           {graphLoading ? (
             <div className="absolute inset-0 flex items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
             </div>
           ) : nodes.length === 0 ? (
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <Network className="h-12 w-12 text-muted-foreground mb-3" />
-              <h3 className="font-semibold mb-1">No knowledge graph yet</h3>
-              <p className="text-sm text-muted-foreground text-center max-w-md mb-4">
-                Add a material and generate your knowledge graph to see how concepts connect.
+            <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
+              <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center mb-3">
+                <Network className="w-6 h-6 text-blue-600" />
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-1">No map yet</h3>
+              <p className="text-sm text-gray-500 max-w-sm mb-4">
+                Pick a material — the AI will extract concepts and lay out how they connect.
               </p>
               {materials && materials.length > 0 ? (
-                <div className="flex items-center gap-2">
-                  <select
-                    className="h-9 rounded-md border border-input bg-background px-3 text-sm"
-                    onChange={(e) => { if (e.target.value) handleGenerate(e.target.value); }}
-                    value=""
-                  >
-                    <option value="">Select material...</option>
-                    {materials.map((m) => (
-                      <option key={m.id} value={m.id}>{m.title}</option>
-                    ))}
-                  </select>
-                  {generatingFor && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
+                <div className="flex flex-col gap-2 w-full max-w-xs">
+                  {materials.map((m) => (
+                    <Button
+                      key={m.id}
+                      variant="outline"
+                      onClick={() => handleGenerate(m.id)}
+                      disabled={generatingFor === m.id}
+                      className="justify-between"
+                    >
+                      <span className="truncate">{m.title}</span>
+                      {generatingFor === m.id ? <Loader2 className="w-4 h-4 animate-spin shrink-0" /> : <Plus className="w-4 h-4 shrink-0" />}
+                    </Button>
+                  ))}
                 </div>
               ) : (
-                <Button size="sm" onClick={() => setLoc("/materials/new")}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Material
+                <Button onClick={() => setLoc("/materials/new")}>
+                  <Plus className="w-4 h-4 mr-2" /> Add a material
                 </Button>
               )}
             </div>
           ) : (
-            <svg
-              ref={svgRef}
-              className="w-full h-full cursor-grab active:cursor-grabbing"
-              viewBox="0 0 800 500"
-              onWheel={handleWheel}
-              onMouseDown={handleMouseDown}
-              onMouseMove={handleMouseMove}
-              onMouseUp={handleMouseUp}
-              onMouseLeave={handleMouseUp}
-            >
-              <defs>
-                <filter id="shadow">
-                  <feDropShadow dx="0" dy="1" stdDeviation="2" floodOpacity="0.1" />
-                </filter>
-              </defs>
-              <g transform={`translate(${pan.x}, ${pan.y}) scale(${scale})`}>
-                {/* Edges */}
-                {edgeLines.map((edge, i) => {
-                  if (!edge) return null;
-                  const isHighlighted = selectedNode && (edge.source.id === selectedNode.id || edge.target.id === selectedNode.id);
-                  return (
-                    <line
-                      key={i}
-                      x1={edge.source.x}
-                      y1={edge.source.y}
-                      x2={edge.target.x}
-                      y2={edge.target.y}
-                      stroke={isHighlighted ? "hsl(var(--primary))" : "hsl(var(--muted-foreground))"}
-                      strokeWidth={isHighlighted ? 2 : 1}
-                      opacity={isHighlighted ? 0.6 : 0.2}
-                      strokeDasharray={edge.relationType === "prerequisite" ? "6 3" : edge.relationType === "extension" ? "3 3" : undefined}
-                    />
-                  );
-                })}
+            <>
+              <svg
+                viewBox={`0 0 ${W} ${H}`}
+                className="w-full h-[60vh] sm:h-[72vh] block select-none"
+                preserveAspectRatio="xMidYMid meet"
+              >
+                <defs>
+                  <radialGradient id="nodeGlow" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stopOpacity="0.35" />
+                    <stop offset="100%" stopOpacity="0" />
+                  </radialGradient>
+                </defs>
+                <g style={{ transform: `scale(${scale})`, transformOrigin: "50% 50%" }}>
+                  {/* edges */}
+                  <g fill="none" strokeLinecap="round">
+                    {edgePaths.map((e) => {
+                      const highlighted = selectedNode && (e.sourceNodeId === selectedNode.id || e.targetNodeId === selectedNode.id);
+                      const dim = selectedNode && !highlighted;
+                      return (
+                        <path
+                          key={e.id}
+                          d={e.d}
+                          stroke={highlighted ? "#0f172a" : "#cbd5e1"}
+                          strokeWidth={highlighted ? 1.6 : 0.9}
+                          strokeOpacity={dim ? 0.12 : highlighted ? 0.7 : 0.45}
+                          strokeDasharray={e.relationType === "prerequisite" ? "5 4" : undefined}
+                        />
+                      );
+                    })}
+                  </g>
+                  {/* nodes */}
+                  <g>
+                    {nodes.map((n) => {
+                      const p = positions.get(n.id);
+                      if (!p) return null;
+                      const visible = matchesFilter(n);
+                      const isSelected = selectedNode?.id === n.id;
+                      const mastery = n.masteryLevel || 0;
+                      const r = 10 + Math.min(8, Math.sqrt(n.reviewCount || 0) * 2);
+                      const ring = catColor.get(n.category || "General") || "#94a3b8";
+                      const fill = masteryColor(mastery);
+                      const opacity = visible ? 1 : 0.18;
+                      return (
+                        <g
+                          key={n.id}
+                          opacity={opacity}
+                          className="cursor-pointer"
+                          onClick={() => setSelectedNode(isSelected ? null : n)}
+                        >
+                          {isSelected && (
+                            <circle cx={p.x} cy={p.y} r={r + 10} fill={fill} opacity={0.18} />
+                          )}
+                          <circle cx={p.x} cy={p.y} r={r + 3} fill="none" stroke={ring} strokeWidth={1.5} strokeOpacity={0.65} />
+                          <circle cx={p.x} cy={p.y} r={r} fill={fill} fillOpacity={0.18 + mastery * 0.55} stroke={fill} strokeWidth={1.2} />
+                          {(visible || isSelected) && (
+                            <text
+                              x={p.x}
+                              y={p.y + r + 11}
+                              textAnchor="middle"
+                              className="fill-gray-700 pointer-events-none"
+                              style={{ fontSize: 9, fontWeight: 500 }}
+                            >
+                              {n.label.length > 22 ? n.label.slice(0, 21) + "…" : n.label}
+                            </text>
+                          )}
+                        </g>
+                      );
+                    })}
+                  </g>
+                </g>
+              </svg>
 
-                {/* Nodes */}
-                {filteredNodes.map((node) => {
-                  const radius = 12 + (node.masteryLevel || 0) * 18;
-                  const isSelected = selectedNode?.id === node.id;
-                  const color = COLORS[node.category || "General"] || "#666";
-                  const fillOpacity = 0.12 + (node.masteryLevel || 0) * 0.28;
+              {/* zoom controls */}
+              <div className="absolute bottom-3 right-3 flex flex-col gap-1.5 bg-white/95 backdrop-blur rounded-lg shadow-sm border border-gray-200 p-1">
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={zoomIn} aria-label="Zoom in">
+                  <ZoomIn className="w-4 h-4" />
+                </Button>
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={zoomOut} aria-label="Zoom out">
+                  <ZoomOut className="w-4 h-4" />
+                </Button>
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={fitView} aria-label="Fit">
+                  <Maximize2 className="w-4 h-4" />
+                </Button>
+              </div>
 
-                  return (
-                    <g
-                      key={node.id}
-                      className="cursor-pointer"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedNode(node);
-                      }}
-                      filter={isSelected ? "url(#shadow)" : undefined}
-                    >
-                      <circle
-                        cx={node.x}
-                        cy={node.y}
-                        r={radius}
-                        fill={color}
-                        fillOpacity={fillOpacity}
-                        stroke={isSelected ? "hsl(var(--primary))" : color}
-                        strokeWidth={isSelected ? 2.5 : 1.5}
-                        strokeOpacity={isSelected ? 1 : 0.6}
-                      />
-                      <text
-                        x={node.x}
-                        y={node.y + radius + 14}
-                        textAnchor="middle"
-                        className="text-[9px] fill-foreground font-medium select-none pointer-events-none"
-                        style={{ fontSize: 9 }}
-                      >
-                        {node.label}
-                      </text>
-                      <text
-                        x={node.x}
-                        y={node.y + radius + 26}
-                        textAnchor="middle"
-                        className="text-[7px] fill-muted-foreground select-none pointer-events-none"
-                        style={{ fontSize: 7 }}
-                      >
-                        {Math.round((node.masteryLevel || 0) * 100)}%
-                      </text>
-                    </g>
-                  );
-                })}
-              </g>
-            </svg>
+              {/* mastery legend */}
+              <div className="absolute bottom-3 left-3 hidden sm:flex items-center gap-3 bg-white/95 backdrop-blur rounded-lg shadow-sm border border-gray-200 px-3 py-2 text-[11px] text-gray-600">
+                <span className="font-medium text-gray-700">Mastery</span>
+                <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full" style={{ background: "#ef4444" }} />weak</span>
+                <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full" style={{ background: "#f59e0b" }} />learning</span>
+                <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full" style={{ background: "#3b82f6" }} />solid</span>
+                <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full" style={{ background: "#10b981" }} />mastered</span>
+              </div>
+            </>
           )}
-
-          {/* Zoom Controls */}
-          <div className="absolute bottom-4 right-4 flex flex-col gap-1">
-            <Button variant="secondary" size="sm" className="h-8 w-8 p-0" onClick={() => setScale((s) => Math.min(3, s * 1.2))}>
-              <ZoomIn className="h-4 w-4" />
-            </Button>
-            <Button variant="secondary" size="sm" className="h-8 w-8 p-0" onClick={() => setScale((s) => Math.max(0.3, s * 0.8))}>
-              <ZoomOut className="h-4 w-4" />
-            </Button>
-          </div>
         </div>
       </div>
+
+      {/* Selected-node sheet */}
+      {selectedNode && (
+        <div className="fixed inset-x-0 bottom-0 z-50 sm:max-w-md sm:right-4 sm:left-auto sm:bottom-4">
+          <Card className="rounded-t-2xl sm:rounded-2xl shadow-lg border-gray-200">
+            <CardContent className="p-4">
+              <div className="flex items-start justify-between gap-3 mb-2">
+                <div className="min-w-0">
+                  <Badge
+                    variant="outline"
+                    className="text-[10px] mb-1.5"
+                    style={{ borderColor: catColor.get(selectedNode.category || "General") || "#94a3b8", color: catColor.get(selectedNode.category || "General") || "#475569" }}
+                  >
+                    {selectedNode.category || "General"}
+                  </Badge>
+                  <h3 className="font-semibold text-gray-900 leading-tight">{selectedNode.label}</h3>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div
+                    className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold"
+                    style={{ background: `${masteryColor(selectedNode.masteryLevel || 0)}20`, color: masteryColor(selectedNode.masteryLevel || 0) }}
+                  >
+                    {Math.round((selectedNode.masteryLevel || 0) * 100)}%
+                  </div>
+                  <button onClick={() => setSelectedNode(null)} className="text-gray-400 hover:text-gray-700">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+              <p className="text-sm text-gray-600 leading-relaxed mb-3">
+                {selectedNode.description || "No description available."}
+              </p>
+              <div className="grid grid-cols-2 gap-3 text-xs text-gray-500 mb-3">
+                <div>
+                  <div className="uppercase tracking-wider text-[10px] mb-0.5">Confidence</div>
+                  <Progress value={(selectedNode.confidenceScore || 0) * 100} className="h-1.5" />
+                </div>
+                <div>
+                  <div className="uppercase tracking-wider text-[10px] mb-0.5">Reviews</div>
+                  <div className="font-semibold text-gray-900">{selectedNode.reviewCount}</div>
+                </div>
+              </div>
+              <Button className="w-full" onClick={() => setLoc("/tutor")}>
+                <MessageCircle className="w-4 h-4 mr-2" /> Discuss with AI tutor
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

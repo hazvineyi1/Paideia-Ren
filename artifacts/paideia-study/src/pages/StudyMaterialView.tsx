@@ -163,10 +163,6 @@ export default function StudyMaterialView() {
             <GraduationCap className="h-3.5 w-3.5" />
             Tutor on this
           </Button>
-          <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setLoc(`/flashcards`)}>
-            <Flashlight className="h-3.5 w-3.5" />
-            Flashcards
-          </Button>
           <span className="ml-auto text-[11px] text-muted-foreground hidden sm:inline">
             {totalConcepts > 0
               ? `${totalConcepts} concepts ready`

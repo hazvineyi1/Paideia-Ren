@@ -46,10 +46,10 @@ function navigateToStep(step: any, pathId: string, setLoc: (s: string) => void) 
   const params = `?pathId=${encodeURIComponent(pathId)}&pathStepId=${encodeURIComponent(step.id)}`;
   switch (step.stepType) {
     case "read_material": setLoc(`/read-step/${pathId}/${step.id}`); break;
-    case "flashcard_review": setLoc(`/flashcards${params}`); break;
+    case "flashcard_review": setLoc(`/practice${params}`); break;
     case "practice_questions": setLoc(`/practice${params}`); break;
     case "tutor_session": setLoc(`/tutor${params}`); break;
-    default: setLoc(`/daily-session`);
+    default: setLoc(`/practice${params}`);
   }
 }
 
@@ -226,14 +226,6 @@ export default function StudyDashboard() {
               <Progress value={progress.percentComplete} className="h-1.5" />
               <div className="flex items-center justify-between">
                 <p className="text-xs text-muted-foreground">{progress.percentComplete}% complete</p>
-                {activePath?.id && (
-                  <button
-                    className="text-xs text-primary hover:underline flex items-center gap-1"
-                    onClick={() => setLoc(`/learning-path/${activePath.id}`)}
-                  >
-                    View full path <ChevronRight className="h-3 w-3" />
-                  </button>
-                )}
               </div>
             </div>
 
@@ -267,15 +259,9 @@ export default function StudyDashboard() {
             <CardContent className="py-8 text-center">
               <CheckCircle2 className="h-10 w-10 text-emerald-500 mx-auto mb-3" />
               <h2 className="font-bold text-lg mb-1">You're caught up!</h2>
-              <p className="text-sm text-muted-foreground mb-4">
+              <p className="text-sm text-muted-foreground">
                 No steps available right now. Spaced reviews will unlock automatically.
               </p>
-              {activePath?.id && (
-                <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setLoc(`/learning-path/${activePath.id}`)}>
-                  <Compass className="h-3.5 w-3.5" />
-                  View Full Path
-                </Button>
-              )}
             </CardContent>
           </Card>
         ) : materials && materials.length > 0 ? (
