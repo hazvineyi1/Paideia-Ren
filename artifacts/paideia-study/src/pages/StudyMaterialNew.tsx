@@ -18,6 +18,7 @@ import {
   Brain, Loader2, CheckCircle2, X, Rocket, Search,
   BookOpen, Zap, Compass, ChevronRight, FileAudio, FileVideo, File as FileIcon, AlertCircle
 } from "lucide-react";
+import StudyNav from "@/components/StudyNav";
 
 type TabId = "paste" | "url" | "topic" | "files";
 
@@ -325,7 +326,8 @@ export default function StudyMaterialNew() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b px-4 py-3 flex items-center justify-between sticky top-0 bg-background/95 backdrop-blur-sm z-10">
+      <StudyNav />
+      <header className="border-b px-4 py-2 flex items-center justify-between sticky top-12 bg-background/95 backdrop-blur-sm z-40">
         <Button variant="ghost" size="sm" className="gap-1.5" onClick={() => setLoc("/materials")}>
           <ArrowLeft className="h-4 w-4" />
           Back

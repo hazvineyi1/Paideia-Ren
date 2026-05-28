@@ -9,6 +9,7 @@ import {
   Lock, ArrowLeft, Flame, Award, TrendingUp, Clock,
   ChevronRight, Sparkles, Circle
 } from "lucide-react";
+import StudyNav from "@/components/StudyNav";
 
 const stepTypeConfig: Record<string, { icon: typeof Brain; label: string; color: string; bg: string }> = {
   read_material: { icon: BookOpen, label: "Read", color: "text-blue-600", bg: "bg-blue-50" },
@@ -80,7 +81,8 @@ export default function StudyLearningPath() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b px-4 py-4 sticky top-0 bg-background/95 backdrop-blur-sm z-10">
+      <StudyNav />
+      <header className="border-b px-4 py-3 sticky top-12 bg-background/95 backdrop-blur-sm z-40">
         <div className="max-w-3xl mx-auto">
           <div className="flex items-center gap-2 mb-1">
             <Button variant="ghost" size="sm" className="h-auto px-1" onClick={() => setLoc("/dashboard")}>

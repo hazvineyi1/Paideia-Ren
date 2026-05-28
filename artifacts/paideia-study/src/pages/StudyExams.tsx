@@ -10,7 +10,8 @@ import {
   useCreateStudyExam,
 } from "@workspace/api-client-react";
 import type { StudyMockExam } from "@workspace/api-client-react";
-import { ArrowLeft, Award, Play, Plus, FileText, Calendar } from "lucide-react";
+import { Award, Play, Plus, FileText, Calendar } from "lucide-react";
+import StudyNav from "@/components/StudyNav";
 
 export default function StudyExams() {
   const [, setLoc] = useLocation();
@@ -40,12 +41,7 @@ export default function StudyExams() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b px-6 py-4">
-        <Button variant="ghost" size="sm" onClick={() => setLoc("/dashboard")}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Dashboard
-        </Button>
-      </header>
+      <StudyNav />
 
       <main className="max-w-2xl mx-auto px-6 py-8">
         <div className="text-center mb-8">

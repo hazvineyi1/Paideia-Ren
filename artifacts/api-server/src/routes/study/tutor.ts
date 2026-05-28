@@ -315,6 +315,61 @@ async function loadLearnerProfileText(userId: string): Promise<string> {
   return lines.join("\n");
 }
 
+type LessonShape = {
+  explanation_md: string;
+  example: string;
+  check: { question: string; options: string[]; correctIndex: number; explanation: string };
+};
+
+async function generateLesson(opts: {
+  socratic: boolean;
+  profileText: string;
+  target: { title: string; explanation: string };
+  contextNote: string;
+}): Promise<LessonShape> {
+  const { socratic, profileText, target, contextNote } = opts;
+  const sourceExcerpt = target.explanation.slice(0, 1800);
+
+  if (socratic) {
+    return await generateJSON<LessonShape>(
+      `You are a Socratic tutor. You teach by asking the learner short, progressively deeper guiding questions — never lecturing first. Then you reveal the key insight. Return strict JSON only.`,
+      `Learner profile:
+${profileText}
+${contextNote ? `\n${contextNote}\n` : ""}
+Concept to teach now: "${target.title}"
+Source excerpt the learner has saved:
+"""${sourceExcerpt}"""
+
+Write a SOCRATIC mini-lesson in markdown (200-350 words). Structure it as:
+1. Open with a single short framing sentence.
+2. Ask 2-3 numbered Socratic questions of increasing depth. After EACH question, give a 1-2 sentence "Think:" prompt that nudges the learner without revealing the answer.
+3. End with a short "Key insight" paragraph (2-4 sentences) that ties the questions together and states the core idea.
+
+Then ONE concrete example tailored to the learner, and ONE multiple-choice check question (4 options, one clearly correct) that requires applying the insight.
+
+Return JSON exactly:
+{"explanation_md":"...","example":"...","check":{"question":"...","options":["","","",""],"correctIndex":0,"explanation":"..."}}`,
+      { kind: "tutor_guided_lesson_socratic" },
+    );
+  }
+
+  return await generateJSON<LessonShape>(
+    `You are an expert tutor. Teach ONE concept in depth, tailored to the learner's profile. Return strict JSON only.`,
+    `Learner profile:
+${profileText}
+${contextNote ? `\n${contextNote}\n` : ""}
+Concept to teach now: "${target.title}"
+Source excerpt the learner has saved:
+"""${sourceExcerpt}"""
+
+Write a clear, layered explanation (250-400 words) using their study style. Use plain markdown (headings, short paragraphs, bullets if helpful). Then ONE concrete example tailored to their interests/background, and ONE multiple-choice check question (4 options, one clearly correct).
+
+Return JSON exactly:
+{"explanation_md":"...","example":"...","check":{"question":"...","options":["","","",""],"correctIndex":0,"explanation":"..."}}`,
+    { kind: "tutor_guided_lesson" },
+  );
+}
+
 function materialIdFromScopeRef(scopeRefId: string | null): string | null {
   if (!scopeRefId) return null;
   // Guided conversations stash a tag like "guided:<materialId-or-empty>" in scopeRefId.
@@ -341,6 +396,8 @@ async function pickFocusConcepts(userId: string, materialId: string | null, limi
 const startGuidedSchema = z.object({
   materialId: z.string().uuid().nullable().optional(),
   title: z.string().min(1).optional(),
+  socratic: z.boolean().optional().default(false),
+  conceptId: z.string().uuid().nullable().optional(),
 });
 
 router.post("/guided/start", async (req, res) => {
@@ -350,9 +407,18 @@ router.post("/guided/start", async (req, res) => {
     return;
   }
   const userId = req.studyUser!.id;
-  const { materialId, title } = parsed.data;
+  const { materialId, title, socratic, conceptId: focusConceptId } = parsed.data;
 
-  const concepts = await pickFocusConcepts(userId, materialId ?? null, 8);
+  let concepts = await pickFocusConcepts(userId, materialId ?? null, 12);
+  // If a specific concept was requested ("today's focus" shortcut), bring it to the front.
+  if (focusConceptId) {
+    const idx = concepts.findIndex((c) => c.id === focusConceptId);
+    if (idx > 0) {
+      const [picked] = concepts.splice(idx, 1);
+      concepts = [picked, ...concepts];
+    }
+  }
+  concepts = concepts.slice(0, 8);
   if (concepts.length === 0) {
     res.status(422).json({
       error:
@@ -435,8 +501,8 @@ Return JSON exactly:
     .insert(studyTutorConversationsTable)
     .values({
       userId,
-      title: title || (materialId ? `Guided session` : `Guided study session`),
-      socraticMode: false,
+      title: title || (socratic ? `Socratic session` : (materialId ? `Guided session` : `Guided study session`)),
+      socraticMode: !!socratic,
       scope: materialId ? "specific_material" : "all_material",
       scopeRefId: guidedTag,
     })
@@ -554,42 +620,16 @@ router.post("/guided/:conversationId/reply", async (req, res) => {
       const focusConcept = concepts.find((c) => c.id === focus.conceptId) ?? concepts[0];
 
       // Generate a tailored lesson grounded in the focus concept's stored explanation
-      const lesson = await generateJSON<{
-        explanation_md: string;
-        example: string;
-        check: { question: string; options: string[]; correctIndex: number; explanation: string };
-      }>(
-        `You are an expert tutor. The learner just took a 3-question diagnostic. You will now teach ONE concept in depth, tailored to their profile. Return strict JSON only.`,
-        `Learner profile:
-${profileText}
-
-Diagnostic results: ${correctCount}/${graded.length} correct. ${
+      const lesson = await generateLesson({
+        socratic: conv.socraticMode,
+        profileText,
+        target: focusConcept,
+        contextNote: `Diagnostic results: ${correctCount}/${graded.length} correct. ${
           wrong.length
             ? `They got these wrong: ${wrong.map((w: any) => w.conceptTitle).join("; ")}.`
             : `They got everything right — go DEEPER on the most important one.`
-        }
-
-Concept to teach now: "${focusConcept.title}"
-Source material excerpt the learner has already saved:
-"""
-${focusConcept.explanation.slice(0, 1800)}
-"""
-
-Write a clear, layered explanation (250-400 words) using their study style. Use plain markdown (headings, short paragraphs, bullets if helpful). Then give ONE concrete example tailored to their interests/background, and ONE multiple-choice check question (4 options, one clearly correct).
-
-Return JSON exactly:
-{
-  "explanation_md": "the explanation in markdown",
-  "example": "1-3 sentence concrete example",
-  "check": {
-    "question": "...",
-    "options": ["...","...","...","..."],
-    "correctIndex": 0,
-    "explanation": "one sentence on why correct"
-  }
-}`,
-        { kind: "tutor_guided_lesson" },
-      );
+        }`,
+      });
 
       // Save a "feedback" turn first, then a "lesson" turn — two assistant messages.
       const feedbackTurn = {
@@ -718,25 +758,12 @@ Return JSON exactly:
         assistantTurn = doneTurn;
         extraMsgs = [m];
       } else {
-        const lesson = await generateJSON<{
-          explanation_md: string;
-          example: string;
-          check: { question: string; options: string[]; correctIndex: number; explanation: string };
-        }>(
-          `You are an expert tutor. Teach ONE concept clearly, tailored to the learner. Return strict JSON only.`,
-          `Learner profile:
-${profileText}
-
-Concept to teach: "${target.title}"
-Source excerpt:
-"""
-${target.explanation.slice(0, 1800)}
-"""
-
-Write a clear 250-400 word explanation (markdown), a concrete example, and one multiple-choice check question (4 options).
-Return JSON: {"explanation_md":"...","example":"...","check":{"question":"...","options":["","","",""],"correctIndex":0,"explanation":"..."}}`,
-          { kind: "tutor_guided_lesson" },
-        );
+        const lesson = await generateLesson({
+          socratic: conv.socraticMode,
+          profileText,
+          target,
+          contextNote: "",
+        });
         const lessonTurn = {
           v: 1,
           kind: "lesson" as const,

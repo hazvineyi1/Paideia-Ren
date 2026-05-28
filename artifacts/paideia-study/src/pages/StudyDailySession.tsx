@@ -9,6 +9,7 @@ import {
   ArrowRight, Clock, ChevronLeft, Sparkles, Loader2,
   RotateCcw, Award,
 } from "lucide-react";
+import StudyNav from "@/components/StudyNav";
 
 const stepTypeConfig: Record<string, { icon: typeof Brain; label: string; color: string; bg: string; action: string }> = {
   read_material: { icon: BookOpen, label: "Read & Understand", color: "text-blue-600", bg: "bg-blue-50", action: "Open Reading" },
@@ -92,19 +93,11 @@ export default function StudyDailySession() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b px-4 py-3 sticky top-0 bg-background/95 backdrop-blur-sm z-10">
-        <div className="max-w-2xl mx-auto flex items-center justify-between">
-          <Button variant="ghost" size="sm" className="gap-1.5 -ml-2" onClick={() => setLoc("/dashboard")}>
-            <ChevronLeft className="h-4 w-4" />
-            Dashboard
-          </Button>
-          <div className="flex items-center gap-2">
-            <div className="bg-primary/10 p-1.5 rounded-lg">
-              <Brain className="h-4 w-4 text-primary" />
-            </div>
-            <span className="text-sm font-medium">Learning Session</span>
-          </div>
-          <div className="w-[88px]" />
+      <StudyNav />
+      <header className="border-b px-4 py-2 sticky top-12 bg-background/95 backdrop-blur-sm z-40">
+        <div className="max-w-2xl mx-auto flex items-center gap-2">
+          <Brain className="h-4 w-4 text-primary" />
+          <span className="text-sm font-medium">Learning Session</span>
         </div>
       </header>
 

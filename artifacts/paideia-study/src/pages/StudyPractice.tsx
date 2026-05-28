@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
+import StudyNav from "@/components/StudyNav";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
@@ -52,12 +53,7 @@ export default function StudyPractice() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b px-4 py-3 flex items-center justify-between sticky top-0 bg-background/95 backdrop-blur-sm z-10">
-        <Button variant="ghost" size="sm" className="gap-1.5" onClick={() => setLoc("/dashboard")}>
-          <ArrowLeft className="h-4 w-4" />
-          Dashboard
-        </Button>
-      </header>
+      <StudyNav />
 
       <main className="max-w-3xl mx-auto px-4 py-6">
         <div className="mb-6">

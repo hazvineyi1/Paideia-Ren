@@ -15,6 +15,7 @@ import {
   ArrowLeft, BookOpen, Network, Brain, Flashlight, Target,
   FileText, ExternalLink, Tag, ChevronRight, Plus, Check
 } from "lucide-react";
+import StudyNav from "@/components/StudyNav";
 
 export default function StudyMaterialView() {
   const { materialId } = useParams<{ materialId: string }>();
@@ -76,7 +77,8 @@ export default function StudyMaterialView() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b px-4 py-3 flex items-center justify-between sticky top-0 bg-background/95 backdrop-blur-sm z-10">
+      <StudyNav />
+      <header className="border-b px-4 py-2 flex items-center justify-between sticky top-12 bg-background/95 backdrop-blur-sm z-40">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="sm" className="gap-1.5" onClick={() => setLoc("/materials")}>
             <ArrowLeft className="h-4 w-4" />

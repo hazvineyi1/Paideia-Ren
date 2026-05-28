@@ -10,6 +10,7 @@ import {
   Sparkles, Clock, Target, Zap, BookOpen, Trophy,
   ChevronRight, Loader2, TrendingUp, Lightbulb
 } from "lucide-react";
+import StudyNav from "@/components/StudyNav";
 
 interface Answer {
   questionId: string;
@@ -367,7 +368,8 @@ export default function StudyAssessment() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b px-4 py-3 sticky top-0 bg-background/95 backdrop-blur-sm z-10">
+      <StudyNav />
+      <header className="border-b px-4 py-3 sticky top-12 bg-background/95 backdrop-blur-sm z-40">
         <div className="max-w-2xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Brain className="h-5 w-5 text-primary" />

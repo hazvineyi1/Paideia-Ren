@@ -12,9 +12,10 @@ import {
   useListStudyMaterials,
 } from "@workspace/api-client-react";
 import { useStudyKnowledgeGraph } from "@/hooks/use-study-api";
+import StudyNav from "@/components/StudyNav";
 import { useQueryClient } from "@tanstack/react-query";
 import {
-  ArrowLeft, RotateCcw, Eye, EyeOff, Flame, BrainCircuit,
+  RotateCcw, Eye, EyeOff, Flame, BrainCircuit,
   TrendingUp, Target, Clock, ChevronRight, Zap, Sparkles,
   Lightbulb, Loader2, BookOpen
 } from "lucide-react";
@@ -62,12 +63,7 @@ export default function StudyFlashcards() {
   if (!allCards || allCards.length === 0) {
     return (
       <div className="min-h-screen bg-background">
-        <header className="border-b px-4 py-3 flex items-center justify-between sticky top-0 bg-background/95 backdrop-blur-sm z-10">
-          <Button variant="ghost" size="sm" className="gap-1.5" onClick={() => setLoc("/dashboard")}>
-            <ArrowLeft className="h-4 w-4" />
-            Dashboard
-          </Button>
-        </header>
+        <StudyNav />
         <main className="max-w-md mx-auto px-6 py-16 text-center">
           <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <Flame className="h-8 w-8 text-primary" />
@@ -104,12 +100,7 @@ export default function StudyFlashcards() {
       : 0;
     return (
       <div className="min-h-screen bg-background">
-        <header className="border-b px-4 py-3 flex items-center justify-between sticky top-0 bg-background/95 backdrop-blur-sm z-10">
-          <Button variant="ghost" size="sm" className="gap-1.5" onClick={() => setLoc("/dashboard")}>
-            <ArrowLeft className="h-4 w-4" />
-            Dashboard
-          </Button>
-        </header>
+        <StudyNav />
         <main className="max-w-lg mx-auto px-6 py-12 text-center">
           <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <Flame className="h-8 w-8 text-primary" />
@@ -219,12 +210,10 @@ export default function StudyFlashcards() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Header */}
-      <header className="border-b px-4 py-3 flex items-center justify-between shrink-0 sticky top-0 bg-background/95 backdrop-blur-sm z-10">
-        <Button variant="ghost" size="sm" className="gap-1.5" onClick={() => setLoc("/dashboard")}>
-          <ArrowLeft className="h-4 w-4" />
-          Dashboard
-        </Button>
+      <StudyNav />
+      {/* Session bar */}
+      <header className="border-b px-4 py-2 flex items-center justify-between shrink-0 sticky top-12 bg-background/95 backdrop-blur-sm z-40">
+        <div className="text-sm font-semibold">Flashcards</div>
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Flame className="h-4 w-4 text-orange-500" />
           <span>{currentIndex + 1} / {allCards.length}</span>

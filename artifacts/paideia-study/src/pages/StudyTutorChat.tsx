@@ -6,7 +6,8 @@ import {
   useGetStudyTutorConversation,
   useSendStudyTutorMessage,
 } from "@workspace/api-client-react";
-import { ArrowLeft, Send, BrainCircuit, Lightbulb } from "lucide-react";
+import { Send, BrainCircuit, Lightbulb } from "lucide-react";
+import StudyNav from "@/components/StudyNav";
 import type { StudyTutorMessage } from "@workspace/api-client-react";
 
 export default function StudyTutorChat() {
@@ -52,21 +53,19 @@ export default function StudyTutorChat() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <header className="border-b px-6 py-4 flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={() => setLoc("/tutor")}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Tutor
-          </Button>
-          <h1 className="font-semibold text-sm">
+      <StudyNav />
+      <header className="border-b px-4 py-2 flex items-center justify-between shrink-0 sticky top-12 bg-background/95 backdrop-blur-sm z-40">
+        <div className="flex items-center gap-2 min-w-0">
+          <h1 className="font-semibold text-sm truncate">
             {conversation?.title || "Study Tutor"}
           </h1>
         </div>
-        <div className="flex items-center gap-2">
-          <Lightbulb className="h-4 w-4 text-muted-foreground" />
-          <span className="text-xs text-muted-foreground">
-            Socratic Mode
-          </span>
+        <div className="flex items-center gap-2 shrink-0">
+          <Lightbulb className="h-3.5 w-3.5 text-muted-foreground" />
+          <span className="text-[11px] text-muted-foreground">Chat</span>
+          <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setLoc("/tutor")}>
+            All sessions
+          </Button>
         </div>
       </header>
 

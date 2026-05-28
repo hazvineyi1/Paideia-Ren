@@ -2,7 +2,8 @@ import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useGetStudyLatestBrief, useListStudyBriefs } from "@workspace/api-client-react";
-import { ArrowLeft, TrendingUp, TrendingDown, Target, Calendar } from "lucide-react";
+import { TrendingUp, TrendingDown, Target, Calendar } from "lucide-react";
+import StudyNav from "@/components/StudyNav";
 
 export default function StudyBriefs() {
   const [, setLoc] = useLocation();
@@ -11,12 +12,7 @@ export default function StudyBriefs() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b px-6 py-4">
-        <Button variant="ghost" size="sm" onClick={() => setLoc("/dashboard")}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Dashboard
-        </Button>
-      </header>
+      <StudyNav />
 
       <main className="max-w-2xl mx-auto px-6 py-8">
         <div className="mb-8 text-center">

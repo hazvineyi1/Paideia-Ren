@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useStudyAuth } from "@/hooks/use-study-auth";
+import StudyNav from "@/components/StudyNav";
 import {
   useDailySession,
   useStartPathStep,
@@ -91,26 +92,7 @@ export default function StudyDashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b px-4 py-3 flex items-center justify-between bg-background/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="flex items-center gap-2.5">
-          <div className="bg-primary/10 p-1.5 rounded-lg">
-            <Brain className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <span className="font-bold text-sm tracking-tight">Paideia</span>
-            <span className="font-light text-sm text-muted-foreground ml-0.5">Study</span>
-          </div>
-        </div>
-        <div className="flex items-center gap-1">
-          <Button variant="ghost" size="sm" className="text-xs gap-1.5" onClick={() => setLoc("/profile")}>
-            <Target className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Profile</span>
-          </Button>
-          <Button variant="ghost" size="sm" className="text-xs" onClick={() => { logout(); setLoc("/"); }}>
-            <LogOut className="h-3.5 w-3.5" />
-          </Button>
-        </div>
-      </header>
+      <StudyNav />
 
       <main className="max-w-xl mx-auto px-4 py-8 space-y-6">
         {/* Greeting + context */}

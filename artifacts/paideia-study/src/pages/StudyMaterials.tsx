@@ -9,7 +9,8 @@ import {
   getListStudyMaterialsQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Plus, Trash2, BookOpen, FileText, ArrowLeft, Layers, Sparkles, Network, ChevronRight } from "lucide-react";
+import { Plus, Trash2, BookOpen, FileText, Layers, Sparkles, Network, ChevronRight } from "lucide-react";
+import StudyNav from "@/components/StudyNav";
 
 export default function StudyMaterials() {
   const [, setLoc] = useLocation();
@@ -41,16 +42,14 @@ export default function StudyMaterials() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b px-4 py-3 flex items-center justify-between sticky top-0 bg-background/95 backdrop-blur-sm z-10">
-        <Button variant="ghost" size="sm" className="gap-1.5" onClick={() => setLoc("/dashboard")}>
-          <ArrowLeft className="h-4 w-4" />
-          Dashboard
-        </Button>
-        <Button size="sm" className="gap-1.5" onClick={() => setLoc("/materials/new")}>
-          <Plus className="h-4 w-4" />
+      <StudyNav />
+      <div className="border-b px-4 py-2 flex items-center justify-between sticky top-12 bg-background/95 backdrop-blur-sm z-10">
+        <h1 className="text-sm font-semibold">Materials</h1>
+        <Button size="sm" className="gap-1.5 h-8" onClick={() => setLoc("/materials/new")}>
+          <Plus className="h-3.5 w-3.5" />
           Add Material
         </Button>
-      </header>
+      </div>
 
       <main className="max-w-4xl mx-auto px-4 py-6">
         <div className="mb-6">

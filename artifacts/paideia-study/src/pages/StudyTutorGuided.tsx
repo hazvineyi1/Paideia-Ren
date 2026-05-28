@@ -3,9 +3,10 @@ import { useLocation, useParams } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import StudyNav from "@/components/StudyNav";
 import {
-  ArrowLeft, Brain, CheckCircle2, XCircle, Loader2, ChevronRight,
-  Globe, Sparkles, GraduationCap, Trophy, BookOpen,
+  Brain, CheckCircle2, XCircle, Loader2, ChevronRight,
+  Globe, Sparkles, GraduationCap, Trophy, BookOpen, RefreshCw,
 } from "lucide-react";
 
 type DiagnosticQuestion = {
@@ -131,19 +132,75 @@ export default function StudyTutorGuided() {
   if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
 
   const visibleMessages = messages.filter((m) => !(m.turn?.kind === "user_reply"));
+  const isSocratic = !!conversation?.socraticMode;
+
+  const restartDiagnostic = async () => {
+    if (pending) return;
+    if (!confirm("Start a fresh diagnostic? This will leave your current session in your history and open a new one.")) return;
+    setPending(true);
+    try {
+      const r = await fetch("/api/study/tutor/guided/start", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ socratic: isSocratic }),
+      });
+      if (!r.ok) {
+        const e = await r.json().catch(() => ({}));
+        alert(e?.error || "Could not restart diagnostic.");
+        setPending(false);
+        return;
+      }
+      const data = await r.json();
+      setLoc(`/tutor/guided/${data.conversation.id}`);
+    } catch {
+      alert("Could not restart diagnostic.");
+      setPending(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <header className="border-b px-4 py-3 flex items-center justify-between sticky top-0 z-20 bg-background/90 backdrop-blur-sm">
-        <Button variant="ghost" size="sm" onClick={() => setLoc("/tutor")} className="gap-1.5">
-          <ArrowLeft className="h-4 w-4" /> Tutor
-        </Button>
-        <div className="flex items-center gap-2">
-          <GraduationCap className="h-4 w-4 text-primary" />
-          <h1 className="font-semibold text-sm">{conversation?.title || "Guided session"}</h1>
+      <StudyNav />
+      <div className="border-b px-3 sm:px-4 py-2 flex items-center justify-between gap-2 sticky top-12 z-20 bg-background/95 backdrop-blur-sm">
+        <div className="flex items-center gap-2 min-w-0">
+          {isSocratic ? (
+            <Brain className="h-4 w-4 text-amber-600 shrink-0" />
+          ) : (
+            <GraduationCap className="h-4 w-4 text-primary shrink-0" />
+          )}
+          <h1 className="font-semibold text-sm truncate">
+            {conversation?.title || "Guided session"}
+          </h1>
+          <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+            isSocratic ? "bg-amber-500/15 text-amber-700" : "bg-primary/15 text-primary"
+          }`}>
+            {isSocratic ? "Socratic" : "Guided"}
+          </span>
         </div>
-        <div className="w-16" />
-      </header>
+        <div className="flex items-center gap-1.5 shrink-0">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 gap-1.5 text-xs"
+            onClick={restartDiagnostic}
+            disabled={pending}
+            title="Start a new diagnostic"
+          >
+            <RefreshCw className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Redo diagnostic</span>
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 gap-1.5 text-xs"
+            onClick={() => setLoc("/tutor")}
+          >
+            <span className="hidden sm:inline">All sessions</span>
+            <span className="sm:hidden">Back</span>
+          </Button>
+        </div>
+      </div>
 
       <main className="flex-1 overflow-y-auto">
         <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">

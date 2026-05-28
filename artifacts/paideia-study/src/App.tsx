@@ -29,6 +29,7 @@ import StudyDailySession from "@/pages/StudyDailySession";
 import StudyLearningPath from "@/pages/StudyLearningPath";
 import StudyLearningStyle from "@/pages/StudyLearningStyle";
 import StudyStrategy from "@/pages/StudyStrategy";
+import StudyProgress from "@/pages/StudyProgress";
 
 const queryClient = new QueryClient();
 
@@ -80,6 +81,7 @@ function Router() {
       <Route path="/learning-path/:id" component={() => <Protected component={StudyLearningPath} />} />
       <Route path="/learning-style" component={() => <Protected component={StudyLearningStyle} />} />
       <Route path="/strategy/:materialId" component={() => <Protected component={StudyStrategy} />} />
+      <Route path="/progress" component={() => <Protected component={StudyProgress} />} />
       <Route component={NotFound} />
     </Switch>
   );

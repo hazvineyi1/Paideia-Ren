@@ -11,8 +11,9 @@ import {
   type KnowledgeEdge,
 } from "@/hooks/use-study-api";
 import { useListStudyMaterials } from "@workspace/api-client-react";
+import StudyNav from "@/components/StudyNav";
 import {
-  ArrowLeft, Network, Brain, ZoomIn, ZoomOut, Maximize2,
+  Network, Brain, ZoomIn, ZoomOut, Maximize2,
   Target, BookOpen, ChevronRight, Filter, Search, Layers, Plus, Loader2,
 } from "lucide-react";
 
@@ -138,17 +139,11 @@ export default function StudyKnowledgeMap() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <header className="border-b px-4 py-3 flex items-center justify-between bg-background/80 backdrop-blur-sm shrink-0 sticky top-0 z-50">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" className="gap-1.5" onClick={() => setLoc("/dashboard")}>
-            <ArrowLeft className="h-4 w-4" />
-            Dashboard
-          </Button>
-          <div className="h-4 w-px bg-border" />
-          <div className="flex items-center gap-2">
-            <Network className="h-4 w-4 text-primary" />
-            <h1 className="font-semibold text-sm">Knowledge Map</h1>
-          </div>
+      <StudyNav />
+      <header className="border-b px-4 py-2 flex items-center justify-between bg-background/95 backdrop-blur-sm shrink-0 sticky top-12 z-40">
+        <div className="flex items-center gap-2">
+          <Network className="h-4 w-4 text-primary" />
+          <h1 className="font-semibold text-sm">Knowledge Map</h1>
         </div>
         <div className="flex items-center gap-2">
           {nodes.length === 0 && materials && materials.length > 0 && (
