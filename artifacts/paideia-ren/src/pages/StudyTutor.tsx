@@ -1,6 +1,5 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { MessageCircle, Brain, Sparkles, Layers, Gauge, Target, TrendingUp, ArrowRight } from "lucide-react";
 
 const fadeUp = {
@@ -40,7 +39,7 @@ export default function StudyTutor() {
     <div className="min-h-screen pt-20">
       {/* Hero */}
       <section className="py-[120px] max-w-[1200px] mx-auto px-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+        <div>
           <div>
             <motion.div {...fadeUp}>
               <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary/5 text-primary text-[13px] font-semibold uppercase tracking-widest mb-6">
@@ -80,40 +79,6 @@ export default function StudyTutor() {
               </Button>
             </motion.div>
           </div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.3 }}
-          >
-            <Card className="bg-white rounded-none border shadow-sm p-8 space-y-5">
-              <div className="flex items-start gap-3 flex-row-reverse">
-                <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center shrink-0">
-                  <span className="text-white text-xs font-bold">S</span>
-                </div>
-                <div className="bg-primary/10 rounded-lg rounded-tr-none px-4 py-3 text-sm max-w-[85%]">
-                  <p className="text-foreground leading-relaxed">
-                    I keep getting quadratic equations wrong. Can you just give me the formula?
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                  <span className="text-primary text-sm font-semibold">AI</span>
-                </div>
-                <div className="bg-muted rounded-lg rounded-tl-none px-4 py-3 text-sm max-w-[85%]">
-                  <p className="text-foreground leading-relaxed">
-                    I could, but your profile says you retain better when we build up first. Quick check: in x squared plus 5x plus 6, what two numbers multiply to 6 and add to 5? Start there and I'll meet you at the formula.
-                  </p>
-                  <div className="flex flex-wrap gap-2 mt-3">
-                    <span className="text-[11px] px-2 py-1 rounded-full bg-white border text-muted-foreground">Pace: deliberate</span>
-                    <span className="text-[11px] px-2 py-1 rounded-full bg-white border text-muted-foreground">Style: sequential</span>
-                    <span className="text-[11px] px-2 py-1 rounded-full bg-white border text-muted-foreground">Gap: factoring</span>
-                  </div>
-                </div>
-              </div>
-            </Card>
-          </motion.div>
         </div>
       </section>
 
