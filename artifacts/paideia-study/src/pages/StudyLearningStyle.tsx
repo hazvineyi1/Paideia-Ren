@@ -50,6 +50,7 @@ export default function StudyLearningStyle() {
     Record<string, Record<string, number>>
   >({});
   const [step, setStep] = useState(0);
+  const [retaking, setRetaking] = useState(false);
   const [showPassage, setShowPassage] = useState(true);
 
   const questionnaire: Question[] = tasks?.questionnaire ?? [];
@@ -86,7 +87,7 @@ export default function StudyLearningStyle() {
   }
 
   // Already completed → bounce
-  if (existing && step === 0) {
+  if (existing && step === 0 && !retaking) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center px-4">
         <Card className="max-w-md w-full">
@@ -102,7 +103,17 @@ export default function StudyLearningStyle() {
               <Button onClick={() => setLoc("/materials/new")}>
                 Upload material <ArrowRight className="h-4 w-4 ml-1.5" />
               </Button>
-              <Button variant="outline" onClick={() => setStep(0.1)}>Retake the diagnostic</Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setRetaking(true);
+                  setStep(0);
+                  setAnswers({});
+                  setMiniAnswers({});
+                }}
+              >
+                Retake the diagnostic
+              </Button>
               <Button variant="ghost" size="sm" onClick={() => setLoc("/dashboard")}>
                 Back to dashboard
               </Button>
