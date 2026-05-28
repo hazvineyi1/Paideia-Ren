@@ -14,7 +14,7 @@ import { requireQuota } from "../../middlewares/quota.js";
 import { REGION_IDS } from "../../lib/catalog.js";
 import { generateJSON } from "../../lib/openai.js";
 import { logEvent } from "../../lib/eventLog.js";
-import { lessonPlanPrompt, type StudentProfileSummary, type LearningProfile } from "../../lib/prompts.js";
+import { lessonPlanPrompt, aggregateClassLearningProfile, type StudentProfileSummary, type LearningProfile } from "../../lib/prompts.js";
 
 async function fetchClassLearningProfile(classId: string, teacherId: string): Promise<LearningProfile | undefined> {
   const [cls] = await db
@@ -27,22 +27,7 @@ async function fetchClassLearningProfile(classId: string, teacherId: string): Pr
     .select()
     .from(studentsTable)
     .where(eq(studentsTable.classId, classId));
-  const withDiagnostic = students.filter((s) => s.learningStyle != null).length;
-  if (withDiagnostic === 0) return undefined;
-  const aggregate: Record<string, number> = { visual: 0, auditory: 0, reading: 0, kinesthetic: 0 };
-  for (const s of students) {
-    const ls = s.learningStyle as Record<string, number> | null;
-    if (!ls) continue;
-    for (const key of Object.keys(aggregate)) {
-      aggregate[key] += (ls[key] ?? 0);
-    }
-  }
-  const maxScore = withDiagnostic * 4;
-  const profile = {} as LearningProfile;
-  for (const key of Object.keys(aggregate) as Array<keyof LearningProfile>) {
-    profile[key] = Math.round((aggregate[key] / maxScore) * 100);
-  }
-  return profile;
+  return aggregateClassLearningProfile(students);
 }
 
 const router: IRouter = Router();

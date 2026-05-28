@@ -358,7 +358,15 @@ export interface Student {
   lastInitial: string;
   email: string | null;
   joinCode: string;
-  learningStyle: Record<string, number> | null;
+  learningStyle: {
+    schemaVersion: 1;
+    processingStyle: "sequential" | "conceptual" | "mixed";
+    pace: "quick" | "deliberate" | "moderate";
+    strengthByQuestionType: { recall: number; comprehension: number; application: number };
+    confidencePattern: "improving" | "fatiguing" | "consistent";
+    inferenceConfidence: "low" | "developing" | "moderate" | "strong";
+    sampleSize: number;
+  } | null;
   diagnosticTakenAt: string | null;
   createdAt: string;
 }

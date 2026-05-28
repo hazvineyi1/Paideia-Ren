@@ -113,10 +113,10 @@ export default function Platform() {
   const applicationResp = responses.find((r) => demoItems[r.itemIndex].bloom === "application");
   const avgMs = responses.length ? Math.round(responses.reduce((s, r) => s + r.elapsedMs, 0) / responses.length) : 0;
 
-  const processingStyle: "sequential" | "conceptual" | "balanced" =
+  const processingStyle: "sequential" | "conceptual" | "mixed" =
     applicationResp?.correct && !recallResp?.correct ? "conceptual"
     : recallResp?.correct && !applicationResp?.correct ? "sequential"
-    : "balanced";
+    : "mixed";
 
   const pace: "quick" | "deliberate" | "moderate" =
     avgMs < 8000 ? "quick" : avgMs > 25000 ? "deliberate" : "moderate";
@@ -236,7 +236,7 @@ export default function Platform() {
                     <p className="text-[17px] text-foreground/80 leading-[1.75] mb-6">
                       {processingStyle === "conceptual" && "You handled an application item more confidently than a recall item — a pattern that suggests you reason from principles. The full system would lead with worked examples and let definitions emerge from cases."}
                       {processingStyle === "sequential" && "You handled the recall item more confidently than the application item — a pattern that suggests you prefer to anchor facts before extending them. The full system would front-load definitions and scaffold up to application problems."}
-                      {processingStyle === "balanced" && "Your two items moved together. The full system needs more evidence before specializing — it would run more diagnostic items first rather than commit to a sequencing strategy."}
+                      {processingStyle === "mixed" && "Your two items moved together. The full system needs more evidence before specializing - it would run more diagnostic items first rather than commit to a sequencing strategy."}
                     </p>
 
                     <div className="bg-secondary p-6 mb-8 border-l-2 border-accent">

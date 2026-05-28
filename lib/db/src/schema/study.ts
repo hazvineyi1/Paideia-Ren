@@ -359,11 +359,12 @@ export const studyCognitiveProfilesTable = pgTable("study_cognitive_profiles", {
   userId: uuid("user_id")
     .notNull()
     .references(() => studyUsersTable.id, { onDelete: "cascade" }),
-  // Cognitive style
-  visualLearningScore: real("visual_learning_score").notNull().default(0.5),
-  auditoryLearningScore: real("auditory_learning_score").notNull().default(0.5),
-  kinestheticLearningScore: real("kinesthetic_learning_score").notNull().default(0.5),
-  readingLearningScore: real("reading_learning_score").notNull().default(0.5),
+  // NOTE: VARK-style (visual/auditory/reading/kinesthetic) columns previously lived here.
+  // They have been removed because VARK is not supported by evidence. The evidence-based
+  // cognitive profile (processingStyle, pace, strengthByQuestionType, confidencePattern,
+  // inferenceConfidence) is computed by assessment.ts and stored on the assessment record
+  // and learning path, not on this table. The physical columns may remain in older
+  // databases; Drizzle will ignore them and they will be dropped in a future migration.
   // Pace
   optimalSessionMinutes: integer("optimal_session_minutes").notNull().default(25),
   breakFrequencyMinutes: integer("break_frequency_minutes").notNull().default(5),

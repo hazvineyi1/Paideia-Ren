@@ -5,6 +5,7 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { LearningProfile } from './learningProfile';
 
 export interface StudyLearnerProfile {
   id: string;
@@ -25,4 +26,6 @@ export interface StudyLearnerProfile {
   timezone?: string | null;
   createdAt: string;
   updatedAt: string;
+  /** Latest completed assessment's canonical cognitive profile, or null if no assessment is completed yet. */
+  learningProfile?: LearningProfile | null;
 }

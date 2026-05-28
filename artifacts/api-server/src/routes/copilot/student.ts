@@ -21,6 +21,7 @@ import {
 import { requireStudent } from "../../middlewares/auth.js";
 import { gradeQuiz, gradeWorksheet } from "../../lib/grading.js";
 import { enqueueGrading } from "../../lib/gradingQueue.js";
+import { isLearningProfile } from "../../lib/prompts.js";
 
 const router: IRouter = Router();
 
@@ -95,16 +96,52 @@ router.get("/me", (req, res) => {
   res.json({ student: safe });
 });
 
+// Evidence-based cognitive diagnostic.
+// We DO NOT use VARK or other fixed learning-styles theories - they are not supported by evidence.
+// Instead we sample brief cognitive items across three Bloom levels (recall, comprehension, application),
+// plus two self-report items (processing style and pace), and infer a soft prior the system can use
+// to adjust pacing, scaffolding, and item-type balance.
+
+type ItemType = "recall" | "comprehension" | "application";
+
+interface DiagnosticItem {
+  id: string;
+  type: ItemType;
+  prompt: string;
+  options: string[];
+  correctIndex: number;
+}
+
+const DIAGNOSTIC_ITEMS: DiagnosticItem[] = [
+  { id: "r1", type: "recall", prompt: "Photosynthesis converts sunlight, water, and which gas into glucose?",
+    options: ["Oxygen", "Nitrogen", "Carbon dioxide", "Hydrogen"], correctIndex: 2 },
+  { id: "r2", type: "recall", prompt: "Which part of a plant cell captures sunlight for photosynthesis?",
+    options: ["Nucleus", "Chloroplast", "Mitochondrion", "Vacuole"], correctIndex: 1 },
+  { id: "c1", type: "comprehension", prompt: "Why do most plant leaves appear green to our eyes?",
+    options: ["They absorb mostly green light", "They reflect mostly green light", "Green dye is added by the soil", "Green is the colour of the cell wall"], correctIndex: 1 },
+  { id: "c2", type: "comprehension", prompt: "If a healthy plant is kept in complete darkness for several days, what happens to its glucose production?",
+    options: ["It increases", "It stays the same", "It stops almost entirely", "It changes colour"], correctIndex: 2 },
+  { id: "a1", type: "application", prompt: "A potted plant on a sunny windowsill wilts after a week with no water. What is the most likely reason it stopped making glucose?",
+    options: ["The sunlight became too strong", "Water, which is a required reactant, ran out", "Carbon dioxide ran out", "The leaves got too cold"], correctIndex: 1 },
+  { id: "a2", type: "application", prompt: "You want to design a fair test to measure how light intensity affects the rate of photosynthesis. Which one variable should you deliberately change?",
+    options: ["The species of plant", "The temperature of the water", "The brightness of the light", "The amount of soil"], correctIndex: 2 },
+];
+
 const diagnosticSchema = z.object({
   answers: z.record(z.string(), z.number().int().min(0).max(3)),
+  processingStylePref: z.enum(["sequential", "conceptual"]),
+  pacePref: z.enum(["quick", "deliberate", "moderate"]),
 });
 
-const DIAGNOSTIC_QUESTIONS = [
-  { id: "q1", options: ["visual", "auditory", "reading", "kinesthetic"] },
-  { id: "q2", options: ["reading", "visual", "kinesthetic", "auditory"] },
-  { id: "q3", options: ["kinesthetic", "reading", "auditory", "visual"] },
-  { id: "q4", options: ["auditory", "kinesthetic", "visual", "reading"] },
-];
+function inferConfidencePattern(itemResults: Array<{ correct: boolean }>): "improving" | "fatiguing" | "consistent" {
+  if (itemResults.length < 4) return "consistent";
+  const half = Math.floor(itemResults.length / 2);
+  const firstHalf = itemResults.slice(0, half).filter((r) => r.correct).length;
+  const secondHalf = itemResults.slice(half).filter((r) => r.correct).length;
+  if (secondHalf - firstHalf >= 1) return "improving";
+  if (firstHalf - secondHalf >= 1) return "fatiguing";
+  return "consistent";
+}
 
 router.post("/diagnostic", requireStudent, async (req, res) => {
   const parsed = diagnosticSchema.safeParse(req.body);
@@ -112,18 +149,45 @@ router.post("/diagnostic", requireStudent, async (req, res) => {
     res.status(400).json({ error: "Invalid input" });
     return;
   }
-  const scores: Record<string, number> = { visual: 0, auditory: 0, reading: 0, kinesthetic: 0 };
-  for (const q of DIAGNOSTIC_QUESTIONS) {
-    const idx = parsed.data.answers[q.id];
+  const totals: Record<ItemType, { correct: number; answered: number }> = {
+    recall: { correct: 0, answered: 0 },
+    comprehension: { correct: 0, answered: 0 },
+    application: { correct: 0, answered: 0 },
+  };
+  const ordered: Array<{ correct: boolean }> = [];
+  for (const item of DIAGNOSTIC_ITEMS) {
+    const idx = parsed.data.answers[item.id];
     if (idx == null) continue;
-    const style = q.options[idx];
-    if (style) scores[style] = (scores[style] ?? 0) + 1;
+    const correct = idx === item.correctIndex;
+    totals[item.type].answered += 1;
+    if (correct) totals[item.type].correct += 1;
+    ordered.push({ correct });
   }
+  const pct = (t: { correct: number; answered: number }) =>
+    t.answered === 0 ? 50 : Math.round((t.correct / t.answered) * 100);
+
+  const sampleSize = ordered.length;
+  const profile = {
+    schemaVersion: 1 as const,
+    processingStyle: parsed.data.processingStylePref,
+    pace: parsed.data.pacePref,
+    strengthByQuestionType: {
+      recall: pct(totals.recall),
+      comprehension: pct(totals.comprehension),
+      application: pct(totals.application),
+    },
+    confidencePattern: inferConfidencePattern(ordered),
+    // A 6-item one-shot diagnostic is intentionally a "low" confidence prior.
+    // It will be revised by later study/assessment behaviour rather than treated as a label.
+    inferenceConfidence: "low" as const,
+    sampleSize,
+  };
+
   await db
     .update(studentsTable)
-    .set({ learningStyle: scores, diagnosticTakenAt: new Date() })
+    .set({ learningStyle: profile, diagnosticTakenAt: new Date() })
     .where(eq(studentsTable.id, req.student!.id));
-  res.json({ scores });
+  res.json({ profile });
 });
 
 router.get("/diagnostic", requireStudent, async (req, res) => {
@@ -132,14 +196,32 @@ router.get("/diagnostic", requireStudent, async (req, res) => {
     .where(eq(studentsTable.id, req.student!.id))
     .limit(1);
   const row = rows[0];
+  // Validate persisted profile against canonical schema; legacy / pre-canonical rows return null.
+  const persisted = row?.learningStyle;
+  const profile = isLearningProfile(persisted) ? persisted : null;
   res.json({
     taken: !!row?.diagnosticTakenAt,
-    scores: row?.learningStyle ?? null,
-    questions: [
-      { id: "q1", prompt: "When learning something new, you most prefer to:", options: ["See a diagram or chart", "Listen to an explanation", "Read a detailed text", "Try it yourself first"] },
-      { id: "q2", prompt: "You need to give directions to someone. You would:", options: ["Write down the steps", "Draw a map with landmarks", "Walk them there personally", "Explain verbally over the phone"] },
-      { id: "q3", prompt: "You are helping someone with a new skill. You prefer to:", options: ["Demonstrate and let them practise", "Give them a written guide", "Talk them through it step by step", "Show pictures or a video"] },
-      { id: "q4", prompt: "In your spare time you are most likely to:", options: ["Listen to music or a podcast", "Build or repair something", "Read a book or article", "Watch a film or look at art"] },
+    profile,
+    notice: "This is a brief cognitive diagnostic, not a learning-styles questionnaire. The signal is a starting prior - it will be refined as you study.",
+    items: DIAGNOSTIC_ITEMS.map(({ id, type, prompt, options }) => ({ id, type, prompt, options })),
+    selfReport: [
+      {
+        id: "processingStylePref",
+        prompt: "When you start a new topic, which usually helps you more?",
+        options: [
+          { value: "sequential", label: "Building up step by step, then seeing how the pieces fit" },
+          { value: "conceptual", label: "Getting the big picture first, then filling in the steps" },
+        ],
+      },
+      {
+        id: "pacePref",
+        prompt: "Which best describes the pace you prefer when learning something challenging?",
+        options: [
+          { value: "quick", label: "Quick - I like to move fast and come back to fix things" },
+          { value: "moderate", label: "Moderate - steady, checking in as I go" },
+          { value: "deliberate", label: "Deliberate - I prefer to take my time and get it right the first time" },
+        ],
+      },
     ],
   });
 });

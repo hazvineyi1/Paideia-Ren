@@ -29,6 +29,149 @@ export interface StudentProfileSummary {
   strongSkills: string[];
 }
 
+export type ProcessingStyle = "sequential" | "conceptual" | "mixed";
+export type LearningPace = "quick" | "deliberate" | "moderate";
+export type ConfidencePattern = "improving" | "fatiguing" | "consistent";
+export type InferenceConfidence = "low" | "developing" | "moderate" | "strong";
+
+export interface LearningProfile {
+  schemaVersion: 1;
+  processingStyle: ProcessingStyle;
+  pace: LearningPace;
+  strengthByQuestionType: {
+    recall: number;
+    comprehension: number;
+    application: number;
+  };
+  confidencePattern: ConfidencePattern;
+  inferenceConfidence: InferenceConfidence;
+  sampleSize: number;
+}
+
+const PROCESSING_STYLES = new Set<ProcessingStyle>(["sequential", "conceptual", "mixed"]);
+const PACES = new Set<LearningPace>(["quick", "deliberate", "moderate"]);
+const CONFIDENCE_PATTERNS = new Set<ConfidencePattern>(["improving", "fatiguing", "consistent"]);
+const INFERENCE_CONFIDENCES = new Set<InferenceConfidence>(["low", "developing", "moderate", "strong"]);
+
+function isFiniteNumber(x: unknown): x is number {
+  return typeof x === "number" && Number.isFinite(x);
+}
+
+export function isLearningProfile(value: unknown): value is LearningProfile {
+  if (!value || typeof value !== "object") return false;
+  const v = value as Record<string, unknown>;
+  if (v["schemaVersion"] !== 1) return false;
+  if (!PROCESSING_STYLES.has(v["processingStyle"] as ProcessingStyle)) return false;
+  if (!PACES.has(v["pace"] as LearningPace)) return false;
+  if (!CONFIDENCE_PATTERNS.has(v["confidencePattern"] as ConfidencePattern)) return false;
+  if (!INFERENCE_CONFIDENCES.has(v["inferenceConfidence"] as InferenceConfidence)) return false;
+  if (!isFiniteNumber(v["sampleSize"]) || (v["sampleSize"] as number) < 0) return false;
+  const s = v["strengthByQuestionType"];
+  if (!s || typeof s !== "object") return false;
+  const sr = s as Record<string, unknown>;
+  return isFiniteNumber(sr["recall"]) && isFiniteNumber(sr["comprehension"]) && isFiniteNumber(sr["application"]);
+}
+
+function mode<T extends string>(values: T[]): T | null {
+  if (values.length === 0) return null;
+  const counts = new Map<T, number>();
+  for (const v of values) counts.set(v, (counts.get(v) ?? 0) + 1);
+  let best: T | null = null;
+  let bestCount = -1;
+  for (const [k, c] of counts) {
+    if (c > bestCount) { best = k; bestCount = c; }
+  }
+  return best;
+}
+
+export function aggregateClassLearningProfile(
+  students: Array<{ learningStyle: unknown }>,
+): LearningProfile | undefined {
+  const profiles = students
+    .map((s) => s.learningStyle)
+    .filter(isLearningProfile);
+  if (profiles.length === 0) return undefined;
+
+  const processingStyle = (mode(profiles.map((p) => p.processingStyle)) ?? "mixed") as ProcessingStyle;
+  const pace = (mode(profiles.map((p) => p.pace)) ?? "moderate") as LearningPace;
+  const confidencePattern = (mode(profiles.map((p) => p.confidencePattern)) ?? "consistent") as ConfidencePattern;
+
+  const avg = (key: "recall" | "comprehension" | "application") =>
+    Math.round(profiles.reduce((s, p) => s + p.strengthByQuestionType[key], 0) / profiles.length);
+
+  const totalSample = profiles.reduce((s, p) => s + p.sampleSize, 0);
+  const inferenceConfidence: InferenceConfidence =
+    profiles.length >= 10 ? "strong"
+    : profiles.length >= 5 ? "moderate"
+    : profiles.length >= 2 ? "developing"
+    : "low";
+
+  return {
+    schemaVersion: 1,
+    processingStyle,
+    pace,
+    strengthByQuestionType: {
+      recall: avg("recall"),
+      comprehension: avg("comprehension"),
+      application: avg("application"),
+    },
+    confidencePattern,
+    inferenceConfidence,
+    sampleSize: totalSample,
+  };
+}
+
+export function formatLearningProfileBlock(p: LearningProfile | undefined, audience: "lesson" | "worksheet" | "quiz" | "tutor"): string {
+  if (!p) return "";
+  const s = p.strengthByQuestionType;
+  const types: Array<"recall" | "comprehension" | "application"> = ["recall", "comprehension", "application"];
+  const sortedAsc = [...types].sort((a, b) => s[a] - s[b]);
+  const weakest = sortedAsc[0]!;
+  const strongest = sortedAsc[sortedAsc.length - 1]!;
+
+  const confidenceCaveat = p.inferenceConfidence === "low" || p.inferenceConfidence === "developing"
+    ? `This profile is based on a small sample (${p.sampleSize} responses). Treat the signal as a soft prior, not a label - vary your approach if it does not seem to fit.`
+    : `This profile is based on ${p.sampleSize} responses (${p.inferenceConfidence} confidence). It is an evidence-based prior, not a fixed identity.`;
+
+  const paceLine = p.pace === "quick"
+    ? "Keep the working pace brisk. Avoid over-scaffolding obvious steps. Push toward harder challenge sooner."
+    : p.pace === "deliberate"
+    ? "Allow more time per item. Add scaffolding and intermediate checks. Fewer, deeper items beat many shallow ones."
+    : "Use a moderate pace with regular checks for understanding.";
+
+  const styleLine = p.processingStyle === "sequential"
+    ? "This group tends to build understanding step by step. Lead with a clear sequence of small steps before showing the whole picture."
+    : p.processingStyle === "conceptual"
+    ? "This group tends to grasp the big picture first. Open with the overarching idea, the why, and the connections before drilling into procedure."
+    : "This group is mixed in how they build understanding. Offer both a step-by-step path and a big-picture frame.";
+
+  const strengthLine = `Current strengths by question type (% correct on diagnostic): recall ${s.recall}%, comprehension ${s.comprehension}%, application ${s.application}%. Strongest: ${strongest}. Weakest: ${weakest}. Allocate more practice to the weakest type, while keeping the strongest type warm.`;
+
+  const confidenceLine = p.confidencePattern === "fatiguing"
+    ? "Accuracy tends to drop later in a session. Keep tasks shorter and end on a confidence-building item."
+    : p.confidencePattern === "improving"
+    ? "Accuracy tends to rise later in a session. Front-load lighter warm-up items and place harder items in the middle to end."
+    : "Performance is roughly consistent across a session. Sequence by topic logic rather than confidence shaping.";
+
+  const audienceTail = audience === "lesson"
+    ? "Reflect these signals in starter, main task tiers, and exit ticket choices."
+    : audience === "worksheet"
+    ? "Reflect these signals in question ordering, scaffolding, and the balance of recall, comprehension, and application items."
+    : audience === "quiz"
+    ? "Reflect these signals in difficulty curve and the mix of recall, comprehension, and application items."
+    : "Reflect these signals in how you explain, scaffold, and pace your responses.";
+
+  return `
+
+Evidence-based cognitive profile for this class (NOT a learning-styles label - VARK and similar fixed-modality theories are not supported by evidence and we do not use them):
+- Processing style: ${p.processingStyle}. ${styleLine}
+- Pace: ${p.pace}. ${paceLine}
+- ${strengthLine}
+- Confidence pattern within a session: ${p.confidencePattern}. ${confidenceLine}
+${confidenceCaveat}
+${audienceTail}`;
+}
+
 export interface LessonPlanInput {
   region: string;
   subject: string;
@@ -84,35 +227,16 @@ ${sp.strongSkills.length ? `Skills the student is confident with: ${sp.strongSki
 Tailor the lesson to this evidence. The "support" tier of the main task should directly target the struggling skills. The "stretch" tier should build on confident areas. Use the misconceptions field to call out errors this student has actually made when relevant.`
     : "";
 
-  function learningBlock(p?: LearningProfile) {
-    if (!p) return "";
-    const dominant = Object.entries(p).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "mixed";
-    return `
-
-This class's learning-style profile (from a VARK diagnostic): Visual ${p.visual}%, Auditory ${p.auditory}%, Reading/Writing ${p.reading}%, Kinesthetic ${p.kinesthetic}%. The dominant style is ${dominant}. Adapt the lesson plan accordingly:
-- If visual is high, include visual starters (diagrams, charts, videos), visual mind-mapping in the main task, and visual exit tickets (draw, label, map).
-- If auditory is high, include discussion-based starters, verbal-reasoning main tasks, and oral-exit tickets (explain, debate, present).
-- If reading/writing is high, include text-based starters, reading and note-taking main tasks, and written-exit tickets (summarise, written response).
-- If kinesthetic is high, include hands-on starters, physical or real-world scenario main tasks, and practical exit tickets (build, measure, demonstrate).`;
-  }
-
   const user = `Subject: ${input.subject}
 Year group: ${input.yearGroup}
 Topic: ${input.topic}
 Lesson duration: ${input.durationMinutes} minutes
 ${input.priorKnowledge ? `Prior knowledge: ${input.priorKnowledge}` : ""}
-${input.groupContext ? `About this class: ${input.groupContext}` : ""}${studentBlock}${learningBlock(input.classLearningProfile)}
+${input.groupContext ? `About this class: ${input.groupContext}` : ""}${studentBlock}${formatLearningProfileBlock(input.classLearningProfile, "lesson")}
 
 Plan one focused lesson. The starter, main task, mini-plenary and exit ticket durations should sum to roughly the lesson duration. The main task must offer three tiers: support, core, and stretch. Misconceptions should be specific to this topic.`;
 
   return { system, user };
-}
-
-export interface LearningProfile {
-  visual: number;
-  auditory: number;
-  reading: number;
-  kinesthetic: number;
 }
 
 export interface WorksheetInput {
@@ -153,24 +277,12 @@ Return JSON with this exact shape:
   "teacherNotes": string
 }`;
 
-  function learningBlock(p?: LearningProfile) {
-    if (!p) return "";
-    const dominant = Object.entries(p).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "mixed";
-    return `
-
-This class's learning-style profile (from a VARK diagnostic): Visual ${p.visual}%, Auditory ${p.auditory}%, Reading/Writing ${p.reading}%, Kinesthetic ${p.kinesthetic}%. The dominant style is ${dominant}. Adapt the worksheet accordingly:
-- If visual is high, include diagrams, charts, spatial layouts, and annotate visual steps.
-- If auditory is high, frame questions as verbal reasoning and include "explain out loud" prompts.
-- If reading/writing is high, provide longer text-based prompts and ask for written explanations.
-- If kinesthetic is high, include hands-on, physical, or real-world scenario questions where possible.`;
-  }
-
   const user = `Subject: ${input.subject}
 Year group: ${input.yearGroup}
 Topic: ${input.topic}
 Difficulty: ${input.difficulty}
 Number of questions: ${input.questionCount}
-${input.notes ? `Additional notes: ${input.notes}` : ""}${learningBlock(input.classLearningProfile)}
+${input.notes ? `Additional notes: ${input.notes}` : ""}${formatLearningProfileBlock(input.classLearningProfile, "worksheet")}
 
 Produce exactly ${input.questionCount} questions, numbered sequentially. Mix question types where appropriate. Each question must include a worked answer or rubric. The instructions should be one or two sentences a student can read.`;
 
@@ -257,24 +369,12 @@ Return JSON with this exact shape:
   ]
 }`;
 
-  function learningBlock(p?: LearningProfile) {
-    if (!p) return "";
-    const dominant = Object.entries(p).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "mixed";
-    return `
-
-This class's learning-style profile (from a VARK diagnostic): Visual ${p.visual}%, Auditory ${p.auditory}%, Reading/Writing ${p.reading}%, Kinesthetic ${p.kinesthetic}%. The dominant style is ${dominant}. Adapt the quiz accordingly:
-- If visual is high, include diagram-based or chart-reading questions.
-- If auditory is high, include verbal-reasoning and listen-then-respond items.
-- If reading/writing is high, include text-heavy prompts and written-explanation items.
-- If kinesthetic is high, include scenario-based and hands-on reasoning questions.`;
-  }
-
   const user = `Subject: ${input.subject}
 Year group: ${input.yearGroup}
 Topic: ${input.topic}
 Format: ${input.format}
 Number of items: ${input.questionCount}
-${input.notes ? `Additional notes: ${input.notes}` : ""}${learningBlock(input.classLearningProfile)}
+${input.notes ? `Additional notes: ${input.notes}` : ""}${formatLearningProfileBlock(input.classLearningProfile, "quiz")}
 
 Produce exactly ${input.questionCount} items. Spread difficulty across easy, medium, and hard. Each item must name the specific skill or concept it assesses.`;
 

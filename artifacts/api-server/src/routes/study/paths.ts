@@ -8,10 +8,13 @@ import {
   studyAssessmentsTable,
 } from "@workspace/db";
 import { eq, and, asc, desc, sql } from "drizzle-orm";
+import { isLearningProfile } from "../../lib/prompts.js";
 
 function generateCoachingMessage(step: any, assessmentResults: any | null, nodes: any[]): string {
   const conceptName = step.node?.label || nodes.find((n: any) => n.id === step.nodeId)?.label || "this concept";
-  const learningProfile = assessmentResults?.learningProfile;
+  // Only consume the persisted profile if it matches the canonical schema; old shapes are ignored.
+  const rawProfile = assessmentResults?.learningProfile;
+  const learningProfile = isLearningProfile(rawProfile) ? rawProfile : null;
   const accuracyByConcept = assessmentResults?.accuracyByConcept ?? {};
   const accuracy = step.conceptId ? accuracyByConcept[step.conceptId] : null;
 
@@ -343,7 +346,7 @@ router.get("/active/daily-session", async (req, res) => {
     hasActivePath: true,
     path: activePath,
     coachingMessage,
-    learningProfile: assessmentResults?.learningProfile ?? null,
+    learningProfile: isLearningProfile(assessmentResults?.learningProfile) ? assessmentResults.learningProfile : null,
     session: {
       primaryStep,
       upcomingSteps,

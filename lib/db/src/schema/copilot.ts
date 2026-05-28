@@ -163,7 +163,15 @@ export const studentsTable = pgTable("copilot_students", {
   email: text("email").unique(),
   passwordHash: text("password_hash"),
   joinCode: text("join_code").unique().notNull(),
-  learningStyle: jsonb("learning_style").$type<{ visual?: number; auditory?: number; reading?: number; kinesthetic?: number }>(),
+  learningStyle: jsonb("learning_style").$type<{
+    schemaVersion: 1;
+    processingStyle: "sequential" | "conceptual" | "mixed";
+    pace: "quick" | "deliberate" | "moderate";
+    strengthByQuestionType: { recall: number; comprehension: number; application: number };
+    confidencePattern: "improving" | "fatiguing" | "consistent";
+    inferenceConfidence: "low" | "developing" | "moderate" | "strong";
+    sampleSize: number;
+  }>(),
   diagnosticTakenAt: timestamp("diagnostic_taken_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (t) => ({

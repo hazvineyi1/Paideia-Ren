@@ -13,23 +13,15 @@ import {
   useUpdateStudyProfile,
 } from "@workspace/api-client-react";
 import {
-  ArrowLeft, User, Save, Brain, Eye, Headphones, Hand, BookOpen,
+  ArrowLeft, User, Save, Brain, Layers, Gauge, ListChecks, TrendingUp as TrendIcon,
   TrendingUp, Target, Zap, BarChart3, Clock, ChevronRight
 } from "lucide-react";
 
-interface CognitiveTrait {
-  key: "visual" | "auditory" | "kinesthetic" | "reading";
-  label: string;
-  icon: typeof Eye;
-  color: string;
-}
-
-const TRAITS: CognitiveTrait[] = [
-  { key: "visual", label: "Visual", icon: Eye, color: "bg-blue-500" },
-  { key: "auditory", label: "Auditory", icon: Headphones, color: "bg-amber-500" },
-  { key: "kinesthetic", label: "Kinesthetic", icon: Hand, color: "bg-emerald-500" },
-  { key: "reading", label: "Reading", icon: BookOpen, color: "bg-purple-500" },
-];
+const STRENGTH_LABELS: Record<"recall" | "comprehension" | "application", string> = {
+  recall: "Recall",
+  comprehension: "Comprehension",
+  application: "Application",
+};
 
 export default function StudyProfile() {
   const [, setLoc] = useLocation();
@@ -106,34 +98,75 @@ export default function StudyProfile() {
         </div>
 
         <div className="grid md:grid-cols-2 gap-4">
-          {/* Cognitive Style Radar */}
+          {/* Cognitive profile (evidence-based, NOT VARK / learning styles) */}
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm flex items-center gap-2">
                 <Brain className="h-4 w-4 text-primary" />
-                Cognitive Style
-                <Badge variant="outline" className="ml-auto text-[10px]">AI-Inferred</Badge>
+                Cognitive Profile
+                <Badge variant="outline" className="ml-auto text-[10px]">
+                  {profile?.learningProfile?.inferenceConfidence ?? "developing"}
+                </Badge>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {TRAITS.map((trait) => {
-                const score = (profile as any)?.cognitiveStyle?.[trait.key] ?? 0.5;
+              {(() => {
+                const lp = profile?.learningProfile;
+                const strengths = lp?.strengthByQuestionType ?? { recall: 0, comprehension: 0, application: 0 };
+                const hasData = lp && (lp.sampleSize ?? 0) > 0;
                 return (
-                  <div key={trait.key}>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <div className="flex items-center gap-2">
-                        <trait.icon className="h-3.5 w-3.5 text-muted-foreground" />
-                        <span className="text-sm">{trait.label}</span>
+                  <>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="p-3 rounded-lg bg-muted/40">
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <Layers className="h-3.5 w-3.5 text-muted-foreground" />
+                          <span className="text-[11px] uppercase tracking-wide text-muted-foreground">Processing</span>
+                        </div>
+                        <p className="text-sm font-medium capitalize">{lp?.processingStyle ?? "—"}</p>
                       </div>
-                      <span className="text-xs font-medium">{(score * 100).toFixed(0)}%</span>
+                      <div className="p-3 rounded-lg bg-muted/40">
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <Gauge className="h-3.5 w-3.5 text-muted-foreground" />
+                          <span className="text-[11px] uppercase tracking-wide text-muted-foreground">Pace</span>
+                        </div>
+                        <p className="text-sm font-medium capitalize">{lp?.pace ?? "—"}</p>
+                      </div>
+                      <div className="p-3 rounded-lg bg-muted/40 col-span-2">
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <TrendIcon className="h-3.5 w-3.5 text-muted-foreground" />
+                          <span className="text-[11px] uppercase tracking-wide text-muted-foreground">Within-session confidence</span>
+                        </div>
+                        <p className="text-sm font-medium capitalize">{lp?.confidencePattern ?? "—"}</p>
+                      </div>
                     </div>
-                    <Progress value={score * 100} className="h-1.5" />
-                  </div>
+
+                    <div className="space-y-3 pt-1">
+                      <div className="flex items-center gap-2">
+                        <ListChecks className="h-3.5 w-3.5 text-muted-foreground" />
+                        <span className="text-[11px] uppercase tracking-wide text-muted-foreground">Strength by question type</span>
+                      </div>
+                      {(["recall", "comprehension", "application"] as const).map((key) => {
+                        const v = strengths[key] ?? 0;
+                        return (
+                          <div key={key}>
+                            <div className="flex items-center justify-between mb-1.5">
+                              <span className="text-sm">{STRENGTH_LABELS[key]}</span>
+                              <span className="text-xs font-medium">{v}%</span>
+                            </div>
+                            <Progress value={v} className="h-1.5" />
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    <p className="text-xs text-muted-foreground pt-1">
+                      {hasData
+                        ? `Based on ${lp!.sampleSize} responses. We do not use VARK or other learning-styles labels - those are not supported by evidence. This profile is a soft prior that refines as you study.`
+                        : "Take a diagnostic or complete a few sessions and your evidence-based profile will appear here. We do not use VARK or learning-styles labels."}
+                    </p>
+                  </>
                 );
-              })}
-              <p className="text-xs text-muted-foreground pt-1">
-                Inferred from your interaction patterns. Accuracy improves as you study more.
-              </p>
+              })()}
             </CardContent>
           </Card>
 
@@ -207,7 +240,7 @@ export default function StudyProfile() {
                   id="studyStyle"
                   value={studyStyle}
                   onChange={(e) => setStudyStyle(e.target.value)}
-                  placeholder="e.g., Visual learner, quick bursts"
+                  placeholder="e.g., quick bursts, deep focus blocks"
                   className="mt-1.5"
                 />
               </div>

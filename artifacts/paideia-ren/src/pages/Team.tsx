@@ -67,14 +67,14 @@ export default function Team() {
               Paideia-Ren Inc. exists to ensure that every learner, regardless of geography, income, language, or learning profile, has access to the kind of personalized, adaptive instruction that the most privileged students receive as a matter of course.
             </p>
             <p className="text-[17px] text-foreground/80 leading-[1.75] mb-12">
-              Our research agenda is anchored in the most rigorous learning science of our time. We translate VARK and the Felder–Silverman model into modality-responsive content delivery. We apply Kolb's experiential learning cycle and Bloom's taxonomy to scaffold mastery. We use cognitive-load theory to calibrate difficulty and Vygotsky's zone of proximal development to hold every learner at the precise edge of their growth.
+              Our research agenda is anchored in the most rigorous learning science of our time. We use Bloom's taxonomy to map question types and scaffold mastery, cognitive-load theory to calibrate difficulty, retrieval and spacing research to schedule practice, and Vygotsky's zone of proximal development to hold every learner at the precise edge of their growth. We do not use learning-styles theories such as VARK; they are popular but not supported by evidence, and pretending otherwise would shortchange the learners we serve.
             </p>
 
             <h3 className="text-[13px] font-semibold uppercase tracking-widest text-foreground mb-6">
               Theoretical Foundations
             </h3>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-12">
-              {["VARK Learning Styles", "Felder–Silverman Model", "Kolb's Experiential Cycle", "Bloom's Taxonomy", "Cognitive-Load Theory", "Vygotsky's ZPD"].map((f) => (
+              {["Bloom's Taxonomy", "Cognitive-Load Theory", "Retrieval Practice", "Spaced Repetition", "Vygotsky's ZPD", "Formative Assessment"].map((f) => (
                 <div key={f} className="bg-white border border-border p-4">
                   <p className="text-[14px] font-medium text-foreground">{f}</p>
                 </div>

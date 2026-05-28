@@ -352,6 +352,69 @@ export interface StudyTutorMessageInput {
   content: string;
 }
 
+export type LearningProfileSchemaVersion = typeof LearningProfileSchemaVersion[keyof typeof LearningProfileSchemaVersion];
+
+
+export const LearningProfileSchemaVersion = {
+  NUMBER_1: 1,
+} as const;
+
+export type LearningProfileProcessingStyle = typeof LearningProfileProcessingStyle[keyof typeof LearningProfileProcessingStyle];
+
+
+export const LearningProfileProcessingStyle = {
+  sequential: 'sequential',
+  conceptual: 'conceptual',
+  mixed: 'mixed',
+} as const;
+
+export type LearningProfilePace = typeof LearningProfilePace[keyof typeof LearningProfilePace];
+
+
+export const LearningProfilePace = {
+  quick: 'quick',
+  moderate: 'moderate',
+  deliberate: 'deliberate',
+} as const;
+
+export type LearningProfileStrengthByQuestionType = {
+  recall: number;
+  comprehension: number;
+  application: number;
+};
+
+export type LearningProfileConfidencePattern = typeof LearningProfileConfidencePattern[keyof typeof LearningProfileConfidencePattern];
+
+
+export const LearningProfileConfidencePattern = {
+  improving: 'improving',
+  fatiguing: 'fatiguing',
+  consistent: 'consistent',
+} as const;
+
+export type LearningProfileInferenceConfidence = typeof LearningProfileInferenceConfidence[keyof typeof LearningProfileInferenceConfidence];
+
+
+export const LearningProfileInferenceConfidence = {
+  low: 'low',
+  developing: 'developing',
+  moderate: 'moderate',
+  strong: 'strong',
+} as const;
+
+/**
+ * Evidence-based cognitive profile (schemaVersion 1). NOT VARK / learning-styles. Treat as a soft prior, not a fixed label.
+ */
+export interface LearningProfile {
+  schemaVersion: LearningProfileSchemaVersion;
+  processingStyle: LearningProfileProcessingStyle;
+  pace: LearningProfilePace;
+  strengthByQuestionType: LearningProfileStrengthByQuestionType;
+  confidencePattern: LearningProfileConfidencePattern;
+  inferenceConfidence: LearningProfileInferenceConfidence;
+  sampleSize: number;
+}
+
 export interface StudyLearnerProfile {
   id: string;
   userId: string;
@@ -371,6 +434,8 @@ export interface StudyLearnerProfile {
   timezone?: string | null;
   createdAt: string;
   updatedAt: string;
+  /** Latest completed assessment's canonical cognitive profile, or null if no assessment is completed yet. */
+  learningProfile?: LearningProfile | null;
 }
 
 export interface StudyLearnerProfileUpdate {

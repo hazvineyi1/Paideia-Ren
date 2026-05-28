@@ -3,8 +3,10 @@ import { z } from "zod";
 import {
   db,
   studyLearnerProfilesTable,
+  studyAssessmentsTable,
 } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
+import { isLearningProfile } from "../../lib/prompts.js";
 import { requireStudyUser } from "../../middlewares/auth.js";
 
 const router: IRouter = Router();
@@ -43,7 +45,22 @@ router.get("/", async (req, res) => {
       .returning();
   }
 
-  res.json(profile);
+  // Attach the latest completed assessment's evidence-based LearningProfile (schemaVersion 1)
+  // so the Profile page can render the canonical cognitive profile. We deliberately do not
+  // store this on studyLearnerProfilesTable - assessments are the source of truth and the
+  // profile refines as new assessments complete.
+  const [latestAssessment] = await db
+    .select({ results: studyAssessmentsTable.results })
+    .from(studyAssessmentsTable)
+    .where(and(eq(studyAssessmentsTable.userId, userId), eq(studyAssessmentsTable.status, "completed")))
+    .orderBy(desc(studyAssessmentsTable.completedAt))
+    .limit(1);
+  // Validate the persisted profile against the canonical schema. Older assessments may have
+  // a pre-canonical shape; we return null in that case rather than leaking a stale shape.
+  const rawLearningProfile = (latestAssessment?.results as { learningProfile?: unknown } | null)?.learningProfile;
+  const learningProfile = isLearningProfile(rawLearningProfile) ? rawLearningProfile : null;
+
+  res.json({ ...profile, learningProfile });
 });
 
 router.patch("/", async (req, res) => {

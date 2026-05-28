@@ -1360,6 +1360,46 @@ components:
       required:
         - content
 
+    LearningProfile:
+      type: object
+      description: "Evidence-based cognitive profile (schemaVersion 1). NOT VARK / learning-styles. Treat as a soft prior, not a fixed label."
+      properties:
+        schemaVersion:
+          type: integer
+          enum: [1]
+        processingStyle:
+          type: string
+          enum: [sequential, conceptual, mixed]
+        pace:
+          type: string
+          enum: [quick, moderate, deliberate]
+        strengthByQuestionType:
+          type: object
+          properties:
+            recall:
+              type: number
+            comprehension:
+              type: number
+            application:
+              type: number
+          required: [recall, comprehension, application]
+        confidencePattern:
+          type: string
+          enum: [improving, fatiguing, consistent]
+        inferenceConfidence:
+          type: string
+          enum: [low, developing, moderate, strong]
+        sampleSize:
+          type: integer
+      required:
+        - schemaVersion
+        - processingStyle
+        - pace
+        - strengthByQuestionType
+        - confidencePattern
+        - inferenceConfidence
+        - sampleSize
+
     StudyLearnerProfile:
       type: object
       properties:
@@ -1401,6 +1441,11 @@ components:
           type: string
         updatedAt:
           type: string
+        learningProfile:
+          oneOf:
+            - $ref: "#/components/schemas/LearningProfile"
+            - type: "null"
+          description: "Latest completed assessment's canonical cognitive profile, or null if no assessment is completed yet."
       required:
         - id
         - userId

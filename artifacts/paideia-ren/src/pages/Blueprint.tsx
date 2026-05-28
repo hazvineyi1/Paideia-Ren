@@ -29,7 +29,7 @@ const sections = [
   {
     number: "IV",
     title: "Pedagogical Architecture",
-    body: "The platform is organized around three pillars. Recognize: every learner begins with a diagnostic that assesses learning style, cognitive strengths, and prior knowledge, drawing on VARK, the Felder-Silverman model, and cognitive-load baselines. Adapt: real-time, modality-responsive content delivery calibrated to the learner's zone of proximal development. Connect: peer cohorts, dialogical discussion, and the Teaching Companion that keeps human relationship at the center of the experience.",
+    body: "The platform is organized around three pillars. Recognize: every learner begins with a brief evidence-based diagnostic that samples processing style, pace, and strength across recall, comprehension, and application items, alongside prior knowledge. We deliberately do not use VARK or other learning-styles labels, which are popular but not supported by evidence. Adapt: real-time pacing and scaffolding calibrated to the learner's zone of proximal development, with cognitive-load theory guiding difficulty. Connect: peer cohorts, dialogical discussion, and the Teaching Companion that keeps human relationship at the center of the experience.",
   },
   {
     number: "V",

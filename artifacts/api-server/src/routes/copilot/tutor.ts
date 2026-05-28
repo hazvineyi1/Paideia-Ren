@@ -15,6 +15,7 @@ import {
 import { and, desc, eq, sql } from "drizzle-orm";
 import { requireStudent } from "../../middlewares/auth.js";
 import { openai, PRIMARY_MODEL } from "../../lib/openai.js";
+import { formatLearningProfileBlock, isLearningProfile, type LearningProfile } from "../../lib/prompts.js";
 
 const router: IRouter = Router();
 
@@ -95,7 +96,7 @@ async function buildGroundingContext(
 function buildSystemPrompt(
   grounding: string,
   socraticMode: boolean,
-  learningProfile?: Record<string, number> | null,
+  learningProfile?: LearningProfile | null,
 ): string {
   const socraticBlock = socraticMode
     ? `
@@ -110,15 +111,7 @@ Adjust your approach:
 - Your role is to be a thinking partner, not a quiz-master.`
     : "";
 
-  const learningBlock = learningProfile
-    ? `
-This student's learning-style profile (from a VARK diagnostic): Visual ${learningProfile.visual ?? 0}%, Auditory ${learningProfile.auditory ?? 0}%, Reading/Writing ${learningProfile.reading ?? 0}%, Kinesthetic ${learningProfile.kinesthetic ?? 0}%.
-Adapt your explanations accordingly:
-- If visual is high, use diagrams, spatial descriptions, and visual metaphors.
-- If auditory is high, emphasize verbal reasoning, rhythm, and spoken explanations.
-- If reading/writing is high, provide clear text-based explanations and encourage note-taking.
-- If kinesthetic is high, use hands-on examples, physical analogies, and real-world scenarios.`
-    : "";
+  const learningBlock = formatLearningProfileBlock(learningProfile ?? undefined, "tutor");
 
   return `You are Paideia-Ren, a patient and encouraging study tutor for a student in an African-curriculum classroom. Your goals, in order:
 
@@ -233,7 +226,8 @@ router.post("/conversations/:id/messages", requireStudent, async (req, res) => {
     .from(studentsTable)
     .where(eq(studentsTable.id, req.student!.id))
     .limit(1);
-  const learningProfile = (studentRows[0]?.learningStyle as Record<string, number> | null) ?? null;
+  const rawLearning = studentRows[0]?.learningStyle;
+  const learningProfile = isLearningProfile(rawLearning) ? rawLearning : null;
 
   // Build grounding context
   const { grounding } = await buildGroundingContext(req.student!.id, conv.classId, conv.scope, conv.scopeRefId);

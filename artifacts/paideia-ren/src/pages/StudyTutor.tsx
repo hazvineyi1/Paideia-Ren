@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { MessageCircle, Brain, Eye, Ear, BookOpen as BookIcon, Dumbbell, ArrowRight } from "lucide-react";
+import { MessageCircle, Brain, Sparkles, Layers, Gauge, Target, TrendingUp, ArrowRight } from "lucide-react";
 
 const fadeUp = {
   initial: { opacity: 0, y: 24 },
@@ -22,17 +22,17 @@ const features = [
     description: "Flip a switch and the tutor stops explaining. Instead, it asks you questions that make you think deeper — definitions, examples, assumptions, and consequences.",
   },
   {
-    icon: Eye,
-    title: "VARK learning style",
-    description: "A built-in diagnostic discovers how you learn best — visual, auditory, reading, or kinesthetic. The tutor then adapts every explanation to match your style.",
+    icon: Sparkles,
+    title: "Adapts to how you think",
+    description: "A short diagnostic infers your cognitive profile from how you actually answer — accuracy across question types and response timing. No self-report quiz, no VARK. The tutor sequences explanations and pacing to fit.",
   },
 ];
 
-const varkStyles = [
-  { icon: Eye, label: "Visual", desc: "Diagrams, charts, and spatial reasoning" },
-  { icon: Ear, label: "Auditory", desc: "Narratives, discussions, and rhythm" },
-  { icon: BookIcon, label: "Reading", desc: "Text, lists, and structured notes" },
-  { icon: Dumbbell, label: "Kinesthetic", desc: "Hands-on examples and movement-based analogies" },
+const profileAxes = [
+  { icon: Layers, label: "Processing style", desc: "Sequential learners get definitions first, then examples. Conceptual learners get worked examples, then the rule." },
+  { icon: Gauge, label: "Pace", desc: "Quick learners skip ahead; deliberate learners get more time and shorter chunks before moving on." },
+  { icon: Target, label: "Strength by question type", desc: "Strong at recall but weak at application? You get more practice problems. Reverse pattern? You get more foundational anchoring." },
+  { icon: TrendingUp, label: "Confidence pattern", desc: "If accuracy drops late in a session, sessions get shorter. If it climbs, the tutor extends and stretches you." },
 ];
 
 export default function StudyTutor() {
@@ -152,19 +152,22 @@ export default function StudyTutor() {
         </div>
       </section>
 
-      {/* VARK */}
+      {/* Cognitive profile axes */}
       <section className="py-[120px]">
         <div className="max-w-[1200px] mx-auto px-6">
-          <motion.div {...fadeUp} className="max-w-[720px]">
+          <motion.div {...fadeUp} className="max-w-[760px]">
             <h2 className="font-serif text-3xl md:text-[40px] text-primary mb-4">
-              Four ways to learn. One tutor that adapts.
+              Four signals. One tutor that adapts.
             </h2>
-            <p className="text-[17px] text-foreground/80 leading-[1.75] mb-12">
-              Every student takes a quick VARK diagnostic when they first sign in. The Study Tutor then tailors every explanation to match the dominant learning style.
+            <p className="text-[17px] text-foreground/80 leading-[1.75] mb-3">
+              A short diagnostic reads four cognitive signals from <em>how</em> you answer — not from a self-report quiz. The Study Tutor uses them to sequence explanations, pick the next step, and pace the session. The profile carries its own confidence score and refines as you study.
+            </p>
+            <p className="text-[13px] text-muted-foreground mb-12">
+              We deliberately don't use VARK (visual/auditory/reading/kinesthetic) — that model has not held up in peer-reviewed research.
             </p>
           </motion.div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {varkStyles.map((v, i) => (
+            {profileAxes.map((v, i) => (
               <motion.div
                 key={v.label}
                 initial={{ opacity: 0, y: 24 }}

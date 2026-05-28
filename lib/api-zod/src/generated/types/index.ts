@@ -7,6 +7,13 @@
  */
 
 export * from './healthStatus';
+export * from './learningProfile';
+export * from './learningProfileConfidencePattern';
+export * from './learningProfileInferenceConfidence';
+export * from './learningProfilePace';
+export * from './learningProfileProcessingStyle';
+export * from './learningProfileSchemaVersion';
+export * from './learningProfileStrengthByQuestionType';
 export * from './studyAuthResult';
 export * from './studyCheckoutInput';
 export * from './studyCheckoutResult';

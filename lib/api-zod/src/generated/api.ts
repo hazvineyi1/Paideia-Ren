@@ -629,7 +629,20 @@ export const GetStudyProfileResponse = zod.object({
   "dailyStudyMinutes": zod.number(),
   "timezone": zod.string().nullish(),
   "createdAt": zod.string(),
-  "updatedAt": zod.string()
+  "updatedAt": zod.string(),
+  "learningProfile": zod.union([zod.object({
+  "schemaVersion": zod.literal(1),
+  "processingStyle": zod.enum(['sequential', 'conceptual', 'mixed']),
+  "pace": zod.enum(['quick', 'moderate', 'deliberate']),
+  "strengthByQuestionType": zod.object({
+  "recall": zod.number(),
+  "comprehension": zod.number(),
+  "application": zod.number()
+}),
+  "confidencePattern": zod.enum(['improving', 'fatiguing', 'consistent']),
+  "inferenceConfidence": zod.enum(['low', 'developing', 'moderate', 'strong']),
+  "sampleSize": zod.number()
+}).describe('Evidence-based cognitive profile (schemaVersion 1). NOT VARK \/ learning-styles. Treat as a soft prior, not a fixed label.'),zod.null()]).optional().describe('Latest completed assessment\'s canonical cognitive profile, or null if no assessment is completed yet.')
 })
 
 
@@ -663,7 +676,20 @@ export const UpdateStudyProfileResponse = zod.object({
   "dailyStudyMinutes": zod.number(),
   "timezone": zod.string().nullish(),
   "createdAt": zod.string(),
-  "updatedAt": zod.string()
+  "updatedAt": zod.string(),
+  "learningProfile": zod.union([zod.object({
+  "schemaVersion": zod.literal(1),
+  "processingStyle": zod.enum(['sequential', 'conceptual', 'mixed']),
+  "pace": zod.enum(['quick', 'moderate', 'deliberate']),
+  "strengthByQuestionType": zod.object({
+  "recall": zod.number(),
+  "comprehension": zod.number(),
+  "application": zod.number()
+}),
+  "confidencePattern": zod.enum(['improving', 'fatiguing', 'consistent']),
+  "inferenceConfidence": zod.enum(['low', 'developing', 'moderate', 'strong']),
+  "sampleSize": zod.number()
+}).describe('Evidence-based cognitive profile (schemaVersion 1). NOT VARK \/ learning-styles. Treat as a soft prior, not a fixed label.'),zod.null()]).optional().describe('Latest completed assessment\'s canonical cognitive profile, or null if no assessment is completed yet.')
 })
 
 

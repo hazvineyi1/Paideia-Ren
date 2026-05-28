@@ -209,23 +209,28 @@ router.post("/:id/complete", async (req, res) => {
   const comprehensionTypeScore = calcTypeScore(comprehensionAnswers);
   const applicationTypeScore = calcTypeScore(applicationAnswers);
 
-  // Processing style: conceptual (big-picture first) vs sequential (step-by-step) — based on Cognitive Style Theory
-  const processingStyle: "sequential" | "conceptual" =
-    (applicationTypeScore !== null && recallTypeScore !== null && applicationTypeScore >= recallTypeScore)
-      ? "conceptual" : "sequential";
+  // Processing style: conceptual (big-picture first) vs sequential (step-by-step) — based on Cognitive Style Theory.
+  // If we cannot tell from accuracy alone we say "mixed" rather than forcing a label.
+  const processingStyle: "sequential" | "conceptual" | "mixed" =
+    (applicationTypeScore === null || recallTypeScore === null)
+      ? "mixed"
+      : applicationTypeScore > recallTypeScore + 10
+        ? "conceptual"
+        : recallTypeScore > applicationTypeScore + 10
+          ? "sequential"
+          : "mixed";
 
   // Pace: based on avg time per question (Kahneman System 1/System 2)
   const avgTimePerQuestion = scoredAnswers.reduce((sum, a) => sum + (a.timeSpentSeconds || 0), 0) / Math.max(scoredAnswers.length, 1);
-  const pace: "intuitive" | "measured" | "deliberate" =
-    avgTimePerQuestion > 30 ? "deliberate" : avgTimePerQuestion < 10 ? "intuitive" : "measured";
+  const pace: "quick" | "moderate" | "deliberate" =
+    avgTimePerQuestion > 30 ? "deliberate" : avgTimePerQuestion < 10 ? "quick" : "moderate";
 
-  // Strength modality: which Bloom's level they performed best at
-  const typeScoreList = [
-    { type: "recall", score: recallTypeScore },
-    { type: "comprehension", score: comprehensionTypeScore },
-    { type: "application", score: applicationTypeScore },
-  ].filter(x => x.score !== null).sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
-  const strengthModality = (typeScoreList[0]?.type ?? "comprehension") as "recall" | "comprehension" | "application";
+  // Canonical strengthByQuestionType: always present, 0-100 (default 0 when no items of that type were answered).
+  const strengthByQuestionType = {
+    recall: recallTypeScore ?? 0,
+    comprehension: comprehensionTypeScore ?? 0,
+    application: applicationTypeScore ?? 0,
+  };
 
   // Confidence pattern: cognitive load / fatigue detection
   const mid = Math.floor(scoredAnswers.length / 2);
@@ -237,24 +242,34 @@ router.post("/:id/complete", async (req, res) => {
     : secondHalfAcc < firstHalfAcc - 0.2 ? "fatiguing"
     : "consistent";
 
-  // Confidence in the inference depends on sample size per axis
+  // Confidence in the inference depends on sample size per axis (canonical 4-level enum).
   const minTypeCount = Math.min(recallAnswers.length, comprehensionAnswers.length, applicationAnswers.length);
   const totalCount = scoredAnswers.length;
-  const inferenceConfidence: "low" | "medium" | "high" =
-    minTypeCount >= 3 && totalCount >= 12 ? "high"
-    : totalCount >= 8 ? "medium"
+  const inferenceConfidence: "low" | "developing" | "moderate" | "strong" =
+    minTypeCount >= 3 && totalCount >= 12 ? "strong"
+    : totalCount >= 8 ? "moderate"
+    : totalCount >= 4 ? "developing"
     : "low";
 
+  // Canonical evidence-based LearningProfile (schemaVersion 1) shared with the copilot stack.
+  // Auxiliary fields (avgTimePerQuestion, sampleSizeBreakdown) are kept on the assessment
+  // results envelope for UI display, NOT on the profile itself, so the profile shape stays
+  // identical to what /copilot/student/diagnostic stores in studentsTable.learningStyle.
   const learningProfile = {
+    schemaVersion: 1 as const,
     processingStyle,
     pace,
-    strengthModality,
+    strengthByQuestionType,
     confidencePattern,
-    typeScores: { recall: recallTypeScore, comprehension: comprehensionTypeScore, application: applicationTypeScore },
-    avgTimePerQuestion: Math.round(avgTimePerQuestion),
     inferenceConfidence,
-    sampleSize: { total: totalCount, recall: recallAnswers.length, comprehension: comprehensionAnswers.length, application: applicationAnswers.length },
-    schemaVersion: 1,
+    sampleSize: totalCount,
+  };
+  const avgTimePerQuestionRounded = Math.round(avgTimePerQuestion);
+  const sampleSizeBreakdown = {
+    total: totalCount,
+    recall: recallAnswers.length,
+    comprehension: comprehensionAnswers.length,
+    application: applicationAnswers.length,
   };
 
   // Fetch concept names for the response
@@ -274,6 +289,8 @@ router.post("/:id/complete", async (req, res) => {
     detectedDifficulty,
     recommendedPathType,
     learningProfile,
+    avgTimePerQuestion: avgTimePerQuestionRounded,
+    sampleSizeBreakdown,
     conceptNameMap,
   };
 

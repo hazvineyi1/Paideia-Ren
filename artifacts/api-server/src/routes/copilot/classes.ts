@@ -11,6 +11,7 @@ import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { requireAuth, requireActiveTeacher } from "../../middlewares/auth.js";
 import { REGION_IDS } from "../../lib/catalog.js";
 import { generateShortCode, hashPassword } from "../../lib/auth.js";
+import { aggregateClassLearningProfile, isLearningProfile } from "../../lib/prompts.js";
 
 const router: IRouter = Router();
 router.use(requireAuth, requireActiveTeacher);
@@ -130,20 +131,8 @@ router.get("/:id/learning-profile", async (req, res) => {
     .from(studentsTable)
     .where(eq(studentsTable.classId, id));
   const total = students.length;
-  const withDiagnostic = students.filter((s) => s.learningStyle != null).length;
-  const aggregate: Record<string, number> = { visual: 0, auditory: 0, reading: 0, kinesthetic: 0 };
-  for (const s of students) {
-    const ls = s.learningStyle as Record<string, number> | null;
-    if (!ls) continue;
-    for (const key of Object.keys(aggregate)) {
-      aggregate[key] += (ls[key] ?? 0);
-    }
-  }
-  const maxScore = Math.max(1, withDiagnostic * 4);
-  const profile: Record<string, number> = {};
-  for (const key of Object.keys(aggregate)) {
-    profile[key] = Math.round((aggregate[key] / maxScore) * 100);
-  }
+  const withDiagnostic = students.filter((s) => isLearningProfile(s.learningStyle)).length;
+  const profile = aggregateClassLearningProfile(students) ?? null;
   res.json({ total, withDiagnostic, profile });
 });
 

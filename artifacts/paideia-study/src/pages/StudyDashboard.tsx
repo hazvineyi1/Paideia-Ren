@@ -31,8 +31,8 @@ function getGreeting() {
 
 function profileLabel(p: any): string | null {
   if (!p) return null;
-  const style = p.processingStyle === "conceptual" ? "Conceptual" : "Sequential";
-  const pace = p.pace === "deliberate" ? "Deliberate" : p.pace === "intuitive" ? "Intuitive" : "Measured";
+  const style = p.processingStyle === "conceptual" ? "Conceptual" : p.processingStyle === "sequential" ? "Sequential" : "Mixed";
+  const pace = p.pace === "deliberate" ? "Deliberate" : p.pace === "quick" ? "Quick" : "Moderate";
   return `${style} · ${pace}`;
 }
 
