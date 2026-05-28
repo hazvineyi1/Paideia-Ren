@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap");
 @import "tailwindcss";
 @import "tw-animate-css";
 @plugin "@tailwindcss/typography";
@@ -78,70 +79,73 @@
   --elevate-1: rgba(0,0,0, .03);
   --elevate-2: rgba(0,0,0, .08);
 
-  --background: 36 33% 97%;
+  /* The Coach — editorial palette.
+     Parchment cream background, deep warm ink, oxblood as the one strong accent.
+     Calm and grounded; not gamified-app energy. */
+  --background: 36 38% 94%;
 
-  --foreground: 0 0% 12%;
+  --foreground: 28 22% 11%;
 
-  --border: 36 16% 86%;
+  --border: 32 18% 84%;
 
-  --card: 0 0% 100%;
+  --card: 36 40% 98%;
 
-  --card-foreground: 0 0% 12%;
+  --card-foreground: 28 22% 11%;
 
-  --card-border: 36 16% 86%;
+  --card-border: 32 18% 84%;
 
-  --sidebar: 0 0% 100%;
+  --sidebar: 36 40% 98%;
 
-  --sidebar-foreground: 0 0% 12%;
+  --sidebar-foreground: 28 22% 11%;
 
-  --sidebar-border: 36 16% 86%;
+  --sidebar-border: 32 18% 84%;
 
-  --sidebar-primary: 229 49% 24%;
+  --sidebar-primary: 8 64% 28%;
 
-  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-primary-foreground: 36 40% 98%;
 
-  --sidebar-accent: 36 30% 94%;
+  --sidebar-accent: 36 32% 91%;
 
-  --sidebar-accent-foreground: 229 49% 24%;
+  --sidebar-accent-foreground: 8 64% 28%;
 
-  --sidebar-ring: 229 49% 24%;
+  --sidebar-ring: 8 64% 28%;
 
-  --popover: 0 0% 100%;
+  --popover: 36 40% 98%;
 
-  --popover-foreground: 0 0% 12%;
+  --popover-foreground: 28 22% 11%;
 
-  --popover-border: 36 16% 86%;
+  --popover-border: 32 18% 84%;
 
-  --primary: 229 49% 24%;
+  --primary: 8 64% 28%;            /* deep oxblood — the one strong accent */
 
-  --primary-foreground: 0 0% 100%;
+  --primary-foreground: 36 40% 98%;
 
-  --secondary: 36 30% 94%;
+  --secondary: 36 32% 91%;
 
-  --secondary-foreground: 229 49% 24%;
+  --secondary-foreground: 8 64% 28%;
 
-  --muted: 36 18% 92%;
+  --muted: 34 24% 89%;
 
-  --muted-foreground: 0 0% 38%;
+  --muted-foreground: 28 12% 36%;
 
-  --accent: 43 76% 45%;
+  --accent: 8 64% 28%;
 
-  --accent-foreground: 0 0% 100%;
+  --accent-foreground: 36 40% 98%;
 
-  --destructive: 17 63% 47%;
+  --destructive: 8 64% 28%;
 
-  --destructive-foreground: 0 0% 100%;
+  --destructive-foreground: 36 40% 98%;
 
-  --input: 36 16% 86%;
-  --ring: 229 49% 24%;
-  --chart-1: 229 49% 24%;
-  --chart-2: 43 76% 45%;
-  --chart-3: 17 63% 47%;
-  --chart-4: 160 60% 38%;
-  --chart-5: 262 52% 47%;
+  --input: 32 18% 84%;
+  --ring: 8 64% 28%;
+  --chart-1: 8 64% 28%;
+  --chart-2: 28 22% 11%;
+  --chart-3: 28 12% 36%;
+  --chart-4: 142 30% 28%;
+  --chart-5: 36 38% 78%;
 
-  --app-font-sans: 'Inter', sans-serif;
-  --app-font-serif: Georgia, serif;
+  --app-font-sans: 'Inter', system-ui, sans-serif;
+  --app-font-serif: 'Fraunces', Georgia, serif;
   --app-font-mono: Menlo, monospace;
   --radius: .5rem; /* 8px */
   --shadow-2xs: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00); /*replace with H S L */
@@ -196,68 +200,41 @@
   --elevate-1: rgba(255,255,255, .04);
   --elevate-2: rgba(255,255,255, .09);
 
-  --background: 36 33% 97%;
-
-  --foreground: 0 0% 12%;
-
-  --border: 36 16% 86%;
-
-  --card: 0 0% 100%;
-
-  --card-foreground: 0 0% 12%;
-
-  --card-border: 36 16% 86%;
-
-  --sidebar: 0 0% 100%;
-
-  --sidebar-foreground: 0 0% 12%;
-
-  --sidebar-border: 36 16% 86%;
-
-  --sidebar-primary: 229 49% 24%;
-
-  --sidebar-primary-foreground: 0 0% 100%;
-
-  --sidebar-accent: 36 30% 94%;
-
-  --sidebar-accent-foreground: 229 49% 24%;
-
-  --sidebar-ring: 229 49% 24%;
-
-  --popover: 0 0% 100%;
-
-  --popover-foreground: 0 0% 12%;
-
-  --popover-border: 36 16% 86%;
-
-  --primary: 229 49% 24%;
-
-  --primary-foreground: 0 0% 100%;
-
-  --secondary: 36 30% 94%;
-
-  --secondary-foreground: 229 49% 24%;
-
-  --muted: 36 18% 92%;
-
-  --muted-foreground: 0 0% 38%;
-
-  --accent: 43 76% 45%;
-
-  --accent-foreground: 0 0% 100%;
-
-  --destructive: 17 63% 47%;
-
-  --destructive-foreground: 0 0% 100%;
-
-  /* Used as the border around inputs. Dark mode: Should be a border that is light enough to have high contrast when rendered on a --card background. More contrast than standard --border */
-  --input: 36 16% 86%;
-  --ring: 229 49% 24%;
-  --chart-1: 229 49% 24%;
-  --chart-2: 43 76% 45%;
-  --chart-3: 17 63% 47%;
-  --chart-4: 160 60% 38%;
-  --chart-5: 262 52% 47%;
+  /* Dark mode = deep warm charcoal (per spec), never pure black. */
+  --background: 24 10% 8%;
+  --foreground: 36 32% 92%;
+  --border: 24 8% 18%;
+  --card: 24 10% 13%;            /* lifted off background so cards read as distinct surfaces in dark mode */
+  --card-foreground: 36 32% 92%;
+  --card-border: 24 8% 22%;
+  --sidebar: 24 10% 11%;
+  --sidebar-foreground: 36 32% 92%;
+  --sidebar-border: 24 8% 18%;
+  --sidebar-primary: 12 65% 55%;
+  --sidebar-primary-foreground: 24 10% 8%;
+  --sidebar-accent: 24 10% 14%;
+  --sidebar-accent-foreground: 12 65% 55%;
+  --sidebar-ring: 12 65% 55%;
+  --popover: 24 10% 11%;
+  --popover-foreground: 36 32% 92%;
+  --popover-border: 24 8% 18%;
+  --primary: 12 65% 55%;             /* lifted oxblood for contrast on dark */
+  --primary-foreground: 24 10% 8%;
+  --secondary: 24 10% 14%;
+  --secondary-foreground: 36 32% 92%;
+  --muted: 24 8% 15%;
+  --muted-foreground: 36 14% 65%;
+  --accent: 12 65% 55%;
+  --accent-foreground: 24 10% 8%;
+  --destructive: 12 65% 55%;
+  --destructive-foreground: 24 10% 8%;
+  --input: 24 8% 18%;
+  --ring: 12 65% 55%;
+  --chart-1: 12 65% 55%;
+  --chart-2: 36 32% 92%;
+  --chart-3: 36 14% 65%;
+  --chart-4: 142 30% 50%;
+  --chart-5: 24 8% 22%;
 
   --shadow-2xs: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00);
   --shadow-xs: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00);

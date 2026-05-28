@@ -11,7 +11,7 @@ import {
   getListStudyMaterialsQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useStudyProfile, useUpdateStudyProfile, useLearningStyleProfile } from "@/hooks/use-study-journey";
+import { useStudyProfile, useUpdateStudyProfile } from "@/hooks/use-study-journey";
 import { useEffect } from "react";
 import {
   ArrowLeft, Sparkles, FileText, Link2, Upload, Image as ImageIcon,
@@ -46,15 +46,14 @@ export default function StudyMaterialNew() {
   const createMutation = useCreateStudyMaterial();
   const updateProfile = useUpdateStudyProfile();
   const { data: profile } = useStudyProfile();
-  const { data: learningStyle, isLoading: lsLoading } = useLearningStyleProfile();
   const queryClient = useQueryClient();
 
-  // Gate: must complete the learning-style diagnostic first
+  // Single onboarding gate: incomplete intake → /intake (The Coach spec dropped the learning-style gate).
   useEffect(() => {
-    if (!lsLoading && learningStyle === null) {
-      setLoc("/learning-style");
+    if (profile && !profile.diagnosticComplete) {
+      setLoc("/intake");
     }
-  }, [lsLoading, learningStyle, setLoc]);
+  }, [profile, setLoc]);
 
   const [learningGoal, setLearningGoal] = useState("");
   const [title, setTitle] = useState("");

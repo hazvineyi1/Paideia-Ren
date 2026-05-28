@@ -101,20 +101,17 @@ export default function StudyDashboard() {
     }
   };
 
-  // Gate 1: send to learning-style diagnostic if not yet completed
-  useEffect(() => {
-    if (!lsLoading && learningStyle === null) {
-      setLoc("/learning-style");
-    }
-  }, [lsLoading, learningStyle, setLoc]);
+  // Learning-styles gate removed — the spec ("The Coach") explicitly forbids the VARK/modality
+  // framing. Coach personality is now captured during intake instead.
+  void lsLoading; void learningStyle;
 
-  // Gate 2: send to intake if learning-style is done but diagnostic intake isn't.
-  // We only redirect once we have profile data to avoid a flash-redirect on first load.
+  // Single onboarding gate: send incomplete profiles straight to intake.
+  // Wait for profile data to load to avoid a flash-redirect on first paint.
   useEffect(() => {
-    if (profile && !profile.diagnosticComplete && learningStyle !== null && !lsLoading) {
+    if (profile && !profile.diagnosticComplete) {
       setLoc("/intake");
     }
-  }, [profile, learningStyle, lsLoading, setLoc]);
+  }, [profile, setLoc]);
 
   const hasActivePath = sessionData?.hasActivePath ?? false;
   const progress = sessionData?.progress ?? { completedSteps: 0, totalSteps: 0, percentComplete: 0 };

@@ -32,6 +32,7 @@ const updateSchema = z.object({
   baselineLevel: z.enum(["zero", "foundations", "solid", "rusty"]).nullable().optional(),
   calibrationSelfRating: z.enum(["high", "mid", "low", "under"]).nullable().optional(),
   failureMode: z.enum(["passive", "cram", "avoid", "scattered", "perfect"]).nullable().optional(),
+  coachPersonality: z.enum(["drill", "socratic", "warm", "analyst"]).nullable().optional(),
 });
 
 router.get("/", async (req, res) => {
@@ -107,6 +108,7 @@ router.patch("/", async (req, res) => {
   if (data.baselineLevel !== undefined) updateData.baselineLevel = data.baselineLevel;
   if (data.calibrationSelfRating !== undefined) updateData.calibrationSelfRating = data.calibrationSelfRating;
   if (data.failureMode !== undefined) updateData.failureMode = data.failureMode;
+  if (data.coachPersonality !== undefined) updateData.coachPersonality = data.coachPersonality;
   updateData.updatedAt = new Date();
 
   const [profile] = await db
@@ -164,11 +166,12 @@ router.post("/reset", async (req, res) => {
             baselineLevel: null,
             calibrationSelfRating: null,
             failureMode: null,
+            coachPersonality: null,
             updatedAt: new Date(),
           })
           .where(eq(studyLearnerProfilesTable.userId, userId));
+        // Legacy learning-style data — clear so old rows don't shadow the new intake.
         await tx.delete(studyLearningStyleProfilesTable).where(eq(studyLearningStyleProfilesTable.userId, userId));
-        // Assessments hold the learning-style results; remove completed ones so the gate re-triggers.
         await tx.delete(studyAssessmentsTable).where(eq(studyAssessmentsTable.userId, userId));
       }
     });

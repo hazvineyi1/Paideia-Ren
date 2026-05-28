@@ -16,6 +16,7 @@ type Step =
   | "baseline"
   | "calibration"
   | "failureMode"
+  | "coach"
   | "review";
 
 const STEPS: Step[] = [
@@ -25,6 +26,7 @@ const STEPS: Step[] = [
   "baseline",
   "calibration",
   "failureMode",
+  "coach",
   "review",
 ];
 
@@ -50,6 +52,40 @@ const FAILURE_MODE_OPTIONS = [
   { value: "perfect", label: "I get stuck perfecting one topic", hint: "I can't move on until it feels mastered" },
 ];
 
+const COACH_OPTIONS = [
+  { value: "drill",    label: "The Drill Sergeant",     hint: "Direct, demanding, high accountability. Push me hard." },
+  { value: "socratic", label: "The Socratic Mentor",    hint: "Leads with questions. Makes me reason to the answer." },
+  { value: "warm",     label: "The Warm Encourager",    hint: "Supportive, steady, normalises struggle. Keeps me moving." },
+  { value: "analyst",  label: "The Strategic Analyst",  hint: "Calm, data-driven. Shows me the path to the exam." },
+];
+
+// Recommendation — voice/pressure only; never changes pedagogy or accuracy.
+// Scoring (highest wins) lets multiple weak signals combine instead of one early `return`
+// hiding the rest, e.g. low-confidence avoidant studiers still see Drill if the avoidance
+// signal outweighs the timidity signal.
+function recommendCoach(baseline: string, calibration: string, failureMode: string): string {
+  const score: Record<"drill" | "socratic" | "warm" | "analyst", number> = {
+    drill: 0, socratic: 0, warm: 0, analyst: 0,
+  };
+  // Spec: "low confidence + 'I often overestimate' leans Socratic or Analyst"
+  if (calibration === "high")  { score.socratic += 3; score.analyst += 1; } // overestimates
+  if (calibration === "under") { score.analyst  += 3; score.socratic += 1; } // underestimates
+  if (calibration === "low")   { score.warm     += 2; }                      // anxious
+  if (calibration === "mid")   { score.analyst  += 1; }
+  // Spec: "rebuilding/rusty leans Encourager"
+  if (baseline === "rusty")       score.warm     += 2;
+  if (baseline === "zero")        score.warm     += 1;
+  if (baseline === "foundations") score.socratic += 1;
+  if (baseline === "solid")       score.analyst  += 1;
+  // Failure modes that need a push
+  if (failureMode === "passive" || failureMode === "avoid" || failureMode === "cram") score.drill += 3;
+  if (failureMode === "scattered") score.analyst += 2;
+  if (failureMode === "perfect")   score.socratic += 1;
+  const ranked = (Object.entries(score) as [keyof typeof score, number][])
+    .sort((a, b) => b[1] - a[1]);
+  return ranked[0][1] === 0 ? "warm" : ranked[0][0];
+}
+
 export default function StudyIntake() {
   const [, setLoc] = useLocation();
   const { data: profile } = useStudyProfile();
@@ -66,7 +102,10 @@ export default function StudyIntake() {
   const [baseline, setBaseline] = useState<string>(profile?.baselineLevel ?? "");
   const [calibration, setCalibration] = useState<string>(profile?.calibrationSelfRating ?? "");
   const [failureMode, setFailureMode] = useState<string>(profile?.failureMode ?? "");
+  const [coachPersonality, setCoachPersonality] = useState<string>(profile?.coachPersonality ?? "");
   const [saving, setSaving] = useState(false);
+
+  const recommended = recommendCoach(baseline, calibration, failureMode);
 
   const step = STEPS[stepIdx];
   const totalQuestions = STEPS.length - 1; // exclude review
@@ -80,6 +119,7 @@ export default function StudyIntake() {
       case "baseline": return baseline.length > 0;
       case "calibration": return calibration.length > 0;
       case "failureMode": return failureMode.length > 0;
+      case "coach": return coachPersonality.length > 0;
       case "review": return true;
       default: return false;
     }
@@ -98,6 +138,7 @@ export default function StudyIntake() {
         baselineLevel: baseline || null,
         calibrationSelfRating: calibration || null,
         failureMode: failureMode || null,
+        coachPersonality: (coachPersonality || recommended) as "drill" | "socratic" | "warm" | "analyst",
       });
       setLoc("/dashboard");
     } catch {
@@ -107,21 +148,21 @@ export default function StudyIntake() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-xl mx-auto px-4 py-8">
-        <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-blue-700 font-semibold mb-2">
-          <Compass className="w-4 h-4" /> Tune your study plan
+    <div className="min-h-screen bg-background">
+      <div className="max-w-xl mx-auto px-4 py-10">
+        <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-primary font-semibold mb-3">
+          <Compass className="w-4 h-4" /> Meet your coach
         </div>
-        <h1 className="text-2xl font-bold text-gray-900 mb-1">
-          A few quick questions
+        <h1 className="font-serif text-4xl text-foreground leading-tight mb-2">
+          First, let me understand you.
         </h1>
-        <p className="text-sm text-gray-600 mb-5">
-          Your answers shape the AI's daily plan, exam pacing, and which weak spots get re-queued.
+        <p className="text-sm text-muted-foreground mb-6 max-w-md">
+          Your answers shape how I plan your days, when I push, and when I ease off. About a minute.
         </p>
 
-        <div className="h-1.5 bg-gray-200 rounded-full mb-6 overflow-hidden">
+        <div className="h-[3px] bg-muted rounded-full mb-7 overflow-hidden">
           <div
-            className="h-full bg-blue-600 transition-all"
+            className="h-full bg-primary transition-all"
             style={{ width: `${progress * 100}%` }}
           />
         </div>
@@ -157,7 +198,7 @@ export default function StudyIntake() {
             {step === "hoursPerWeek" && (
               <Section
                 title="How many hours a week can you realistically study?"
-                hint="Be honest — under-promising is fine. We adapt as you go."
+                hint="Be honest — under-promising is fine. I adapt as we go."
               >
                 <div className="flex items-center gap-3">
                   <Input
@@ -172,7 +213,7 @@ export default function StudyIntake() {
                     }}
                     className="max-w-[120px]"
                   />
-                  <span className="text-sm text-gray-600">hours / week</span>
+                  <span className="text-sm text-muted-foreground">hours / week</span>
                 </div>
               </Section>
             )}
@@ -185,8 +226,8 @@ export default function StudyIntake() {
 
             {step === "calibration" && (
               <Section
-                title="How well do you usually predict your test performance?"
-                hint="This tells us how much to trust your own confidence ratings during practice."
+                title="When you think you understand something, how often are you actually right?"
+                hint="This tells me how much to trust your own confidence ratings during practice."
               >
                 <OptionList options={CALIBRATION_OPTIONS} selected={calibration} onSelect={setCalibration} />
               </Section>
@@ -195,26 +236,41 @@ export default function StudyIntake() {
             {step === "failureMode" && (
               <Section
                 title="When studying goes wrong for you, it usually looks like…"
-                hint="No judgement — knowing your pattern lets us route around it."
+                hint="No judgement — knowing your pattern lets me route around it."
               >
                 <OptionList options={FAILURE_MODE_OPTIONS} selected={failureMode} onSelect={setFailureMode} />
               </Section>
             )}
 
+            {step === "coach" && (
+              <Section
+                title="Which coach do you respond to best?"
+                hint="Voice and pressure change. Accuracy never does. You can change this anytime in settings."
+              >
+                <OptionList
+                  options={COACH_OPTIONS}
+                  selected={coachPersonality}
+                  onSelect={setCoachPersonality}
+                  recommendedValue={recommended}
+                />
+              </Section>
+            )}
+
             {step === "review" && (
               <div>
-                <div className="flex items-center gap-2 text-emerald-700 font-semibold mb-3">
-                  <Sparkles className="w-5 h-5" /> Ready to tune your plan
+                <div className="flex items-center gap-2 text-primary font-semibold mb-3">
+                  <Sparkles className="w-5 h-5" /> Ready when you are
                 </div>
-                <p className="text-sm text-gray-600 mb-4">
-                  Here's what we'll use:
+                <p className="text-sm text-muted-foreground mb-4">
+                  Here's what your coach will start with:
                 </p>
                 <ReviewRow label="Goal" value={goal || "(none)"} />
                 <ReviewRow label="Exam date" value={examDate || "Open-ended"} />
                 <ReviewRow label="Hours/week" value={String(hoursPerWeek || "—")} />
                 <ReviewRow label="Baseline" value={labelOf(BASELINE_OPTIONS, baseline)} />
-                <ReviewRow label="Self-prediction style" value={labelOf(CALIBRATION_OPTIONS, calibration)} />
+                <ReviewRow label="Self-prediction" value={labelOf(CALIBRATION_OPTIONS, calibration)} />
                 <ReviewRow label="Failure pattern" value={labelOf(FAILURE_MODE_OPTIONS, failureMode)} />
+                <ReviewRow label="Coach" value={labelOf(COACH_OPTIONS, coachPersonality || recommended)} />
               </div>
             )}
 
@@ -235,15 +291,15 @@ export default function StudyIntake() {
               ) : (
                 <Button onClick={submit} disabled={saving}>
                   <CheckCircle2 className="w-4 h-4 mr-1" />
-                  {saving ? "Saving…" : "Tune my plan"}
+                  {saving ? "Saving…" : "Meet my coach"}
                 </Button>
               )}
             </div>
           </CardContent>
         </Card>
 
-        <p className="text-center text-xs text-gray-400 mt-4">
-          Takes about a minute. Your answers shape every plan we generate.
+        <p className="text-center text-xs text-muted-foreground mt-4">
+          Voice and pressure are tunable. Accuracy is not.
         </p>
       </div>
     </div>
@@ -253,8 +309,8 @@ export default function StudyIntake() {
 function Section({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
   return (
     <div>
-      <h2 className="text-lg font-semibold text-gray-900 mb-1">{title}</h2>
-      {hint && <p className="text-sm text-gray-500 mb-4">{hint}</p>}
+      <h2 className="font-serif text-2xl text-foreground mb-1 leading-snug">{title}</h2>
+      {hint && <p className="text-sm text-muted-foreground mb-4">{hint}</p>}
       <div className="mt-3">{children}</div>
     </div>
   );
@@ -264,27 +320,37 @@ function OptionList({
   options,
   selected,
   onSelect,
+  recommendedValue,
 }: {
   options: { value: string; label: string; hint: string }[];
   selected: string;
   onSelect: (v: string) => void;
+  recommendedValue?: string;
 }) {
   return (
     <div className="space-y-2">
       {options.map((opt) => {
         const active = selected === opt.value;
+        const recommended = recommendedValue === opt.value;
         return (
           <button
             key={opt.value}
             onClick={() => onSelect(opt.value)}
-            className={`w-full text-left px-4 py-3 rounded-lg border transition ${
+            className={`w-full text-left px-4 py-3 rounded-lg border transition relative ${
               active
-                ? "bg-blue-50 border-blue-400 ring-1 ring-blue-200"
-                : "bg-white border-gray-200 hover:border-gray-300"
+                ? "bg-primary/5 border-primary ring-1 ring-primary/30"
+                : "bg-card border-border hover:border-primary/40"
             }`}
           >
-            <div className="font-medium text-gray-900 text-sm">{opt.label}</div>
-            <div className="text-xs text-gray-500 mt-0.5">{opt.hint}</div>
+            <div className="flex items-center justify-between gap-3">
+              <div className="font-medium text-foreground text-sm">{opt.label}</div>
+              {recommended && !active && (
+                <span className="text-[10px] uppercase tracking-wider font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full shrink-0">
+                  Recommended for you
+                </span>
+              )}
+            </div>
+            <div className="text-xs text-muted-foreground mt-0.5">{opt.hint}</div>
           </button>
         );
       })}
@@ -295,8 +361,8 @@ function OptionList({
 function ReviewRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-baseline justify-between py-2 border-b last:border-b-0 text-sm">
-      <span className="text-gray-500">{label}</span>
-      <span className="font-medium text-gray-900 text-right max-w-[60%] truncate">{value}</span>
+      <span className="text-muted-foreground">{label}</span>
+      <span className="font-medium text-foreground text-right max-w-[60%] truncate">{value}</span>
     </div>
   );
 }
