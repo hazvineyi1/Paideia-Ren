@@ -52,8 +52,11 @@ export function Footer() {
             <a href="#" className="text-muted-foreground hover:text-primary transition-colors"><SiX size={18} /></a>
             <a href="#" className="text-muted-foreground hover:text-primary transition-colors"><SiInstagram size={18} /></a>
           </div>
-          
-          <div className="flex flex-wrap justify-center items-center gap-6 text-[13px] text-muted-foreground">
+
+          <div className="flex flex-wrap justify-center items-center gap-x-6 gap-y-2 text-[13px] text-muted-foreground">
+            <a href="/app/student/login" className="hover:text-foreground" data-testid="link-student-signin">Student sign-in</a>
+            <a href="/app/login" className="hover:text-foreground" data-testid="link-teacher-signin">Teacher sign-in</a>
+            <span className="hidden md:inline text-border">·</span>
             <Link href="/privacy" className="hover:text-foreground">Privacy Policy</Link>
             <Link href="/terms" className="hover:text-foreground">Terms of Service</Link>
             <Link href="/transparency" className="hover:text-foreground">Accessibility</Link>
