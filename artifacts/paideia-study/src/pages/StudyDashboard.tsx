@@ -11,7 +11,7 @@ import {
   useStudyProfile,
   useLearningStyleProfile,
 } from "@/hooks/use-study-journey";
-import { useListStudyMaterials, customFetch, getDailyStudySessionQueryKey } from "@workspace/api-client-react";
+import { useListStudyMaterials, customFetch } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import {
@@ -76,7 +76,7 @@ export default function StudyDashboard() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ materialId }),
       });
-      await queryClient.invalidateQueries({ queryKey: getDailyStudySessionQueryKey() });
+      await queryClient.invalidateQueries({ queryKey: ["study", "daily-session"] });
     } catch (err: unknown) {
       setPlanError(
         (err as { response?: { data?: { error?: string } } })?.response?.data?.error ||
