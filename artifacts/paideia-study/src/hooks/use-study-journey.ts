@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 const API_BASE = "/api";
 
-async function fetchApi(path: string, opts?: RequestInit) {
+export async function fetchApi(path: string, opts?: RequestInit) {
   const res = await fetch(`${API_BASE}${path}`, {
     credentials: "include",
     headers: { "Content-Type": "application/json" },
@@ -102,10 +102,11 @@ export function useCompletePathStep() {
 }
 
 // Learner Profile
-export function useStudyProfile() {
+export function useStudyProfile(enabled: boolean = true) {
   return useQuery({
     queryKey: ["study", "profile"],
     queryFn: () => fetchApi("/study/profile/"),
+    enabled,
   });
 }
 

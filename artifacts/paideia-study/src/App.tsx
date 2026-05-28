@@ -30,6 +30,7 @@ import StudyStrategy from "@/pages/StudyStrategy";
 import StudyProgress from "@/pages/StudyProgress";
 import StudyIntake from "@/pages/StudyIntake";
 import StudyStartOver from "@/pages/StudyStartOver";
+import StudyCoach from "@/pages/StudyCoach";
 
 const queryClient = new QueryClient();
 
@@ -61,6 +62,7 @@ function Router() {
       <Route path="/" component={StudyLanding} />
       <Route path="/login" component={StudyLogin} />
       <Route path="/signup" component={StudySignup} />
+      <Route path="/coach" component={() => <Protected component={StudyCoach} />} />
       <Route path="/dashboard" component={() => <Protected component={StudyDashboard} />} />
       <Route path="/materials" component={() => <Protected component={StudyMaterials} />} />
       <Route path="/materials/new" component={() => <Protected component={StudyMaterialNew} />} />

@@ -1,6 +1,9 @@
+import { useEffect } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useStudyAuth } from "@/hooks/use-study-auth";
+import { useStudyProfile } from "@/hooks/use-study-journey";
 import {
   BookOpen, BrainCircuit, Zap, Award, TrendingUp,
   Layers, Sparkles, ArrowRight, Brain, Network, Target,
@@ -29,6 +32,27 @@ function ContentTypeCard({ icon: Icon, label }: { icon: typeof FileText; label: 
 
 export default function StudyLanding() {
   const [, setLoc] = useLocation();
+  const { user, loading: authLoading } = useStudyAuth();
+  // Only query the profile once we know the user is authed — avoids the 401-and-retry noise
+  // and means an unauthed visitor never triggers a profile fetch.
+  const { data: profile, isLoading: profileLoading } = useStudyProfile(!!user && !authLoading);
+
+  // "Conversation IS the home" — authed users with a finished intake land on /coach,
+  // not on the marketing page. Incomplete users still see the landing so they can sign in/up.
+  const willRedirect = !authLoading && !!user && !!profile?.diagnosticComplete;
+  useEffect(() => {
+    if (willRedirect) setLoc("/coach");
+  }, [willRedirect, setLoc]);
+
+  // Render nothing while we resolve auth + profile for an authed user, so they never see
+  // a flash of the marketing hero before bouncing to /coach.
+  if (authLoading || (user && (profileLoading || willRedirect))) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">

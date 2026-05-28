@@ -40,6 +40,33 @@ const messageInputSchema = z.object({
   content: z.string().min(1),
 });
 
+// Coach voice — the four named personalities from "The Coach" spec. Voice/pressure only;
+// never alters pedagogy or accuracy. Prepended to the existing tutor system prompt so the
+// underlying socraticMode / grounding behaviour is unchanged.
+type CoachPersonality = "drill" | "socratic" | "warm" | "analyst";
+const COACH_VOICE: Record<CoachPersonality, string> = {
+  drill:
+    "You are The Drill Sergeant. Voice: direct, no fluff, time-boxed. You expect effort and call out avoidance immediately, but you are never cruel — you push because you believe the learner can do it. Keep responses short. End with a concrete next action (e.g. \"5 minutes. Go.\").",
+  socratic:
+    "You are The Socratic Mentor. Voice: patient, curious, deliberate. You never volunteer the answer; you ask the one question that lets the learner find it themselves. When they stall, narrow the question — never widen into a lecture.",
+  warm:
+    "You are The Warm Encourager. Voice: steady, supportive, human. You normalise struggle (\"that confusion means you're at the edge of new territory\"), celebrate small wins specifically, and keep the next step small enough to actually start.",
+  analyst:
+    "You are The Strategic Analyst. Voice: calm, precise, data-aware. You name what the evidence says about where the learner is, where the exam is, and what the highest-leverage next move is. Prefer numbers and short reasoned plans over pep talk.",
+};
+function coachVoiceFor(personality: string | null | undefined): string {
+  const p = (personality ?? "warm") as CoachPersonality;
+  return COACH_VOICE[p] ?? COACH_VOICE.warm;
+}
+async function getCoachPersonality(userId: string): Promise<string | null> {
+  const [row] = await db
+    .select({ coachPersonality: studyLearnerProfilesTable.coachPersonality })
+    .from(studyLearnerProfilesTable)
+    .where(eq(studyLearnerProfilesTable.userId, userId))
+    .limit(1);
+  return row?.coachPersonality ?? null;
+}
+
 async function buildGroundingContext(userId: string): Promise<string> {
   const materials = await db
     .select()
@@ -131,11 +158,16 @@ router.post("/conversations", async (req, res) => {
     })
     .returning();
 
-  // Send initial AI greeting
+  // Send initial AI greeting.
+  // Conflict resolution: if the conversation is in socraticMode, the user explicitly asked
+  // for Socratic-style "no direct answers", so we force the Socratic voice regardless of the
+  // profile's coach personality. Otherwise the profile personality wins.
   const grounding = await buildGroundingContext(userId);
-  const systemPrompt = data.socraticMode
-    ? `You are a Socratic tutor. You NEVER give direct answers. Instead, you ask guiding questions that help the learner discover the answer themselves. Be encouraging and patient. Adapt to the learner's background and interests when creating examples.\n\nGrounding context:\n${grounding}`
-    : `You are a knowledgeable and adaptive tutor. You explain concepts clearly, use real-world examples that relate to the learner's interests and background, and create immersive scenarios. When appropriate, ask the learner to apply concepts to their own life.\n\nGrounding context:\n${grounding}`;
+  const voice = data.socraticMode ? coachVoiceFor("socratic") : coachVoiceFor(await getCoachPersonality(userId));
+  const tutorRules = data.socraticMode
+    ? `You are a Socratic tutor. You NEVER give direct answers. Instead, you ask guiding questions that help the learner discover the answer themselves. Be encouraging and patient. Adapt to the learner's background and interests when creating examples.`
+    : `You are a knowledgeable and adaptive tutor. You explain concepts clearly, use real-world examples that relate to the learner's interests and background, and create immersive scenarios. When appropriate, ask the learner to apply concepts to their own life.`;
+  const systemPrompt = `${voice}\n\n${tutorRules}\n\nGrounding context:\n${grounding}`;
 
   try {
     const response = await openai.chat.completions.create({
@@ -251,10 +283,14 @@ router.post("/conversations/:conversationId/messages", async (req, res) => {
     .orderBy(studyTutorMessagesTable.createdAt)
     .limit(20);
 
+  // Same conflict resolution as on conversation creation: socraticMode pins the voice to
+  // Socratic so the user's explicit pedagogy choice always wins over profile personality.
   const grounding = await buildGroundingContext(userId);
-  const systemPrompt = conv.socraticMode
-    ? `You are a Socratic tutor. You NEVER give direct answers. Instead, you ask guiding questions that help the learner discover the answer themselves. Be encouraging and patient. Use the learner's profile and interests to make questions relatable.\n\nGrounding context:\n${grounding}`
-    : `You are a knowledgeable and adaptive tutor. Explain concepts clearly, use real-world examples that relate to the learner's interests and background, and create immersive scenarios. When appropriate, ask the learner to apply concepts to their own life. Be inclusive and adjust complexity to the learner's level.\n\nGrounding context:\n${grounding}`;
+  const voice = conv.socraticMode ? coachVoiceFor("socratic") : coachVoiceFor(await getCoachPersonality(userId));
+  const tutorRules = conv.socraticMode
+    ? `You are a Socratic tutor. You NEVER give direct answers. Instead, you ask guiding questions that help the learner discover the answer themselves. Be encouraging and patient. Use the learner's profile and interests to make questions relatable.`
+    : `You are a knowledgeable and adaptive tutor. Explain concepts clearly, use real-world examples that relate to the learner's interests and background, and create immersive scenarios. When appropriate, ask the learner to apply concepts to their own life. Be inclusive and adjust complexity to the learner's level.`;
+  const systemPrompt = `${voice}\n\n${tutorRules}\n\nGrounding context:\n${grounding}`;
 
   const messages = [
     { role: "system" as const, content: systemPrompt },
