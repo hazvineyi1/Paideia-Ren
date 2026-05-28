@@ -5,6 +5,7 @@ import {
   studyPracticeSessionsTable,
   studyConceptsTable,
   studyFlashcardsTable,
+  studyMaterialsTable,
 } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
 import { requireStudyUser } from "../../middlewares/auth.js";
@@ -36,32 +37,51 @@ router.post("/", async (req, res) => {
   const data = parsed.data;
   const userId = req.studyUser!.id;
 
-  // Load concepts for question generation
-  let concepts: { id: string; title: string; explanation: string; difficulty: string }[] = [];
+  // Load concepts for question generation — STRICTLY scoped to selected material
+  let concepts: { id: string; title: string; explanation: string; difficulty: string; materialId: string | null }[] = [];
   if (data.conceptIds && data.conceptIds.length > 0) {
     concepts = await db
       .select()
       .from(studyConceptsTable)
       .where(and(eq(studyConceptsTable.userId, userId), eq(studyConceptsTable.id, data.conceptIds[0])));
-    // For simplicity, take first few matching concepts
-    concepts = concepts.slice(0, 10);
+    concepts = concepts.slice(0, 20);
   } else if (data.materialId) {
     concepts = await db
       .select()
       .from(studyConceptsTable)
       .where(and(eq(studyConceptsTable.userId, userId), eq(studyConceptsTable.materialId, data.materialId)))
-      .limit(15);
+      .limit(40);
   } else {
     concepts = await db
       .select()
       .from(studyConceptsTable)
       .where(eq(studyConceptsTable.userId, userId))
-      .limit(15);
+      .limit(40);
   }
 
-  const conceptTexts = concepts.map((c) => `Concept: ${c.title}\n${c.explanation}`).join("\n\n");
+  // Look up the material title so the AI knows what subject to stay inside
+  let materialTitle: string | null = null;
+  if (data.materialId) {
+    const mat = await db
+      .select()
+      .from(studyMaterialsTable)
+      .where(and(eq(studyMaterialsTable.userId, userId), eq(studyMaterialsTable.id, data.materialId)))
+      .limit(1);
+    materialTitle = mat[0]?.title ?? null;
+  }
 
-  let questions: Array<{
+  if (concepts.length === 0) {
+    res.status(400).json({
+      error: "This material has no extracted concepts yet. Open the material and wait for AI extraction to finish, then try again.",
+    });
+    return;
+  }
+
+  const conceptTexts = concepts
+    .map((c, i) => `[${i + 1}] ${c.title}\n${c.explanation}`)
+    .join("\n\n");
+
+  type GenQ = {
     id: string;
     prompt: string;
     options: string[];
@@ -69,9 +89,19 @@ router.post("/", async (req, res) => {
     explanation: string;
     conceptId: string | null;
     difficulty: string;
-  }> = [];
+  };
+  let questions: GenQ[] = [];
+
+  const difficultyInstruction =
+    data.difficulty === "mixed"
+      ? "Mix easy/medium/hard across the set."
+      : `All questions should be ${data.difficulty} difficulty.`;
 
   try {
+    const subjectLine = materialTitle
+      ? `SUBJECT: "${materialTitle}". You may ONLY generate questions about THIS subject using the numbered concepts below. Do NOT introduce content from other domains (e.g., if subject is CompTIA, do not ask about PMI/PMP and vice versa).`
+      : "Use ONLY the numbered concepts below. Do not introduce outside knowledge.";
+
     const aiQuestions = await generateJSON<
       Array<{
         prompt: string;
@@ -79,41 +109,91 @@ router.post("/", async (req, res) => {
         correctOptionIndex: number;
         explanation: string;
         difficulty: string;
+        conceptIndex?: number;
       }>
     >(
-      "You are an expert test writer. Generate multiple-choice questions based on the provided concepts. Each question must have 4 options, only one correct. Return JSON with an array of questions.",
-      `Generate ${Math.min(data.questionCount, 5)} questions from these concepts:\n\n${conceptTexts.slice(0, 4000)}`,
+      `You are an expert test writer. ${subjectLine} Each question must have exactly 4 plausible options with exactly one correct. Include a "conceptIndex" field referencing which numbered concept it tests. ${difficultyInstruction} Return JSON: { "questions": [ ... ] }.`,
+      `Generate ${data.questionCount} multiple-choice questions strictly from these concepts:\n\n${conceptTexts.slice(0, 8000)}`,
       { kind: "study_practice_questions" },
     );
 
-    const questionArray = Array.isArray(aiQuestions) ? aiQuestions : [];
-    questions = questionArray.map((q, i) => ({
-      id: randomUUID(),
-      prompt: q.prompt,
-      options: q.options.slice(0, 4),
-      correctOptionIndex: Math.max(0, Math.min(3, q.correctOptionIndex)),
-      explanation: q.explanation,
-      conceptId: concepts[i % concepts.length]?.id ?? null,
-      difficulty: q.difficulty ?? "medium",
-    }));
-  } catch (err) {
-    req.log?.warn({ err }, "AI question generation failed, using fallback");
-    // Fallback: simple recall questions from flashcards
-    const flashcards = await db
-      .select()
-      .from(studyFlashcardsTable)
-      .where(eq(studyFlashcardsTable.userId, userId))
-      .limit(data.questionCount);
+    const questionArray: Array<{
+      prompt: string;
+      options: string[];
+      correctOptionIndex: number;
+      explanation: string;
+      difficulty: string;
+      conceptIndex?: number;
+    }> = Array.isArray(aiQuestions)
+      ? (aiQuestions as Array<{ prompt: string; options: string[]; correctOptionIndex: number; explanation: string; difficulty: string; conceptIndex?: number }>)
+      // OpenAI structured-output wrappers often return { questions: [...] }
+      : Array.isArray((aiQuestions as unknown as { questions?: unknown })?.questions)
+        ? ((aiQuestions as unknown as { questions: Array<{ prompt: string; options: string[]; correctOptionIndex: number; explanation: string; difficulty: string; conceptIndex?: number }> }).questions)
+        : [];
 
-    questions = flashcards.map((f) => ({
-      id: randomUUID(),
-      prompt: f.front,
-      options: [f.back, "Incorrect option A", "Incorrect option B", "Incorrect option C"],
-      correctOptionIndex: 0,
-      explanation: f.back,
-      conceptId: f.conceptId,
-      difficulty: "medium",
-    }));
+    questions = questionArray
+      .filter((q) => q && Array.isArray(q.options) && q.options.length >= 2 && typeof q.prompt === "string")
+      .map((q, i) => {
+        const opts = q.options.slice(0, 4);
+        // pad to 4 options if AI returned fewer
+        while (opts.length < 4) opts.push("None of the above");
+        const conceptIdx =
+          typeof q.conceptIndex === "number" && q.conceptIndex >= 1 && q.conceptIndex <= concepts.length
+            ? q.conceptIndex - 1
+            : i % concepts.length;
+        return {
+          id: randomUUID(),
+          prompt: q.prompt,
+          options: opts,
+          correctOptionIndex: Math.max(0, Math.min(3, q.correctOptionIndex ?? 0)),
+          explanation: q.explanation ?? "",
+          conceptId: concepts[conceptIdx]?.id ?? null,
+          difficulty: q.difficulty ?? "medium",
+        };
+      });
+  } catch (err) {
+    req.log?.warn({ err }, "AI question generation failed");
+    questions = [];
+  }
+
+  // Fallback when AI returns nothing usable — flashcards scoped to the same material
+  if (questions.length === 0) {
+    const fcWhere = data.materialId
+      ? and(eq(studyFlashcardsTable.userId, userId), eq(studyFlashcardsTable.materialId, data.materialId))
+      : eq(studyFlashcardsTable.userId, userId);
+    const flashcards = await db.select().from(studyFlashcardsTable).where(fcWhere).limit(data.questionCount);
+
+    if (flashcards.length === 0) {
+      res.status(502).json({
+        error:
+          "Couldn't generate questions for this material right now. Try again, or open the material and verify it has extracted concepts.",
+      });
+      return;
+    }
+
+    // Distractors drawn from OTHER flashcards in the same material so they're plausible
+    questions = flashcards.map((f) => {
+      const distractors = flashcards
+        .filter((x) => x.id !== f.id)
+        .map((x) => x.back)
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 3);
+      while (distractors.length < 3) distractors.push("None of the above");
+      const all = [f.back, ...distractors];
+      // shuffle and remember correct index
+      const idx = Math.floor(Math.random() * 4);
+      const final = [...all];
+      [final[0], final[idx]] = [final[idx], final[0]];
+      return {
+        id: randomUUID(),
+        prompt: f.front,
+        options: final,
+        correctOptionIndex: idx,
+        explanation: f.back,
+        conceptId: f.conceptId,
+        difficulty: "medium",
+      };
+    });
   }
 
   const [session] = await db

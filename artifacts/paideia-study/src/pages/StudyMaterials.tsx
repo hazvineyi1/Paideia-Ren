@@ -18,10 +18,16 @@ export default function StudyMaterials() {
   const deleteMutation = useDeleteStudyMaterial();
   const queryClient = useQueryClient();
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Delete this material and all its concepts/flashcards?")) return;
-    await deleteMutation.mutateAsync({ materialId: id });
-    queryClient.invalidateQueries({ queryKey: getListStudyMaterialsQueryKey() });
+  const handleDelete = async (e: React.MouseEvent, id: string, title: string) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (!confirm(`Delete "${title}" and all its concepts, flashcards, and practice history?\n\nThis cannot be undone.`)) return;
+    try {
+      await deleteMutation.mutateAsync({ materialId: id });
+      queryClient.invalidateQueries({ queryKey: getListStudyMaterialsQueryKey() });
+    } catch {
+      alert("Failed to delete material. Please try again.");
+    }
   };
 
   const getIcon = (sourceType: string) => {
@@ -122,19 +128,14 @@ export default function StudyMaterials() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={() => handleDelete(m.id)}
+                        aria-label={`Delete ${m.title}`}
+                        className="h-8 w-8 p-0 text-red-500 hover:text-red-600 hover:bg-red-50"
+                        disabled={deleteMutation.isPending}
+                        onClick={(e) => handleDelete(e, m.id, m.title)}
                       >
-                        <Trash2 className="h-4 w-4 text-red-500" />
+                        <Trash2 className="h-4 w-4" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0"
-                        onClick={() => setLoc("/flashcards")}
-                      >
-                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                      </Button>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
                     </div>
                   </div>
                 </CardContent>

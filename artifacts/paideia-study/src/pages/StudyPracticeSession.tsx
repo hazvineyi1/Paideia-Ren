@@ -112,9 +112,26 @@ export default function StudyPracticeSession() {
 
   const currentQuestion = session.currentQuestion;
   if (!currentQuestion) {
+    const isEmpty = !session.questions || session.questions.length === 0;
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">No more questions</p>
+      <div className="min-h-screen flex items-center justify-center p-6">
+        <Card className="max-w-md w-full">
+          <CardContent className="p-6 text-center space-y-3">
+            <Brain className="h-10 w-10 text-muted-foreground mx-auto" />
+            <div className="font-semibold">
+              {isEmpty ? "No questions could be generated" : "No more questions"}
+            </div>
+            <p className="text-sm text-muted-foreground">
+              {isEmpty
+                ? "The AI couldn't produce questions for this material. This usually means concepts haven't been extracted yet, or the AI service is temporarily unavailable."
+                : "You've finished every question in this session."}
+            </p>
+            <div className="flex gap-2 justify-center pt-2">
+              <Button variant="outline" onClick={() => setLoc("/practice")}>Back to Practice</Button>
+              <Button onClick={() => setLoc("/materials")}>Open materials</Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }

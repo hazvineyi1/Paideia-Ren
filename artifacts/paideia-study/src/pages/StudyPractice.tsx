@@ -50,16 +50,22 @@ export default function StudyPractice() {
   const [focusMode, setFocusMode] = useState(false);
   const [creating, setCreating] = useState(false);
 
+  const [error, setError] = useState<string | null>(null);
   const handleCreate = async () => {
     if (!materialId) return;
+    setError(null);
     setCreating(true);
     try {
       const res = await createMutation.mutateAsync({
         data: { materialId, questionCount, difficulty },
       });
       setLoc(`/practice/${res.id}`);
-    } catch {
-      alert("Failed to start practice session.");
+    } catch (err: unknown) {
+      const msg =
+        (err as { response?: { data?: { error?: string } } })?.response?.data?.error ||
+        (err as { message?: string })?.message ||
+        "Failed to start practice session. Please try again.";
+      setError(msg);
       setCreating(false);
     }
   };
@@ -197,6 +203,11 @@ export default function StudyPractice() {
               <p className="text-xs text-center text-muted-foreground -mt-2">
                 This usually takes 10–20 seconds while AI tailors each question to your material.
               </p>
+            )}
+            {error && !creating && (
+              <div className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700">
+                {error}
+              </div>
             )}
           </CardContent>
         </Card>
