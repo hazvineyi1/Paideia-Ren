@@ -75,6 +75,7 @@ export const studyConceptsTable = pgTable("study_concepts", {
   difficulty: text("difficulty").notNull().default("medium"),
   keyTerms: jsonb("key_terms").$type<string[]>().notNull().default([]),
   relatedConceptIds: jsonb("related_concept_ids").$type<string[]>().notNull().default([]),
+  visualSvg: text("visual_svg"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (t) => ({
   userIdx: index("study_concepts_user_idx").on(t.userId),
@@ -146,18 +147,30 @@ export const studyMockExamsTable = pgTable("study_mock_exams", {
   questionCount: integer("question_count").notNull(),
   timeLimitMinutes: integer("time_limit_minutes").notNull(),
   status: text("status").notNull().default("active"),
+  format: text("format").notNull().default("multiple-choice"), // multiple-choice | short-answer | essay | fact-pattern | mixed
   questions: jsonb("questions").$type<{
     id: string;
     prompt: string;
-    options: string[];
-    correctOptionIndex: number;
-    explanation: string;
     conceptId: string | null;
     points: number;
+    format: "multiple-choice" | "short-answer" | "essay" | "fact-pattern";
+    // MCQ-only
+    options?: string[];
+    correctOptionIndex?: number;
+    explanation?: string;
+    // Free-form
+    modelAnswer?: string;
+    scoringPoints?: string[];
   }[]>().notNull().default([]),
   answers: jsonb("answers").$type<{
     questionId: string;
-    selectedOptionIndex: number;
+    // MCQ
+    selectedOptionIndex?: number;
+    // Free-form
+    freeformAnswer?: string;
+    aiScore?: number; // 0..1
+    aiFeedback?: string;
+    aiCoveredPoints?: string[];
   }[]>().notNull().default([]),
   score: real("score"),
   maxScore: integer("max_score"),
@@ -213,6 +226,12 @@ export const studyLearnerProfilesTable = pgTable("study_learner_profiles", {
   background: text("background"),
   dailyStudyMinutes: integer("daily_study_minutes").notNull().default(30),
   timezone: text("timezone"),
+  // Diagnostic intake fields (from "The Method" v2 onboarding)
+  examDate: timestamp("exam_date"),
+  hoursPerWeek: integer("hours_per_week"),
+  baselineLevel: text("baseline_level"), // zero | foundations | solid | rusty
+  calibrationSelfRating: text("calibration_self_rating"), // high | mid | low | under
+  failureMode: text("failure_mode"), // passive | cram | avoid | scattered | perfect
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

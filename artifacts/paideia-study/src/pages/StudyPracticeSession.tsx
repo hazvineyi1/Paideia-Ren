@@ -221,20 +221,26 @@ export default function StudyPracticeSession() {
         {!submitted ? (
           <div className="space-y-4">
             <div>
-              <p className="text-sm text-muted-foreground mb-2">How confident are you? (1-5)</p>
-              <div className="flex gap-2">
-                {[1, 2, 3, 4, 5].map((n) => (
+              <p className="text-sm text-muted-foreground mb-2">How sure are you of your answer?</p>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { n: 1, label: "Guess" },
+                  { n: 3, label: "Pretty sure" },
+                  { n: 5, label: "Certain" },
+                ].map((opt) => (
                   <Button
-                    key={n}
-                    variant={confidence === n ? "default" : "outline"}
+                    key={opt.n}
+                    variant={confidence === opt.n ? "default" : "outline"}
                     size="sm"
-                    className="flex-1"
-                    onClick={() => setConfidence(n)}
+                    onClick={() => setConfidence(opt.n)}
                   >
-                    {n}
+                    {opt.label}
                   </Button>
                 ))}
               </div>
+              <p className="text-[11px] text-muted-foreground/70 mt-1.5">
+                Calibrating your confidence helps us find your real blind spots.
+              </p>
             </div>
             <Button className="w-full" onClick={handleAnswer} disabled={selectedIndex === null}>
               Submit Answer

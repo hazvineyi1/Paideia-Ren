@@ -5,6 +5,7 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { StudyMockExamInputFormat } from './studyMockExamInputFormat';
 
 export interface StudyMockExamInput {
   title?: string;
@@ -13,4 +14,5 @@ export interface StudyMockExamInput {
   conceptIds?: string[];
   questionCount?: number;
   timeLimitMinutes?: number;
+  format?: StudyMockExamInputFormat;
 }

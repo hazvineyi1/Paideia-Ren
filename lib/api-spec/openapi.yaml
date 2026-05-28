@@ -1150,6 +1150,9 @@ components:
           type: string
         prompt:
           type: string
+        format:
+          type: string
+          enum: [multiple-choice, short-answer, essay, fact-pattern]
         options:
           type: array
           items:
@@ -1158,6 +1161,12 @@ components:
           type: integer
         explanation:
           type: string
+        modelAnswer:
+          type: string
+        scoringPoints:
+          type: array
+          items:
+            type: string
         conceptId:
           type: ["string", "null"]
         points:
@@ -1165,9 +1174,6 @@ components:
       required:
         - id
         - prompt
-        - options
-        - correctOptionIndex
-        - explanation
         - points
 
     StudyMockExamInput:
@@ -1187,6 +1193,10 @@ components:
         timeLimitMinutes:
           type: integer
           default: 30
+        format:
+          type: string
+          enum: [multiple-choice, short-answer, essay, fact-pattern]
+          default: multiple-choice
       required: []
 
     StudyMockExamSubmit:
@@ -1201,9 +1211,10 @@ components:
                 type: string
               selectedOptionIndex:
                 type: integer
+              freeformAnswer:
+                type: string
             required:
               - questionId
-              - selectedOptionIndex
         timeSpentSeconds:
           type: integer
       required:

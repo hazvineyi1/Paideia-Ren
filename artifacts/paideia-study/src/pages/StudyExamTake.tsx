@@ -2,11 +2,12 @@ import { useState, useEffect } from "react";
 import { useLocation, useParams } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
 import {
   useGetStudyExam,
   useSubmitStudyExam,
 } from "@workspace/api-client-react";
-import { ArrowLeft, Clock, CheckCircle2, XCircle, Award } from "lucide-react";
+import { ArrowLeft, Clock, CheckCircle2, XCircle, Award, Sparkles } from "lucide-react";
 
 export default function StudyExamTake() {
   const { examId } = useParams<{ examId: string }>();
@@ -15,6 +16,7 @@ export default function StudyExamTake() {
   const submitMutation = useSubmitStudyExam();
 
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [freeformAnswer, setFreeformAnswer] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [summary, setSummary] = useState<any>(null);
@@ -23,6 +25,7 @@ export default function StudyExamTake() {
   const [timeSpent, setTimeSpent] = useState(0);
 
   const question = exam?.questions?.[currentIndex];
+  const isMcq = !question || question.format === undefined || question.format === "multiple-choice";
 
   useEffect(() => {
     if (!exam || exam.status === "completed") return;
@@ -69,11 +72,11 @@ export default function StudyExamTake() {
           <h2 className="text-2xl font-bold mb-2">Exam Complete!</h2>
           {exam.score !== null && exam.score !== undefined ? (
             <p className="text-lg mb-6">
-              Score: {exam.score} / {exam.maxScore} ({Math.round((exam.score / (exam.maxScore || 1)) * 100)}%)
+              Score: {Number(exam.score).toFixed(1)} / {exam.maxScore} ({Math.round((Number(exam.score) / (exam.maxScore || 1)) * 100)}%)
             </p>
           ) : summary ? (
             <p className="text-lg mb-6">
-              Score: {summary.score} / {summary.maxScore} ({Math.round((summary.score / (summary.maxScore || 1)) * 100)}%)
+              Score: {Number(summary.score).toFixed(1)} / {summary.maxScore} ({Math.round((Number(summary.score) / (summary.maxScore || 1)) * 100)}%)
             </p>
           ) : (
             <p className="text-muted-foreground">Exam already completed.</p>
@@ -99,12 +102,17 @@ export default function StudyExamTake() {
   const mins = Math.floor(timeLeft / 60);
   const secs = timeLeft % 60;
 
+  const canSubmit = isMcq ? selectedIndex !== null : freeformAnswer.trim().length >= 5;
+
   const handleAnswer = async () => {
-    if (selectedIndex === null) return;
+    if (!canSubmit) return;
+    const answer: any = { questionId: question.id };
+    if (isMcq) answer.selectedOptionIndex = selectedIndex;
+    else answer.freeformAnswer = freeformAnswer.trim();
     const res = await submitMutation.mutateAsync({
       examId,
       data: {
-        answers: [{ questionId: question.id, selectedOptionIndex: selectedIndex }],
+        answers: [answer],
         timeSpentSeconds: timeSpent,
       },
     });
@@ -120,6 +128,7 @@ export default function StudyExamTake() {
     }
     setCurrentIndex(nextIdx);
     setSelectedIndex(null);
+    setFreeformAnswer("");
     setSubmitted(false);
     setResult(null);
   };
@@ -146,54 +155,106 @@ export default function StudyExamTake() {
 
         <p className="text-sm text-muted-foreground mb-2">
           Question {currentIndex + 1} of {exam.questionCount}
+          {question.format && question.format !== "multiple-choice" && (
+            <span className="ml-2 inline-flex items-center gap-1 text-xs uppercase tracking-wider text-primary">
+              <Sparkles className="h-3 w-3" /> {question.format.replace("-", " ")}
+            </span>
+          )}
         </p>
 
         <Card className="mb-6">
           <CardContent className="py-6">
-            <p className="font-medium text-lg mb-6">{question.prompt}</p>
-            <div className="space-y-2">
-              {question.options.map((opt: string, i: number) => {
-                let bg = "bg-background border hover:bg-muted";
-                if (submitted) {
-                  if (i === question.correctOptionIndex) bg = "bg-green-50 border-green-300";
-                  else if (i === selectedIndex) bg = "bg-red-50 border-red-300";
-                  else bg = "bg-muted border-muted opacity-50";
-                } else if (i === selectedIndex) {
-                  bg = "bg-primary/10 border-primary";
-                }
-                return (
-                  <button
-                    key={i}
-                    onClick={() => !submitted && setSelectedIndex(i)}
-                    disabled={submitted}
-                    className={`w-full text-left px-4 py-3 rounded-lg border text-sm transition-colors ${bg}`}
-                  >
-                    <span className="font-semibold mr-2">{String.fromCharCode(65 + i)}.</span>
-                    {opt}
-                  </button>
-                );
-              })}
-            </div>
+            <p className="font-medium text-lg mb-6 whitespace-pre-wrap">{question.prompt}</p>
+
+            {isMcq ? (
+              <div className="space-y-2">
+                {(question.options ?? []).map((opt: string, i: number) => {
+                  let bg = "bg-background border hover:bg-muted";
+                  if (submitted) {
+                    if (i === question.correctOptionIndex) bg = "bg-green-50 border-green-300";
+                    else if (i === selectedIndex) bg = "bg-red-50 border-red-300";
+                    else bg = "bg-muted border-muted opacity-50";
+                  } else if (i === selectedIndex) {
+                    bg = "bg-primary/10 border-primary";
+                  }
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => !submitted && setSelectedIndex(i)}
+                      disabled={submitted}
+                      className={`w-full text-left px-4 py-3 rounded-lg border text-sm transition-colors ${bg}`}
+                    >
+                      <span className="font-semibold mr-2">{String.fromCharCode(65 + i)}.</span>
+                      {opt}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Textarea
+                  value={freeformAnswer}
+                  onChange={(e) => setFreeformAnswer(e.target.value)}
+                  disabled={submitted}
+                  placeholder={
+                    question.format === "essay"
+                      ? "Write your essay response here…"
+                      : question.format === "fact-pattern"
+                        ? "Analyze the facts and apply the relevant principles…"
+                        : "Write a few sentences…"
+                  }
+                  rows={question.format === "essay" || question.format === "fact-pattern" ? 10 : 5}
+                  className="text-sm"
+                />
+                <p className="text-xs text-muted-foreground">
+                  {freeformAnswer.trim().length} chars · AI will grade against the scoring points and give feedback.
+                </p>
+              </div>
+            )}
 
             {submitted && result && (
-              <div className="mt-4 p-4 bg-muted rounded-lg">
-                <div className="flex items-center gap-2 mb-1">
+              <div className="mt-4 p-4 bg-muted rounded-lg space-y-2">
+                <div className="flex items-center gap-2">
                   {result.correct ? (
                     <CheckCircle2 className="h-5 w-5 text-green-500" />
                   ) : (
                     <XCircle className="h-5 w-5 text-red-500" />
                   )}
-                  <span className="font-medium">{result.correct ? "Correct!" : "Incorrect"}</span>
+                  <span className="font-medium">
+                    {result.correct
+                      ? "Strong answer"
+                      : typeof result.aiScore === "number"
+                        ? `Scored ${(result.aiScore * 100).toFixed(0)}%`
+                        : "Incorrect"}
+                  </span>
                 </div>
-                <p className="text-sm text-muted-foreground">{result.explanation}</p>
+                {result.explanation && (
+                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">{result.explanation}</p>
+                )}
+                {result.aiFeedback && (
+                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">{result.aiFeedback}</p>
+                )}
+                {Array.isArray(result.aiCoveredPoints) && result.aiCoveredPoints.length > 0 && (
+                  <div className="text-xs text-emerald-700">
+                    Covered: {result.aiCoveredPoints.join(" · ")}
+                  </div>
+                )}
+                {result.modelAnswer && (
+                  <details className="text-xs">
+                    <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
+                      Show model answer
+                    </summary>
+                    <p className="mt-1 whitespace-pre-wrap text-muted-foreground">{result.modelAnswer}</p>
+                  </details>
+                )}
               </div>
             )}
           </CardContent>
         </Card>
 
         {!submitted ? (
-          <Button className="w-full" onClick={handleAnswer} disabled={selectedIndex === null}>
-            Submit Answer
+          <Button className="w-full" onClick={handleAnswer} disabled={!canSubmit || submitMutation.isPending}>
+            {submitMutation.isPending ? "Grading…" : "Submit Answer"}
           </Button>
         ) : (
           <Button className="w-full" onClick={handleNext}>

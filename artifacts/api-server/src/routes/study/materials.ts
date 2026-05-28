@@ -152,6 +152,93 @@ router.delete("/:materialId", async (req, res) => {
   res.json({ success: true });
 });
 
+// Generate (or regenerate) a per-concept SVG diagram for dual-coding.
+// We keep this scoped under the parent material so we can validate ownership in one place.
+router.post("/:materialId/concepts/:conceptId/visual", async (req, res) => {
+  const userId = req.studyUser!.id;
+  const { materialId, conceptId } = req.params;
+
+  const [concept] = await db
+    .select()
+    .from(studyConceptsTable)
+    .where(
+      and(
+        eq(studyConceptsTable.userId, userId),
+        eq(studyConceptsTable.id, conceptId),
+        eq(studyConceptsTable.materialId, materialId),
+      ),
+    )
+    .limit(1);
+  if (!concept) {
+    res.status(404).json({ error: "Concept not found" });
+    return;
+  }
+
+  // Use a dynamic import so this route file stays free of side-effect coupling
+  // to the OpenAI client (which throws at import time if env vars are missing).
+  const { openai, PRIMARY_MODEL } = await import("../../lib/openai.js");
+
+  const systemPrompt = `You are an editorial illustrator. You produce SINGLE, self-contained SVG diagrams that explain one concept visually.
+Return ONLY the raw SVG markup (starts with <svg ...> and ends with </svg>). No XML declaration, no <!DOCTYPE>, no markdown fences, no commentary.
+Rules:
+- viewBox="0 0 400 240", no fixed width/height attributes (so it scales).
+- Use only these colors: #0f172a (slate-900) for primary lines/text, #475569 (slate-600) for secondary, #2563eb (blue-600) for highlight, #e0e7ff (indigo-100) for fill accents, #ffffff for backgrounds.
+- Editorial, calm, schematic style — not cartoonish, not photo-real. Think Stripe or FT Weekend Magazine.
+- Include 2-6 short text labels (<text> elements, font-size 12-14, font-family sans-serif).
+- Use <rect>, <line>, <path>, <circle>, <text> only. NO <script>, NO <foreignObject>, NO external <image>.
+- Diagram should reveal the structure, flow, or relationships in the concept — not just decorate it.`;
+
+  const userPrompt = `Concept: ${concept.title}\n\nExplanation:\n${concept.explanation.slice(0, 2000)}\n\nKey terms: ${(concept.keyTerms ?? []).join(", ") || "(none)"}\n\nProduce one SVG diagram that visually explains this concept.`;
+
+  let svgText: string | null = null;
+  try {
+    const response = await openai.chat.completions.create({
+      model: PRIMARY_MODEL,
+      max_completion_tokens: 4096,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+    });
+    svgText = response.choices[0]?.message?.content ?? null;
+  } catch (err) {
+    req.log?.warn({ err }, "concept visual generation failed");
+    res.status(502).json({ error: "Could not generate diagram. Try again in a moment." });
+    return;
+  }
+
+  if (!svgText) {
+    res.status(502).json({ error: "Empty response from model." });
+    return;
+  }
+
+  // Sanitize: strip code fences, trim, ensure it starts with <svg, strip any <script> tags as defense-in-depth.
+  let cleaned = svgText
+    .replace(/^```(?:svg|xml|html)?\s*/i, "")
+    .replace(/```\s*$/i, "")
+    .trim();
+  const svgStart = cleaned.indexOf("<svg");
+  const svgEnd = cleaned.lastIndexOf("</svg>");
+  if (svgStart === -1 || svgEnd === -1) {
+    res.status(502).json({ error: "Model did not return valid SVG." });
+    return;
+  }
+  cleaned = cleaned.slice(svgStart, svgEnd + 6);
+  // Strip script tags and inline event handlers as a precaution (client also sanitizes).
+  cleaned = cleaned
+    .replace(/<script[\s\S]*?<\/script>/gi, "")
+    .replace(/\son\w+\s*=\s*"[^"]*"/gi, "")
+    .replace(/\son\w+\s*=\s*'[^']*'/gi, "");
+
+  const [updated] = await db
+    .update(studyConceptsTable)
+    .set({ visualSvg: cleaned })
+    .where(eq(studyConceptsTable.id, conceptId))
+    .returning();
+
+  res.json({ visualSvg: updated.visualSvg });
+});
+
 router.get("/:materialId/concepts", async (req, res) => {
   const userId = req.studyUser!.id;
   const materialId = req.params.materialId;

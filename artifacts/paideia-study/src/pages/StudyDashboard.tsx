@@ -101,12 +101,20 @@ export default function StudyDashboard() {
     }
   };
 
-  // Gate: send to learning-style diagnostic if not yet completed
+  // Gate 1: send to learning-style diagnostic if not yet completed
   useEffect(() => {
     if (!lsLoading && learningStyle === null) {
       setLoc("/learning-style");
     }
   }, [lsLoading, learningStyle, setLoc]);
+
+  // Gate 2: send to intake if learning-style is done but diagnostic intake isn't.
+  // We only redirect once we have profile data to avoid a flash-redirect on first load.
+  useEffect(() => {
+    if (profile && !profile.diagnosticComplete && learningStyle !== null && !lsLoading) {
+      setLoc("/intake");
+    }
+  }, [profile, learningStyle, lsLoading, setLoc]);
 
   const hasActivePath = sessionData?.hasActivePath ?? false;
   const progress = sessionData?.progress ?? { completedSteps: 0, totalSteps: 0, percentComplete: 0 };

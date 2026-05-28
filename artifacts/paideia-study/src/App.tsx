@@ -28,6 +28,7 @@ import StudyReadStep from "@/pages/StudyReadStep";
 import StudyLearningStyle from "@/pages/StudyLearningStyle";
 import StudyStrategy from "@/pages/StudyStrategy";
 import StudyProgress from "@/pages/StudyProgress";
+import StudyIntake from "@/pages/StudyIntake";
 
 const queryClient = new QueryClient();
 
@@ -76,6 +77,7 @@ function Router() {
       <Route path="/assessment/:id" component={() => <Protected component={StudyAssessment} />} />
       <Route path="/read-step/:pathId/:stepId" component={() => <Protected component={StudyReadStep} />} />
       <Route path="/learning-style" component={() => <Protected component={StudyLearningStyle} />} />
+      <Route path="/intake" component={() => <Protected component={StudyIntake} />} />
       <Route path="/strategy/:materialId" component={() => <Protected component={StudyStrategy} />} />
       <Route path="/progress" component={() => <Protected component={StudyProgress} />} />
       <Route component={NotFound} />

@@ -22,6 +22,12 @@ const updateSchema = z.object({
   background: z.string().nullable().optional(),
   dailyStudyMinutes: z.number().int().min(5).max(480).optional(),
   timezone: z.string().nullable().optional(),
+  // Diagnostic intake fields
+  examDate: z.string().datetime().nullable().optional(),
+  hoursPerWeek: z.number().int().min(1).max(80).nullable().optional(),
+  baselineLevel: z.enum(["zero", "foundations", "solid", "rusty"]).nullable().optional(),
+  calibrationSelfRating: z.enum(["high", "mid", "low", "under"]).nullable().optional(),
+  failureMode: z.enum(["passive", "cram", "avoid", "scattered", "perfect"]).nullable().optional(),
 });
 
 router.get("/", async (req, res) => {
@@ -60,7 +66,17 @@ router.get("/", async (req, res) => {
   const rawLearningProfile = (latestAssessment?.results as { learningProfile?: unknown } | null)?.learningProfile;
   const learningProfile = isLearningProfile(rawLearningProfile) ? rawLearningProfile : null;
 
-  res.json({ ...profile, learningProfile });
+  // Diagnostic intake is "complete" when the 5 onboarding signals are all set.
+  // The path generator should adapt to these signals once available.
+  const diagnosticComplete = Boolean(
+    profile.examTarget &&
+      profile.hoursPerWeek &&
+      profile.baselineLevel &&
+      profile.calibrationSelfRating &&
+      profile.failureMode,
+  );
+
+  res.json({ ...profile, learningProfile, diagnosticComplete });
 });
 
 router.patch("/", async (req, res) => {
@@ -82,6 +98,11 @@ router.patch("/", async (req, res) => {
   if (data.background !== undefined) updateData.background = data.background;
   if (data.dailyStudyMinutes !== undefined) updateData.dailyStudyMinutes = data.dailyStudyMinutes;
   if (data.timezone !== undefined) updateData.timezone = data.timezone;
+  if (data.examDate !== undefined) updateData.examDate = data.examDate ? new Date(data.examDate) : null;
+  if (data.hoursPerWeek !== undefined) updateData.hoursPerWeek = data.hoursPerWeek;
+  if (data.baselineLevel !== undefined) updateData.baselineLevel = data.baselineLevel;
+  if (data.calibrationSelfRating !== undefined) updateData.calibrationSelfRating = data.calibrationSelfRating;
+  if (data.failureMode !== undefined) updateData.failureMode = data.failureMode;
   updateData.updatedAt = new Date();
 
   const [profile] = await db

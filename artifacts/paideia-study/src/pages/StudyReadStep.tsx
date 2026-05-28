@@ -1,12 +1,92 @@
 import { useLocation, useParams } from "wouter";
 import { useStudyPath, useCompletePathStep } from "@/hooks/use-study-journey";
-import { useListStudyConcepts } from "@workspace/api-client-react";
+import { useListStudyConcepts, customFetch } from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, BookOpen, CheckCircle2, Clock, Loader2, Sparkles } from "lucide-react";
+import { ArrowLeft, BookOpen, CheckCircle2, Clock, Image as ImageIcon, Loader2, Sparkles } from "lucide-react";
 import StudyNav from "@/components/StudyNav";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+
+// Strict allowlist SVG sanitizer. AI-generated SVG is untrusted input; we cannot rely on
+// regex stripping (event handlers can be unquoted, dangerous tags can be obfuscated). Instead
+// we parse the markup with the browser's XML parser and rebuild a clean tree keeping only
+// known-safe SVG elements and attributes. Anything else is dropped.
+const ALLOWED_TAGS = new Set([
+  "svg", "g", "defs", "title", "desc",
+  "rect", "circle", "ellipse", "line", "polyline", "polygon", "path",
+  "text", "tspan", "textPath",
+  "linearGradient", "radialGradient", "stop",
+  "marker", "symbol", "use", "pattern", "clipPath", "mask",
+]);
+const ALLOWED_ATTRS = new Set([
+  "viewBox", "xmlns", "width", "height", "preserveAspectRatio",
+  "x", "y", "x1", "y1", "x2", "y2", "cx", "cy", "r", "rx", "ry",
+  "d", "points", "transform",
+  "fill", "stroke", "stroke-width", "stroke-linecap", "stroke-linejoin", "stroke-dasharray",
+  "fill-opacity", "stroke-opacity", "opacity",
+  "font-family", "font-size", "font-weight", "text-anchor", "dominant-baseline", "dy", "dx",
+  "offset", "stop-color", "stop-opacity",
+  "id", "class", "style",
+  "gradientUnits", "gradientTransform", "spreadMethod",
+  "patternUnits", "patternTransform",
+  "marker-start", "marker-mid", "marker-end", "markerWidth", "markerHeight", "refX", "refY", "orient",
+  "clip-path", "mask", "fill-rule", "clip-rule",
+]);
+// `style` is allowed but we additionally scrub url(), expression(), and javascript: out of its value.
+function scrubStyle(v: string): string | null {
+  if (/url\s*\(|expression\s*\(|javascript:|@import/i.test(v)) return null;
+  return v;
+}
+
+function sanitizeSvg(raw: string): string | null {
+  if (typeof window === "undefined" || !window.DOMParser) return null;
+  let doc: Document;
+  try {
+    doc = new DOMParser().parseFromString(raw, "image/svg+xml");
+  } catch {
+    return null;
+  }
+  const root = doc.documentElement;
+  if (!root || root.tagName.toLowerCase() !== "svg" || root.getElementsByTagName("parsererror").length > 0) {
+    return null;
+  }
+
+  const walk = (el: Element): boolean => {
+    const tag = el.tagName.toLowerCase();
+    if (!ALLOWED_TAGS.has(tag)) return false;
+
+    // Filter attributes
+    for (const attr of Array.from(el.attributes)) {
+      const name = attr.name;
+      // Drop anything namespaced (xlink:*, etc.) and anything not in the allowlist.
+      if (name.includes(":") || !ALLOWED_ATTRS.has(name)) {
+        el.removeAttribute(name);
+        continue;
+      }
+      const val = attr.value;
+      if (/javascript:|data:text\/html/i.test(val)) {
+        el.removeAttribute(name);
+        continue;
+      }
+      if (name === "style") {
+        const scrubbed = scrubStyle(val);
+        if (scrubbed === null) el.removeAttribute(name);
+        else el.setAttribute(name, scrubbed);
+      }
+    }
+
+    // Recurse, removing any child the walker rejects.
+    for (const child of Array.from(el.children)) {
+      if (!walk(child)) el.removeChild(child);
+    }
+    return true;
+  };
+
+  if (!walk(root)) return null;
+  return new XMLSerializer().serializeToString(root);
+}
 
 export default function StudyReadStep() {
   const { pathId, stepId } = useParams<{ pathId: string; stepId: string }>();
@@ -21,6 +101,30 @@ export default function StudyReadStep() {
   const { data: concepts, isLoading: conceptsLoading } = useListStudyConcepts(materialId ?? undefined);
 
   const concept = concepts?.find((c: any) => c.id === conceptId) ?? null;
+  const qc = useQueryClient();
+  const [generatingVisual, setGeneratingVisual] = useState(false);
+  const [visualError, setVisualError] = useState<string | null>(null);
+  const [localVisualSvg, setLocalVisualSvg] = useState<string | null>(null);
+  const visualSvg = localVisualSvg ?? concept?.visualSvg ?? null;
+  const safeSvg = useMemo(() => (visualSvg ? sanitizeSvg(visualSvg) : null), [visualSvg]);
+
+  const generateVisual = async () => {
+    if (!materialId || !conceptId) return;
+    setVisualError(null);
+    setGeneratingVisual(true);
+    try {
+      const res = await customFetch<{ visualSvg: string }>(
+        `/api/study/materials/${materialId}/concepts/${conceptId}/visual`,
+        { method: "POST", headers: { "Content-Type": "application/json" } },
+      );
+      setLocalVisualSvg(res.visualSvg);
+      qc.invalidateQueries({ queryKey: ["/api/study/materials", materialId, "concepts"] });
+    } catch (err: any) {
+      setVisualError(err?.data?.error || err?.message || "Couldn't generate a diagram.");
+    } finally {
+      setGeneratingVisual(false);
+    }
+  };
 
   // Position in path so the learner sees "Step X of Y"
   const stepIndex = pathData?.steps?.findIndex((s: any) => s.id === stepId) ?? -1;
@@ -111,6 +215,53 @@ export default function StudyReadStep() {
                     </p>
                   )}
                 </div>
+
+                {/* Dual-coding: per-concept diagram. Generated on demand and cached on the concept row. */}
+                {concept && (
+                  <div className="mt-5 border-t pt-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="text-xs uppercase tracking-wider text-gray-500 flex items-center gap-1.5">
+                        <ImageIcon className="w-3.5 h-3.5" /> Visual
+                      </div>
+                      {visualSvg && (
+                        <button
+                          onClick={generateVisual}
+                          disabled={generatingVisual}
+                          className="text-xs text-blue-600 hover:text-blue-700 disabled:opacity-50"
+                        >
+                          {generatingVisual ? "Regenerating…" : "Regenerate"}
+                        </button>
+                      )}
+                    </div>
+                    {safeSvg ? (
+                      <div
+                        className="rounded-lg border bg-white p-2 [&>svg]:w-full [&>svg]:h-auto"
+                        dangerouslySetInnerHTML={{ __html: safeSvg }}
+                      />
+                    ) : (
+                      <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 p-4 text-center">
+                        <p className="text-xs text-gray-500 mb-2">
+                          A diagram can make this concept stick faster.
+                        </p>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={generateVisual}
+                          disabled={generatingVisual}
+                        >
+                          {generatingVisual ? (
+                            <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> Drawing…</>
+                          ) : (
+                            <><ImageIcon className="w-3.5 h-3.5 mr-1.5" /> Generate diagram</>
+                          )}
+                        </Button>
+                        {visualError && (
+                          <p className="text-xs text-red-600 mt-2">{visualError}</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {Array.isArray(concept?.keyTerms) && concept!.keyTerms.length > 0 && (
                   <div className="mt-4">

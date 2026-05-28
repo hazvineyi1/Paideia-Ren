@@ -23,6 +23,7 @@ export default function StudyExams() {
   const [materialId, setMaterialId] = useState("");
   const [questionCount, setQuestionCount] = useState(20);
   const [timeLimitMinutes, setTimeLimitMinutes] = useState(60);
+  const [format, setFormat] = useState<"multiple-choice" | "short-answer" | "essay" | "fact-pattern">("multiple-choice");
   const [creating, setCreating] = useState(false);
 
   const handleCreate = async () => {
@@ -30,7 +31,7 @@ export default function StudyExams() {
     setCreating(true);
     try {
       const res = await createMutation.mutateAsync({
-        data: { title, materialId, questionCount, timeLimitMinutes },
+        data: { title, materialId, questionCount, timeLimitMinutes, format },
       });
       setLoc(`/exams/${res.id}/take`);
     } catch {
@@ -38,6 +39,13 @@ export default function StudyExams() {
       setCreating(false);
     }
   };
+
+  const FORMAT_OPTIONS: { value: typeof format; label: string; hint: string }[] = [
+    { value: "multiple-choice", label: "Multiple choice", hint: "Classic 4-option questions, graded instantly." },
+    { value: "short-answer", label: "Short answer", hint: "A few sentences. AI grades against scoring points." },
+    { value: "essay", label: "Essay", hint: "Long-form. AI rubric scoring + written feedback." },
+    { value: "fact-pattern", label: "Fact pattern", hint: "Scenario + analysis. Bar/MCAT style." },
+  ];
 
   return (
     <div className="min-h-screen bg-background">
@@ -81,6 +89,29 @@ export default function StudyExams() {
                   ))}
                 </select>
               )}
+            </div>
+            <div>
+              <Label>Question format</Label>
+              <div className="grid grid-cols-2 gap-2 mt-1">
+                {FORMAT_OPTIONS.map((opt) => {
+                  const active = format === opt.value;
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setFormat(opt.value)}
+                      className={`text-left px-3 py-2 rounded-md border text-xs transition ${
+                        active
+                          ? "bg-primary/10 border-primary ring-1 ring-primary/30"
+                          : "bg-background border-input hover:bg-muted"
+                      }`}
+                    >
+                      <div className="font-medium text-sm">{opt.label}</div>
+                      <div className="text-muted-foreground mt-0.5">{opt.hint}</div>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>

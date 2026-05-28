@@ -414,9 +414,12 @@ export const ListStudyExamsResponseItem = zod.object({
   "questions": zod.array(zod.object({
   "id": zod.string(),
   "prompt": zod.string(),
-  "options": zod.array(zod.string()),
-  "correctOptionIndex": zod.number(),
-  "explanation": zod.string(),
+  "format": zod.enum(['multiple-choice', 'short-answer', 'essay', 'fact-pattern']).optional(),
+  "options": zod.array(zod.string()).optional(),
+  "correctOptionIndex": zod.number().optional(),
+  "explanation": zod.string().optional(),
+  "modelAnswer": zod.string().optional(),
+  "scoringPoints": zod.array(zod.string()).optional(),
   "conceptId": zod.string().nullish(),
   "points": zod.number()
 })),
@@ -433,13 +436,15 @@ export const ListStudyExamsResponse = zod.array(ListStudyExamsResponseItem)
  */
 export const createStudyExamBodyQuestionCountDefault = 20;
 export const createStudyExamBodyTimeLimitMinutesDefault = 30;
+export const createStudyExamBodyFormatDefault = `multiple-choice`;
 
 export const CreateStudyExamBody = zod.object({
   "title": zod.string().optional(),
   "materialId": zod.string().nullish(),
   "conceptIds": zod.array(zod.string()).optional(),
   "questionCount": zod.number().default(createStudyExamBodyQuestionCountDefault),
-  "timeLimitMinutes": zod.number().default(createStudyExamBodyTimeLimitMinutesDefault)
+  "timeLimitMinutes": zod.number().default(createStudyExamBodyTimeLimitMinutesDefault),
+  "format": zod.enum(['multiple-choice', 'short-answer', 'essay', 'fact-pattern']).default(createStudyExamBodyFormatDefault)
 })
 
 
@@ -461,9 +466,12 @@ export const GetStudyExamResponse = zod.object({
   "questions": zod.array(zod.object({
   "id": zod.string(),
   "prompt": zod.string(),
-  "options": zod.array(zod.string()),
-  "correctOptionIndex": zod.number(),
-  "explanation": zod.string(),
+  "format": zod.enum(['multiple-choice', 'short-answer', 'essay', 'fact-pattern']).optional(),
+  "options": zod.array(zod.string()).optional(),
+  "correctOptionIndex": zod.number().optional(),
+  "explanation": zod.string().optional(),
+  "modelAnswer": zod.string().optional(),
+  "scoringPoints": zod.array(zod.string()).optional(),
   "conceptId": zod.string().nullish(),
   "points": zod.number()
 })),
@@ -484,7 +492,8 @@ export const SubmitStudyExamParams = zod.object({
 export const SubmitStudyExamBody = zod.object({
   "answers": zod.array(zod.object({
   "questionId": zod.string(),
-  "selectedOptionIndex": zod.number()
+  "selectedOptionIndex": zod.number().optional(),
+  "freeformAnswer": zod.string().optional()
 })),
   "timeSpentSeconds": zod.number()
 })

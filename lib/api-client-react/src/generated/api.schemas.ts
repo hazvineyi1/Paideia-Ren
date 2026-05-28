@@ -222,12 +222,25 @@ export interface StudyPracticeAnswerResult {
   sessionSummary?: StudyPracticeSummary;
 }
 
+export type StudyMockExamQuestionFormat = typeof StudyMockExamQuestionFormat[keyof typeof StudyMockExamQuestionFormat];
+
+
+export const StudyMockExamQuestionFormat = {
+  'multiple-choice': 'multiple-choice',
+  'short-answer': 'short-answer',
+  essay: 'essay',
+  'fact-pattern': 'fact-pattern',
+} as const;
+
 export interface StudyMockExamQuestion {
   id: string;
   prompt: string;
-  options: string[];
-  correctOptionIndex: number;
-  explanation: string;
+  format?: StudyMockExamQuestionFormat;
+  options?: string[];
+  correctOptionIndex?: number;
+  explanation?: string;
+  modelAnswer?: string;
+  scoringPoints?: string[];
   /** @nullable */
   conceptId?: string | null;
   points: number;
@@ -252,6 +265,16 @@ export interface StudyMockExam {
   createdAt: string;
 }
 
+export type StudyMockExamInputFormat = typeof StudyMockExamInputFormat[keyof typeof StudyMockExamInputFormat];
+
+
+export const StudyMockExamInputFormat = {
+  'multiple-choice': 'multiple-choice',
+  'short-answer': 'short-answer',
+  essay: 'essay',
+  'fact-pattern': 'fact-pattern',
+} as const;
+
 export interface StudyMockExamInput {
   title?: string;
   /** @nullable */
@@ -259,11 +282,13 @@ export interface StudyMockExamInput {
   conceptIds?: string[];
   questionCount?: number;
   timeLimitMinutes?: number;
+  format?: StudyMockExamInputFormat;
 }
 
 export type StudyMockExamSubmitAnswersItem = {
   questionId: string;
-  selectedOptionIndex: number;
+  selectedOptionIndex?: number;
+  freeformAnswer?: string;
 };
 
 export interface StudyMockExamSubmit {

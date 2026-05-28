@@ -8,5 +8,6 @@
 
 export type StudyMockExamSubmitAnswersItem = {
   questionId: string;
-  selectedOptionIndex: number;
+  selectedOptionIndex?: number;
+  freeformAnswer?: string;
 };

@@ -5,13 +5,17 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { StudyMockExamQuestionFormat } from './studyMockExamQuestionFormat';
 
 export interface StudyMockExamQuestion {
   id: string;
   prompt: string;
-  options: string[];
-  correctOptionIndex: number;
-  explanation: string;
+  format?: StudyMockExamQuestionFormat;
+  options?: string[];
+  correctOptionIndex?: number;
+  explanation?: string;
+  modelAnswer?: string;
+  scoringPoints?: string[];
   /** @nullable */
   conceptId?: string | null;
   points: number;
