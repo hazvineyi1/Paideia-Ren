@@ -13,28 +13,31 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { useGenerateAssessment, useStudyProfile, useUpdateStudyProfile } from "@/hooks/use-study-journey";
 import {
-  ArrowLeft, Sparkles, FileText, Link2, Upload, Image,
-  Mic, Globe, Brain, Loader2, CheckCircle2, X, Rocket,
-  BookOpen, Zap, Compass, ChevronRight
+  ArrowLeft, Sparkles, FileText, Link2, Upload, Image as ImageIcon,
+  Brain, Loader2, CheckCircle2, X, Rocket,
+  BookOpen, Zap, Compass, ChevronRight, FileAudio, FileVideo, File as FileIcon, AlertCircle
 } from "lucide-react";
 
-type SourceType = "paste" | "url" | "file" | "image" | "audio";
+type TabId = "paste" | "url" | "files";
 
-interface IngestionOption {
-  id: SourceType;
-  label: string;
-  icon: typeof FileText;
-  description: string;
-  accepted?: string;
+function fileIconFor(file: File) {
+  const t = file.type;
+  if (t.startsWith("image/")) return ImageIcon;
+  if (t.startsWith("audio/")) return FileAudio;
+  if (t.startsWith("video/")) return FileVideo;
+  if (t === "application/pdf" || /\.(pdf|docx?|txt|md)$/i.test(file.name)) return FileText;
+  return FileIcon;
 }
 
-const OPTIONS: IngestionOption[] = [
-  { id: "paste", label: "Paste Text", icon: FileText, description: "Notes, articles, textbook content" },
-  { id: "url", label: "Web URL", icon: Link2, description: "Articles, Wikipedia, docs" },
-  { id: "file", label: "Upload File", icon: Upload, description: "PDF, DOC, TXT files", accepted: ".pdf,.doc,.docx,.txt" },
-  { id: "image", label: "Image / Screenshot", icon: Image, description: "Notes, diagrams, slides", accepted: "image/*" },
-  { id: "audio", label: "Audio / Video", icon: Mic, description: "Lectures, podcasts, recordings", accepted: "audio/*,video/*" },
-];
+function prettySize(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
+}
+
+const MAX_FILES = 10;
+const ACCEPT_ALL =
+  ".pdf,.doc,.docx,.txt,.md,image/*,audio/*,video/*";
 
 export default function StudyMaterialNew() {
   const [, setLoc] = useLocation();
@@ -48,52 +51,61 @@ export default function StudyMaterialNew() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [sourceUrl, setSourceUrl] = useState("");
-  const [activeTab, setActiveTab] = useState<SourceType>("paste");
+  const [activeTab, setActiveTab] = useState<TabId>("paste");
   const [submitting, setSubmitting] = useState(false);
   const [stage, setStage] = useState<"input" | "processing" | "done">("input");
-  const [createdMaterial, setCreatedMaterial] = useState<any>(null);
+  const [createdMaterials, setCreatedMaterials] = useState<any[]>([]);
+  const [processedReport, setProcessedReport] = useState<Array<{label: string; kind: string; chars: number; error: string | null}>>([]);
   const [dragOver, setDragOver] = useState(false);
-  const [droppedFile, setDroppedFile] = useState<File | null>(null);
+  const [pickedFiles, setPickedFiles] = useState<File[]>([]);
+  const [combine, setCombine] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleSubmit = async (sourceType: SourceType) => {
-    if (!title) return;
-    if (sourceType === "paste" && !content) return;
-    if (sourceType === "url" && !sourceUrl) return;
-    setSubmitting(true);
-    setStage("processing");
+  const addFiles = (incoming: FileList | File[]) => {
+    const arr = Array.from(incoming);
+    const merged = [...pickedFiles, ...arr].slice(0, MAX_FILES);
+    setPickedFiles(merged);
+    if (!title && merged.length === 1) {
+      setTitle(merged[0]!.name.replace(/\.[^/.]+$/, ""));
+    }
+  };
 
+  const removeFile = (idx: number) => {
+    setPickedFiles((files) => files.filter((_, i) => i !== idx));
+  };
+
+  const saveLearningGoal = async () => {
+    const goal = learningGoal.trim();
+    if (goal && goal !== (profile?.examTarget ?? "")) {
+      try {
+        await updateProfile.mutateAsync({ examTarget: goal });
+      } catch { /* non-fatal */ }
+    }
+  };
+
+  const triggerKnowledgeGen = async (materialId: string) => {
     try {
-      // Save learning goal to learner profile so AI can use it as context
-      const goal = learningGoal.trim();
-      if (goal && goal !== (profile?.examTarget ?? "")) {
-        try {
-          await updateProfile.mutateAsync({ examTarget: goal });
-        } catch {
-          // non-fatal - continue with material creation
-        }
-      }
-
-      const material = await createMutation.mutateAsync({
-        data: {
-          title,
-          sourceType: (sourceType === "audio" ? "file" : sourceType) as any,
-          sourceUrl: sourceType === "url" ? sourceUrl || null : null,
-          contentText: content || sourceUrl || "",
-        },
-      });
-
-      queryClient.invalidateQueries({ queryKey: getListStudyMaterialsQueryKey() });
-      setCreatedMaterial(material);
-
-      // Trigger knowledge graph generation
       await fetch("/api/study/knowledge/generate", {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ materialId: material.id }),
+        body: JSON.stringify({ materialId }),
       });
+    } catch { /* non-fatal */ }
+  };
 
+  const handleSubmitText = async () => {
+    if (!title || !content) return;
+    setSubmitting(true);
+    setStage("processing");
+    try {
+      await saveLearningGoal();
+      const material = await createMutation.mutateAsync({
+        data: { title, sourceType: "paste", sourceUrl: null, contentText: content },
+      });
+      queryClient.invalidateQueries({ queryKey: getListStudyMaterialsQueryKey() });
+      setCreatedMaterials([material]);
+      await triggerKnowledgeGen(material.id);
       setStage("done");
     } catch (err: any) {
       alert(err?.data?.error || "Failed to add material");
@@ -102,54 +114,128 @@ export default function StudyMaterialNew() {
     }
   };
 
+  const handleSubmitUrl = async () => {
+    if (!title || !sourceUrl) return;
+    setSubmitting(true);
+    setStage("processing");
+    try {
+      await saveLearningGoal();
+      const fd = new FormData();
+      fd.append("title", title);
+      fd.append("combine", "true");
+      fd.append("urls", sourceUrl);
+      const res = await fetch("/api/study/materials/upload", {
+        method: "POST",
+        credentials: "include",
+        body: fd,
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.error || "Failed to fetch URL");
+      }
+      const data = await res.json();
+      queryClient.invalidateQueries({ queryKey: getListStudyMaterialsQueryKey() });
+      setCreatedMaterials(data.materials ?? []);
+      setProcessedReport(data.processed ?? []);
+      for (const m of data.materials ?? []) await triggerKnowledgeGen(m.id);
+      setStage("done");
+    } catch (err: any) {
+      alert(err?.message || "Failed to add material");
+      setSubmitting(false);
+      setStage("input");
+    }
+  };
+
+  const handleSubmitFiles = async () => {
+    if (pickedFiles.length === 0) return;
+    setSubmitting(true);
+    setStage("processing");
+    try {
+      await saveLearningGoal();
+      const fd = new FormData();
+      if (title) fd.append("title", title);
+      fd.append("combine", combine ? "true" : "false");
+      for (const f of pickedFiles) fd.append("files", f, f.name);
+      const res = await fetch("/api/study/materials/upload", {
+        method: "POST",
+        credentials: "include",
+        body: fd,
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.error || `Upload failed (${res.status})`);
+      }
+      const data = await res.json();
+      queryClient.invalidateQueries({ queryKey: getListStudyMaterialsQueryKey() });
+      setCreatedMaterials(data.materials ?? []);
+      setProcessedReport(data.processed ?? []);
+      for (const m of data.materials ?? []) await triggerKnowledgeGen(m.id);
+      setStage("done");
+    } catch (err: any) {
+      alert(err?.message || "Failed to add materials");
+      setSubmitting(false);
+      setStage("input");
+    }
+  };
+
   const handleStartAssessment = () => {
-    if (!createdMaterial) return;
+    const first = createdMaterials[0];
+    if (!first) return;
     generateAssessment.mutate(
-      { materialId: createdMaterial.id },
+      { materialId: first.id },
       {
-        onSuccess: (assessment: any) => {
-          setLoc(`/assessment/${assessment.id}`);
-        },
-        onError: () => {
-          alert("Assessment generation failed. Try again in a moment.");
-        },
+        onSuccess: (assessment: any) => setLoc(`/assessment/${assessment.id}`),
+        onError: () => alert("Assessment generation failed. Try again in a moment."),
       },
     );
   };
 
-  const handleDrop = (e: DragEvent<HTMLDivElement>, type: SourceType) => {
+  const handleDrop = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setDragOver(false);
-    const files = e.dataTransfer.files;
-    if (files.length > 0) {
-      setDroppedFile(files[0]);
-      setTitle(files[0].name.replace(/\.[^/.]+$/, ""));
-    }
+    if (e.dataTransfer.files.length > 0) addFiles(e.dataTransfer.files);
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setDroppedFile(file);
-      setTitle(file.name.replace(/\.[^/.]+$/, ""));
-    }
-  };
-
-  // Done / Success Stage
-  if (stage === "done" && createdMaterial) {
+  // ---- Done stage ----
+  if (stage === "done" && createdMaterials.length > 0) {
+    const single = createdMaterials.length === 1;
+    const failed = processedReport.filter((p) => p.error);
     return (
       <div className="min-h-screen bg-background">
-        <main className="max-w-lg mx-auto px-4 py-16 text-center">
+        <main className="max-w-lg mx-auto px-4 py-12 text-center">
           <div className="w-20 h-20 rounded-2xl bg-emerald-50 flex items-center justify-center mx-auto mb-6">
             <CheckCircle2 className="h-10 w-10 text-emerald-500" />
           </div>
-          <h1 className="text-2xl font-bold mb-2">Material Added!</h1>
-          <p className="text-muted-foreground mb-2">{createdMaterial.title}</p>
-          <p className="text-sm text-muted-foreground mb-8 max-w-sm mx-auto">
-            AI has extracted key concepts and built your knowledge graph. Now take a quick diagnostic assessment so we can personalize your learning path.
+          <h1 className="text-2xl font-bold mb-2">
+            {single ? "Material Added!" : `${createdMaterials.length} Materials Added!`}
+          </h1>
+          {single ? (
+            <p className="text-muted-foreground mb-2">{createdMaterials[0].title}</p>
+          ) : (
+            <div className="text-sm text-muted-foreground mb-3 space-y-1">
+              {createdMaterials.map((m) => (
+                <div key={m.id}>· {m.title}</div>
+              ))}
+            </div>
+          )}
+          <p className="text-sm text-muted-foreground mb-6 max-w-sm mx-auto">
+            AI is extracting concepts and building your knowledge graph. Take a quick diagnostic assessment to personalize your learning path.
           </p>
 
-          <div className="flex items-center justify-center gap-4 mb-8 text-xs text-muted-foreground">
+          {failed.length > 0 && (
+            <div className="text-left bg-amber-50 border border-amber-200 rounded-lg p-3 mb-6 text-xs">
+              <div className="flex items-center gap-1.5 font-medium text-amber-800 mb-1">
+                <AlertCircle className="h-3.5 w-3.5" /> {failed.length} item(s) could not be processed:
+              </div>
+              <ul className="text-amber-700 space-y-0.5">
+                {failed.map((f, i) => (
+                  <li key={i}>· {f.label}: {f.error}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <div className="flex items-center justify-center gap-4 mb-6 text-xs text-muted-foreground">
             <span className="flex items-center gap-1"><BookOpen className="h-3 w-3 text-primary" /> Concepts Extracted</span>
             <span className="flex items-center gap-1"><Zap className="h-3 w-3 text-primary" /> Flashcards Ready</span>
             <span className="flex items-center gap-1"><Compass className="h-3 w-3 text-primary" /> Path Waiting</span>
@@ -162,16 +248,9 @@ export default function StudyMaterialNew() {
             disabled={generateAssessment.isPending}
           >
             {generateAssessment.isPending ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Generating Assessment...
-              </>
+              <><Loader2 className="h-4 w-4 animate-spin" /> Generating Assessment...</>
             ) : (
-              <>
-                <Sparkles className="h-4 w-4" />
-                Start Diagnostic Assessment
-                <ChevronRight className="h-4 w-4" />
-              </>
+              <><Sparkles className="h-4 w-4" /> Start Diagnostic Assessment <ChevronRight className="h-4 w-4" /></>
             )}
           </Button>
 
@@ -179,20 +258,20 @@ export default function StudyMaterialNew() {
             variant="ghost"
             size="sm"
             className="mt-3 text-xs"
-            onClick={() => setLoc("/dashboard")}
+            onClick={() => setLoc(single ? "/dashboard" : "/materials")}
           >
-            Skip for Now → Dashboard
+            {single ? "Skip for Now → Dashboard" : "View All Materials →"}
           </Button>
         </main>
       </div>
     );
   }
 
-  // Processing Stage
+  // ---- Processing stage ----
   if (stage === "processing") {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center max-w-sm">
+        <div className="text-center max-w-sm px-4">
           <div className="relative w-16 h-16 mx-auto mb-4">
             <div className="absolute inset-0 rounded-full border-2 border-primary/20" />
             <div className="absolute inset-0 rounded-full border-2 border-t-primary animate-spin" />
@@ -200,15 +279,19 @@ export default function StudyMaterialNew() {
           </div>
           <h2 className="font-semibold mb-1">AI is Analyzing Your Material</h2>
           <p className="text-sm text-muted-foreground">
-            Extracting concepts, building knowledge graph, generating flashcards...
+            Reading files, transcribing audio, extracting concepts...
           </p>
-          <p className="text-xs text-muted-foreground mt-2">This takes ~10-20 seconds</p>
+          <p className="text-xs text-muted-foreground mt-2">
+            This can take 10-60 seconds depending on size.
+          </p>
         </div>
       </div>
     );
   }
 
-  // Input Stage
+  // ---- Input stage ----
+  const fileSubmitDisabled = pickedFiles.length === 0 || submitting;
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b px-4 py-3 flex items-center justify-between sticky top-0 bg-background/95 backdrop-blur-sm z-10">
@@ -226,11 +309,11 @@ export default function StudyMaterialNew() {
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold mb-2">Set Up Your Learning Journey</h1>
           <p className="text-sm text-muted-foreground">
-            Tell us your goal and share your materials. AI will profile how you learn and build your optimal path.
+            Share any materials - PDFs, Word docs, photos of notes, lectures, podcasts, web pages. AI handles the rest.
           </p>
         </div>
 
-        {/* Learning Goal - sets context for everything */}
+        {/* Learning Goal */}
         <Card className="mb-5 border-primary/20 bg-primary/5">
           <CardContent className="py-5 px-5">
             <div className="flex items-center gap-2 mb-2">
@@ -257,23 +340,32 @@ export default function StudyMaterialNew() {
 
         {/* Title */}
         <div className="mb-6">
-          <Label htmlFor="title" className="text-sm font-medium">Material title</Label>
+          <Label htmlFor="title" className="text-sm font-medium">
+            {activeTab === "files" && pickedFiles.length > 1 && combine
+              ? "Title for the combined study pack"
+              : activeTab === "files" && pickedFiles.length > 1
+                ? "Title prefix (optional - each file becomes its own material)"
+                : "Material title"}
+          </Label>
           <Input
             id="title"
             placeholder="e.g., Scrum Guide 2020 - Chapter 1"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             className="mt-1.5"
-            required
           />
         </div>
 
-        {/* Source Type Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 mb-6">
-          {OPTIONS.map((opt) => (
+        {/* Source Type Tabs */}
+        <div className="grid grid-cols-3 gap-2 mb-6">
+          {([
+            { id: "paste", label: "Paste Text", icon: FileText, desc: "Notes, articles, content" },
+            { id: "url", label: "Web URL", icon: Link2, desc: "Articles, Wikipedia, docs" },
+            { id: "files", label: "Upload Files", icon: Upload, desc: "PDFs, docs, images, audio, video" },
+          ] as const).map((opt) => (
             <button
               key={opt.id}
-              onClick={() => { setActiveTab(opt.id); setDroppedFile(null); }}
+              onClick={() => setActiveTab(opt.id)}
               className={`flex flex-col items-center gap-2 p-3 rounded-xl border transition-all text-left ${
                 activeTab === opt.id
                   ? "border-primary bg-primary/5 ring-1 ring-primary/20"
@@ -283,7 +375,7 @@ export default function StudyMaterialNew() {
               <opt.icon className={`h-5 w-5 ${activeTab === opt.id ? "text-primary" : "text-muted-foreground"}`} />
               <div className="text-center">
                 <p className={`text-xs font-medium ${activeTab === opt.id ? "text-primary" : ""}`}>{opt.label}</p>
-                <p className="text-[10px] text-muted-foreground leading-tight mt-0.5 hidden sm:block">{opt.description}</p>
+                <p className="text-[10px] text-muted-foreground leading-tight mt-0.5 hidden sm:block">{opt.desc}</p>
               </div>
             </button>
           ))}
@@ -325,59 +417,115 @@ export default function StudyMaterialNew() {
                   onChange={(e) => setSourceUrl(e.target.value)}
                 />
                 <p className="text-xs text-muted-foreground mt-2">
-                  Paste a link to an article, Wikipedia page, or any web resource. AI will extract key concepts.
+                  AI fetches the page, strips the markup, and extracts concepts.
                 </p>
               </div>
             )}
 
-            {(activeTab === "file" || activeTab === "image" || activeTab === "audio") && (
-              <div
-                onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-                onDragLeave={() => setDragOver(false)}
-                onDrop={(e) => handleDrop(e, activeTab)}
-                className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors ${
-                  dragOver ? "border-primary bg-primary/5" : "border-muted-foreground/20 hover:border-muted-foreground/40"
-                }`}
-              >
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept={OPTIONS.find((o) => o.id === activeTab)?.accepted}
-                  className="hidden"
-                  onChange={handleFileSelect}
-                />
-                {droppedFile ? (
-                  <div className="flex items-center gap-3 justify-center">
-                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <CheckCircle2 className="h-5 w-5 text-primary" />
-                    </div>
-                    <div className="text-left">
-                      <p className="text-sm font-medium">{droppedFile.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {(droppedFile.size / 1024 / 1024).toFixed(2)} MB
-                      </p>
-                    </div>
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => setDroppedFile(null)}>
-                      <X className="h-4 w-4" />
-                    </Button>
+            {activeTab === "files" && (
+              <div>
+                <div
+                  onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                  onDragLeave={() => setDragOver(false)}
+                  onDrop={handleDrop}
+                  className={`border-2 border-dashed rounded-xl p-6 text-center transition-colors ${
+                    dragOver ? "border-primary bg-primary/5" : "border-muted-foreground/20 hover:border-muted-foreground/40"
+                  }`}
+                >
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    multiple
+                    accept={ACCEPT_ALL}
+                    className="hidden"
+                    onChange={(e) => {
+                      if (e.target.files) addFiles(e.target.files);
+                      e.target.value = "";
+                    }}
+                  />
+                  <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center mx-auto mb-3">
+                    <Upload className="h-6 w-6 text-muted-foreground" />
                   </div>
-                ) : (
-                  <>
-                    <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center mx-auto mb-3">
-                      {activeTab === "file" && <Upload className="h-6 w-6 text-muted-foreground" />}
-                      {activeTab === "image" && <Image className="h-6 w-6 text-muted-foreground" />}
-                      {activeTab === "audio" && <Mic className="h-6 w-6 text-muted-foreground" />}
+                  <p className="text-sm font-medium mb-1">
+                    Drop files here or pick up to {MAX_FILES} from your device
+                  </p>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    PDF · Word · TXT · Images · Audio · Video (max 50 MB each)
+                  </p>
+                  <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+                    Browse Files
+                  </Button>
+                </div>
+
+                {pickedFiles.length > 0 && (
+                  <div className="mt-4 space-y-2">
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span>{pickedFiles.length} file{pickedFiles.length === 1 ? "" : "s"} selected</span>
+                      <button
+                        type="button"
+                        onClick={() => setPickedFiles([])}
+                        className="text-muted-foreground hover:text-foreground underline"
+                      >
+                        Clear all
+                      </button>
                     </div>
-                    <p className="text-sm font-medium mb-1">
-                      Drop {activeTab === "file" ? "a file" : activeTab === "image" ? "an image" : "audio/video"} here
-                    </p>
-                    <p className="text-xs text-muted-foreground mb-3">
-                      or click to browse from your device
-                    </p>
-                    <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
-                      Browse Files
-                    </Button>
-                  </>
+                    <ul className="space-y-1.5">
+                      {pickedFiles.map((f, i) => {
+                        const Icon = fileIconFor(f);
+                        return (
+                          <li key={i} className="flex items-center gap-2 p-2 rounded-lg border bg-card">
+                            <Icon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-medium truncate">{f.name}</p>
+                              <p className="text-[10px] text-muted-foreground">{prettySize(f.size)}</p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => removeFile(i)}
+                              className="text-muted-foreground hover:text-foreground p-1"
+                              aria-label="Remove file"
+                            >
+                              <X className="h-3.5 w-3.5" />
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+
+                    {pickedFiles.length > 1 && (
+                      <div className="mt-3 p-3 rounded-lg border bg-muted/30">
+                        <p className="text-xs font-medium mb-2">How should these be organized?</p>
+                        <div className="space-y-1.5">
+                          <label className="flex items-start gap-2 cursor-pointer">
+                            <input
+                              type="radio"
+                              name="combine"
+                              checked={!combine}
+                              onChange={() => setCombine(false)}
+                              className="mt-0.5"
+                            />
+                            <div>
+                              <p className="text-xs font-medium">Keep as separate materials</p>
+                              <p className="text-[10px] text-muted-foreground">Each file gets its own concepts, flashcards, and assessment.</p>
+                            </div>
+                          </label>
+                          <label className="flex items-start gap-2 cursor-pointer">
+                            <input
+                              type="radio"
+                              name="combine"
+                              checked={combine}
+                              onChange={() => setCombine(true)}
+                              className="mt-0.5"
+                            />
+                            <div>
+                              <p className="text-xs font-medium">Combine into one material</p>
+                              <p className="text-[10px] text-muted-foreground">All files merged into a single knowledge graph and assessment.</p>
+                            </div>
+                          </label>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
             )}
@@ -388,24 +536,27 @@ export default function StudyMaterialNew() {
         <Button
           className="w-full gap-2"
           size="lg"
-          disabled={!title || (activeTab === "paste" && !content) || (activeTab === "url" && !sourceUrl) || ((activeTab === "file" || activeTab === "image" || activeTab === "audio") && !droppedFile) || submitting}
-          onClick={() => handleSubmit(activeTab)}
+          disabled={
+            submitting ||
+            (activeTab === "paste" && (!title || !content)) ||
+            (activeTab === "url" && (!title || !sourceUrl)) ||
+            (activeTab === "files" && fileSubmitDisabled)
+          }
+          onClick={() => {
+            if (activeTab === "paste") handleSubmitText();
+            else if (activeTab === "url") handleSubmitUrl();
+            else handleSubmitFiles();
+          }}
         >
           {submitting ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              AI is analyzing your material...
-            </>
+            <><Loader2 className="h-4 w-4 animate-spin" /> AI is analyzing your material...</>
           ) : (
-            <>
-              <Sparkles className="h-4 w-4" />
-              Start Learning - Generate Concepts & Path
-            </>
+            <><Sparkles className="h-4 w-4" /> Start Learning - Generate Concepts & Path</>
           )}
         </Button>
 
         <p className="text-xs text-muted-foreground text-center mt-3">
-          After upload, AI extracts concepts, generates flashcards, and creates your personalized assessment & learning path.
+          AI reads PDFs and docs, transcribes audio/video, and reads images using vision models. Then it extracts concepts, generates flashcards, and creates your personalized learning path.
         </p>
       </main>
     </div>

@@ -1,6 +1,7 @@
 import { Router, type IRouter } from "express";
 import authRouter from "./auth.js";
 import materialsRouter from "./materials.js";
+import uploadRouter from "./upload.js";
 import flashcardsRouter from "./flashcards.js";
 import practiceRouter from "./practice.js";
 import examsRouter from "./exams.js";
@@ -17,6 +18,7 @@ import pathsRouter from "./paths.js";
 const router: IRouter = Router();
 
 router.use("/auth", authRouter);
+router.use("/materials/upload", uploadRouter);
 router.use("/materials", materialsRouter);
 router.use("/flashcards", flashcardsRouter);
 router.use("/practice", practiceRouter);
