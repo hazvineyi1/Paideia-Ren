@@ -42,7 +42,7 @@ const TASK_ICONS = {
 export default function StudyLearningStyle() {
   const [, setLoc] = useLocation();
   const { data: existing } = useLearningStyleProfile();
-  const { data: tasks, isLoading } = useLearningStyleTasks();
+  const { data: tasks, isLoading, error: tasksError } = useLearningStyleTasks();
   const submit = useSubmitLearningStyle();
 
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -58,10 +58,29 @@ export default function StudyLearningStyle() {
 
   const progress = useMemo(() => Math.round((step / Math.max(totalSteps - 1, 1)) * 100), [step, totalSteps]);
 
-  if (isLoading || !tasks) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-6 w-6 text-primary animate-spin" />
+      </div>
+    );
+  }
+
+  if (tasksError || !tasks) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center px-4">
+        <Card className="max-w-md w-full">
+          <CardContent className="py-8 text-center">
+            <h2 className="font-bold text-lg mb-2">We couldn't load your diagnostic</h2>
+            <p className="text-sm text-muted-foreground mb-5">
+              {tasksError instanceof Error ? tasksError.message : "Please sign in and try again."}
+            </p>
+            <div className="flex flex-col gap-2">
+              <Button onClick={() => setLoc("/login")}>Go to sign in</Button>
+              <Button variant="outline" onClick={() => window.location.reload()}>Retry</Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
