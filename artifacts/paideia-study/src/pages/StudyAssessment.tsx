@@ -101,29 +101,68 @@ export default function StudyAssessment() {
 
   // Results screen
   if (results) {
-    const { score, detectedDifficulty, recommendedPathType, accuracyByConcept } = results.results ?? {};
-    const conceptAccuracies = Object.entries(accuracyByConcept ?? {}).map(([id, acc]) => ({
-      name: assessment?.questions?.find((q: any) => q.conceptId === id)?.conceptId ?? "Concept",
-      accuracy: acc as number,
-    }));
+    const { score, detectedDifficulty, recommendedPathType, accuracyByConcept, conceptNameMap } = results.results ?? {};
+
+    // Build concept accuracies with names, sorted weakest first
+    const conceptAccuracies = Object.entries(accuracyByConcept ?? {})
+      .map(([id, acc]) => ({
+        id,
+        name: (conceptNameMap?.[id]?.title) || "Concept",
+        accuracy: acc as number,
+      }))
+      .sort((a, b) => a.accuracy - b.accuracy);
+
+    const weakConcepts = conceptAccuracies.filter((c) => c.accuracy < 50);
+    const strongConcepts = conceptAccuracies.filter((c) => c.accuracy >= 70);
+    const moderateConcepts = conceptAccuracies.filter((c) => c.accuracy >= 50 && c.accuracy < 70);
+
+    const pathTypeLabel = recommendedPathType === "gentle" ? "Gentle Pace" : recommendedPathType === "intensive" ? "Intensive" : "Standard";
+    const pathTypeDesc = recommendedPathType === "gentle"
+      ? "Extra scaffolding and repetition. More time on each concept before advancing."
+      : recommendedPathType === "intensive"
+      ? "Fast-paced with deeper connections. Assumes solid foundation, pushes to mastery quickly."
+      : "Balanced approach. Solid instruction with moderate practice per concept.";
 
     return (
       <div className="min-h-screen bg-background">
-        <main className="max-w-2xl mx-auto px-4 py-12">
-          <div className="text-center mb-10">
-            <div className="inline-flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full mb-4">
+        <main className="max-w-2xl mx-auto px-4 py-10">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full mb-3">
               <Sparkles className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium text-primary">Assessment Complete</span>
+              <span className="text-sm font-medium text-primary">Your Study Plan is Ready</span>
             </div>
-            <h1 className="text-3xl font-bold mb-2">Your Learning Profile</h1>
-            <p className="text-muted-foreground">AI has analyzed your diagnostic results and prepared a personalized learning journey.</p>
+            <h1 className="text-2xl font-bold mb-2">Here's What the AI Found</h1>
+            <p className="text-sm text-muted-foreground max-w-md mx-auto">
+              Based on your diagnostic, the AI chose where to start and how fast to move. Here's why.
+            </p>
           </div>
 
-          {/* Score Circle */}
-          <Card className="mb-6 border-primary/20">
-            <CardContent className="py-8 px-6">
-              <div className="flex flex-col items-center">
-                <div className="relative w-32 h-32 mb-4">
+          {/* AI Decision Summary */}
+          <Card className="mb-5 border-primary/20 bg-gradient-to-br from-primary/5 to-background">
+            <CardContent className="py-5 px-5">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                  <Brain className="h-6 w-6 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-sm mb-1">AI's Decision</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    You scored <span className="font-semibold text-foreground">{score}%</span> — {detectedDifficulty === "advanced" ? "strong grasp" : detectedDifficulty === "intermediate" ? "decent foundation" : "building from fundamentals"}.
+                    The AI has scheduled <span className="font-semibold text-foreground">{weakConcepts.length > 0 ? weakConcepts.length : "no"} weak concept{weakConcepts.length !== 1 ? "s" : ""}</span> first
+                    {strongConcepts.length > 0 ? ` and will briefly revisit ${strongConcepts.length} mastered concept${strongConcepts.length !== 1 ? "s" : ""} for retention.` : "."}
+                    Path type: <span className="font-semibold text-foreground">{pathTypeLabel}</span>.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Score + Path Type */}
+          <div className="grid sm:grid-cols-3 gap-3 mb-5">
+            <Card className="sm:col-span-1">
+              <CardContent className="py-5 text-center">
+                <div className="relative w-20 h-20 mx-auto mb-2">
                   <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
                     <circle cx="50" cy="50" r="42" fill="none" stroke="currentColor" strokeWidth="6" className="text-muted/20" />
                     <circle
@@ -135,72 +174,68 @@ export default function StudyAssessment() {
                     />
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-3xl font-bold">{score}%</span>
-                    <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Score</span>
+                    <span className="text-xl font-bold">{score}%</span>
                   </div>
                 </div>
-                <p className="text-sm text-muted-foreground max-w-xs text-center">
-                  {score >= 70
-                    ? "Strong foundation! Your personalized path will build on this with advanced connections and deeper applications."
-                    : score >= 50
-                    ? "Good start. Your path focuses on solidifying fundamentals before building to more complex concepts."
-                    : "No worries — everyone starts somewhere. Your path is designed to gently build from the ground up."}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Detected Profile */}
-          <div className="grid sm:grid-cols-2 gap-3 mb-6">
-            <Card>
-              <CardContent className="py-4 px-5">
-                <div className="flex items-center gap-2 mb-2">
-                  <Target className="h-4 w-4 text-primary" />
-                  <span className="text-sm font-medium">Detected Level</span>
-                </div>
-                <Badge variant={detectedDifficulty === "advanced" ? "default" : detectedDifficulty === "intermediate" ? "secondary" : "outline"}>
-                  {detectedDifficulty?.charAt(0).toUpperCase() + detectedDifficulty?.slice(1)}
-                </Badge>
+                <p className="text-xs text-muted-foreground">Diagnostic Score</p>
               </CardContent>
             </Card>
-            <Card>
-              <CardContent className="py-4 px-5">
-                <div className="flex items-center gap-2 mb-2">
+            <Card className="sm:col-span-2">
+              <CardContent className="py-5 px-5">
+                <div className="flex items-center gap-2 mb-1">
                   <Zap className="h-4 w-4 text-primary" />
-                  <span className="text-sm font-medium">Path Type</span>
+                  <span className="text-sm font-medium">{pathTypeLabel} Path</span>
                 </div>
-                <Badge variant="secondary">
-                  {recommendedPathType === "gentle" ? "Gentle Pace" : recommendedPathType === "intensive" ? "Intensive" : "Standard"}
-                </Badge>
+                <p className="text-sm text-muted-foreground leading-relaxed">{pathTypeDesc}</p>
+                <div className="flex items-center gap-2 mt-2">
+                  <Badge variant={detectedDifficulty === "advanced" ? "default" : detectedDifficulty === "intermediate" ? "secondary" : "outline"}>
+                    {detectedDifficulty?.charAt(0).toUpperCase() + detectedDifficulty?.slice(1)} Level Detected
+                  </Badge>
+                </div>
               </CardContent>
             </Card>
           </div>
 
-          {/* Concept Breakdown */}
+          {/* Concept Breakdown — Prioritized */}
           {conceptAccuracies.length > 0 && (
-            <Card className="mb-6">
-              <CardContent className="py-4 px-5">
-                <h3 className="font-semibold text-sm flex items-center gap-2 mb-3">
-                  <TrendingUp className="h-4 w-4 text-primary" />
-                  Concept Mastery
-                </h3>
+            <Card className="mb-5">
+              <CardContent className="py-5 px-5">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-semibold text-sm flex items-center gap-2">
+                    <TrendingUp className="h-4 w-4 text-primary" />
+                    Concept Priority — Weakest First
+                  </h3>
+                  <span className="text-[10px] text-muted-foreground">Order = study sequence</span>
+                </div>
                 <div className="space-y-3">
-                  {conceptAccuracies.map((c, i) => (
-                    <div key={i}>
-                      <div className="flex items-center justify-between text-xs mb-1">
-                        <span className="text-muted-foreground">Concept {i + 1}</span>
-                        <span className={`font-medium ${c.accuracy >= 70 ? "text-emerald-600" : c.accuracy >= 50 ? "text-amber-600" : "text-orange-600"}`}>
-                          {c.accuracy}%
-                        </span>
+                  {conceptAccuracies.map((c, i) => {
+                    const isWeak = c.accuracy < 50;
+                    const isStrong = c.accuracy >= 70;
+                    return (
+                      <div key={c.id} className={`p-3 rounded-lg border ${isWeak ? "border-orange-200 bg-orange-50/50" : isStrong ? "border-emerald-200 bg-emerald-50/50" : "border-border bg-card"}`}>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <div className="flex items-center gap-2">
+                            <span className={`text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center ${isWeak ? "bg-orange-100 text-orange-600" : isStrong ? "bg-emerald-100 text-emerald-600" : "bg-muted text-muted-foreground"}`}>
+                              {i + 1}
+                            </span>
+                            <span className="text-sm font-medium truncate max-w-[200px] sm:max-w-xs">{c.name}</span>
+                          </div>
+                          <span className={`text-xs font-semibold ${isWeak ? "text-orange-600" : isStrong ? "text-emerald-600" : "text-amber-600"}`}>
+                            {c.accuracy}%
+                          </span>
+                        </div>
+                        <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all ${isWeak ? "bg-orange-500" : isStrong ? "bg-emerald-500" : "bg-amber-500"}`}
+                            style={{ width: `${c.accuracy}%` }}
+                          />
+                        </div>
+                        <p className="text-[10px] text-muted-foreground mt-1">
+                          {isWeak ? "Needs focused study — assigned first in your path" : isStrong ? "Solid — brief retention review scheduled" : "Moderate — standard practice sequence"}
+                        </p>
                       </div>
-                      <div className="h-2 bg-muted rounded-full overflow-hidden">
-                        <div
-                          className={`h-full rounded-full transition-all ${c.accuracy >= 70 ? "bg-emerald-500" : c.accuracy >= 50 ? "bg-amber-500" : "bg-orange-500"}`}
-                          style={{ width: `${c.accuracy}%` }}
-                        />
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </CardContent>
             </Card>
@@ -208,13 +243,14 @@ export default function StudyAssessment() {
 
           {/* CTA */}
           <div className="text-center">
-            <Button size="lg" className="gap-2" onClick={() => setLoc("/dashboard")}>
+            <Button size="lg" className="gap-2 w-full max-w-xs" onClick={() => setLoc("/dashboard")}>
               <Trophy className="h-4 w-4" />
-              Start Your Learning Journey
+              Start My Personalized Path
               <ArrowRight className="h-4 w-4" />
             </Button>
-            <p className="text-xs text-muted-foreground mt-2">
-              Your personalized path is ready with {detectedDifficulty === "beginner" ? "gentle" : "structured"} steps tailored to your level.
+            <p className="text-xs text-muted-foreground mt-3 max-w-sm mx-auto">
+              The AI has built {conceptAccuracies.length} concept stages with {recommendedPathType === "gentle" ? "extra practice" : recommendedPathType === "intensive" ? "advanced connections" : "balanced study"} per concept.
+              Your first step is ready.
             </p>
           </div>
         </main>

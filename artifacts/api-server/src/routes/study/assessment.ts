@@ -197,12 +197,23 @@ router.post("/:id/complete", async (req, res) => {
   if (detectedDifficulty === "beginner") recommendedPathType = "gentle";
   else if (detectedDifficulty === "advanced") recommendedPathType = "intensive";
 
+  // Fetch concept names for the response
+  const conceptIdList = assessment.conceptIds ?? [];
+  const conceptRows = conceptIdList.length > 0
+    ? await db
+        .select({ id: studyConceptsTable.id, title: studyConceptsTable.title, explanation: studyConceptsTable.explanation })
+        .from(studyConceptsTable)
+        .where(and(eq(studyConceptsTable.userId, userId), inArray(studyConceptsTable.id, conceptIdList)))
+    : [];
+  const conceptNameMap = Object.fromEntries(conceptRows.map((c) => [c.id, c]));
+
   const results = {
     answers: scoredAnswers,
     score,
     accuracyByConcept,
     detectedDifficulty,
     recommendedPathType,
+    conceptNameMap,
   };
 
   await db
