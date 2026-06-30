@@ -71,6 +71,7 @@ export default function StudyAmbassador() {
 
   const statusQuery = useAmbassadorStatus();
   const enrolled = statusQuery.data?.enrolled ?? false;
+  const eligible = statusQuery.data?.eligible ?? false;
   const dashboard = useAmbassadorDashboard(enrolled);
 
   const join = useAmbassadorJoin();
@@ -175,8 +176,8 @@ export default function StudyAmbassador() {
             <CardHeader>
               <CardTitle>Join the program</CardTitle>
               <CardDescription>
-                It is free. Share your link, and earn on real payments from the learners who join
-                through it.
+                Open to learners on a paid plan. Share your link, and earn on real payments from the
+                learners who join through it.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -192,10 +193,22 @@ export default function StudyAmbassador() {
                   </li>
                 </ul>
               )}
-              <Button onClick={handleJoin} disabled={join.isPending} className="gap-2">
-                {join.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-                Join now
-              </Button>
+              {eligible ? (
+                <Button onClick={handleJoin} disabled={join.isPending} className="gap-2">
+                  {join.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+                  Join now
+                </Button>
+              ) : (
+                <div className="space-y-3">
+                  <p className="text-sm text-muted-foreground">
+                    The ambassador program is available to learners on a paid plan. Upgrade to Plus
+                    or Pro to join and start earning.
+                  </p>
+                  <Button onClick={() => setLoc("/upgrade")} className="gap-2">
+                    Upgrade to join
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         ) : dashboard.isLoading ? (

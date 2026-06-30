@@ -19,12 +19,18 @@ router.use(requireStudyUser);
 
 // Whether the current user is enrolled, plus the public program settings the
 // dashboard needs to render rates and payout options.
+// A user may only join once they are a paying subscriber (Plus or Pro).
+function isPayingTier(tier: string | null | undefined): boolean {
+  return tier === "plus" || tier === "pro";
+}
+
 router.get("/status", async (req, res) => {
   const userId = req.studyUser!.id;
   const ambassador = await getAmbassadorByUserId(userId);
   const settings = await getAmbassadorSettings();
   res.json({
     enrolled: !!ambassador,
+    eligible: isPayingTier(req.studyUser!.subscriptionTier),
     program: {
       schedule: settings.schedule,
       standardCapMonths: settings.standardCapMonths,
@@ -36,9 +42,13 @@ router.get("/status", async (req, res) => {
   });
 });
 
-// Free opt-in. Idempotent: returns the existing profile if already enrolled.
+// Paying subscribers only. Idempotent: returns the existing profile if already enrolled.
 router.post("/join", async (req, res) => {
   const userId = req.studyUser!.id;
+  if (!isPayingTier(req.studyUser!.subscriptionTier)) {
+    res.status(403).json({ error: "Upgrade to a paid plan to join the ambassador program" });
+    return;
+  }
   const method = typeof req.body?.payoutMethod === "string" ? req.body.payoutMethod : undefined;
   const handle = typeof req.body?.payoutHandle === "string" ? req.body.payoutHandle : undefined;
   if (method && !isPayoutMethod(method)) {

@@ -410,6 +410,7 @@ export interface AmbassadorProgramInfo {
 
 export interface AmbassadorStatus {
   enrolled: boolean;
+  eligible: boolean;
   program: AmbassadorProgramInfo;
 }
 
