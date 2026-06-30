@@ -55,7 +55,7 @@ export function Footer() {
             <span className="hidden md:inline text-border">·</span>
             <Link href="/privacy" className="hover:text-foreground">Privacy Policy</Link>
             <Link href="/terms" className="hover:text-foreground">Terms of Service</Link>
-            <span>© Synops</span>
+            <span>© Synops Consulting</span>
           </div>
         </div>
       </div>

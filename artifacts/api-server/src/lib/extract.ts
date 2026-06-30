@@ -215,7 +215,7 @@ export async function extractFromUrl(url: string): Promise<ExtractedContent> {
   const res = await fetch(safe.toString(), {
     headers: {
       "User-Agent":
-        "Mozilla/5.0 (compatible; PaideiaStudy/1.0; +https://paideia-ren.com)",
+        "Mozilla/5.0 (compatible; SynopsCoach/1.0; +https://synops-consulting.com)",
       Accept: "text/html,application/xhtml+xml,*/*;q=0.8",
     },
     redirect: "follow",
