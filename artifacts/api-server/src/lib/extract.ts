@@ -82,6 +82,23 @@ function isBlockedAddress(ip: string): boolean {
 export interface ExtractedContent {
   text: string;
   kind: "pdf" | "docx" | "txt" | "image" | "audio" | "video" | "url";
+  // The page's own title, when we can read one (used to auto-name URL materials).
+  title?: string;
+}
+
+function extractHtmlTitle(html: string): string | undefined {
+  const m = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+  if (!m) return undefined;
+  const decoded = (m[1] ?? "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\s+/g, " ")
+    .trim();
+  return decoded.length > 0 ? decoded.slice(0, 200) : undefined;
 }
 
 const MAX_TEXT_CHARS = 50000;
@@ -235,6 +252,7 @@ export async function extractFromUrl(url: string): Promise<ExtractedContent> {
 
   const contentType = res.headers.get("content-type") || "";
   const body = await res.text();
+  const pageTitle = contentType.includes("html") ? extractHtmlTitle(body) : undefined;
   const directText = contentType.includes("html")
     ? stripHtml(body)
     : body.replace(/\s+/g, " ").trim();
@@ -243,12 +261,13 @@ export async function extractFromUrl(url: string): Promise<ExtractedContent> {
   // JS-rendered SPA or a thin landing page). Use grounded web research that
   // focuses on this URL so we still produce real, cited study content.
   if (directText.length < 400) {
-    return researchTopic(
+    const researched = await researchTopic(
       `Summarize the educational content of this page so a learner can study from it: ${safe.toString()}`,
       { preferredUrl: safe.toString() },
     );
+    return { ...researched, title: pageTitle ?? researched.title };
   }
-  return { text: clamp(directText), kind: "url" };
+  return { text: clamp(directText), kind: "url", title: pageTitle };
 }
 
 /**

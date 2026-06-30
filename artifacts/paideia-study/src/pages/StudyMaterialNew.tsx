@@ -74,9 +74,6 @@ export default function StudyMaterialNew() {
     const arr = Array.from(incoming);
     const merged = [...pickedFiles, ...arr].slice(0, MAX_FILES);
     setPickedFiles(merged);
-    if (!title && merged.length === 1) {
-      setTitle(merged[0]!.name.replace(/\.[^/.]+$/, ""));
-    }
   };
 
   const removeFile = (idx: number) => {
@@ -124,13 +121,13 @@ export default function StudyMaterialNew() {
   };
 
   const handleSubmitUrl = async () => {
-    if (!title || !sourceUrl) return;
+    if (!sourceUrl) return;
     setSubmitting(true);
     setStage("processing");
     try {
       await saveLearningGoal();
       const fd = new FormData();
-      fd.append("title", title);
+      // Title is derived server-side from the fetched page title.
       fd.append("combine", "true");
       fd.append("urls", sourceUrl);
       const res = await fetch("/api/study/materials/upload", {
@@ -157,13 +154,13 @@ export default function StudyMaterialNew() {
 
   const handleSubmitTopic = async () => {
     const t = topic.trim();
-    if (!title || !t) return;
+    if (!t) return;
     setSubmitting(true);
     setStage("processing");
     try {
       await saveLearningGoal();
       const fd = new FormData();
-      fd.append("title", title);
+      // Title is derived server-side from the researched topic.
       fd.append("combine", "true");
       fd.append("topics", t);
       const res = await fetch("/api/study/materials/upload", {
@@ -195,7 +192,7 @@ export default function StudyMaterialNew() {
     try {
       await saveLearningGoal();
       const fd = new FormData();
-      if (title) fd.append("title", title);
+      // Titles are derived server-side from each file name (or "Study Pack (N)").
       fd.append("combine", combine ? "true" : "false");
       for (const f of pickedFiles) fd.append("files", f, f.name);
       const res = await fetch("/api/study/materials/upload", {
@@ -370,24 +367,6 @@ export default function StudyMaterialNew() {
           </CardContent>
         </Card>
 
-        {/* Title */}
-        <div className="mb-6">
-          <Label htmlFor="title" className="text-sm font-medium">
-            {activeTab === "files" && pickedFiles.length > 1 && combine
-              ? "Title for the combined study pack"
-              : activeTab === "files" && pickedFiles.length > 1
-                ? "Title prefix (optional - each file becomes its own material)"
-                : "Material title"}
-          </Label>
-          <Input
-            id="title"
-            placeholder="e.g., Scrum Guide 2020 - Chapter 1"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="mt-1.5"
-          />
-        </div>
-
         {/* Source Type Tabs */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-6">
           {([
@@ -423,6 +402,16 @@ export default function StudyMaterialNew() {
                   <FileText className="h-4 w-4 text-primary" />
                   <h3 className="font-semibold text-sm">Paste Your Study Notes</h3>
                   <Badge variant="outline" className="text-[10px] h-5 ml-auto">Fastest</Badge>
+                </div>
+                <div className="mb-3">
+                  <Label htmlFor="paste-title" className="text-sm font-medium">Material title</Label>
+                  <Input
+                    id="paste-title"
+                    placeholder="e.g., Cell Biology Lecture Notes"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    className="mt-1.5"
+                  />
                 </div>
                 <Textarea
                   placeholder="Paste lecture notes, textbook chapters, study guides, or any text content here..."
@@ -592,8 +581,8 @@ export default function StudyMaterialNew() {
           disabled={
             submitting ||
             (activeTab === "paste" && (!title || !content)) ||
-            (activeTab === "url" && (!title || !sourceUrl)) ||
-            (activeTab === "topic" && (!title || !topic.trim())) ||
+            (activeTab === "url" && !sourceUrl) ||
+            (activeTab === "topic" && !topic.trim()) ||
             (activeTab === "files" && fileSubmitDisabled)
           }
           onClick={() => {

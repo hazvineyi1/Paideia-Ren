@@ -24,6 +24,13 @@ function inferSourceType(kind: string): "paste" | "url" | "file" {
   return "file";
 }
 
+// Auto-derived titles can come from raw page labels or multi-line topic text;
+// collapse whitespace and cap the length so material names stay tidy.
+function cleanTitle(raw: string): string {
+  const cleaned = raw.replace(/\s+/g, " ").trim();
+  return (cleaned.length > 200 ? cleaned.slice(0, 200).trim() : cleaned) || "Untitled material";
+}
+
 router.post("/", upload.array("files", MAX_FILES), async (req, res) => {
   try {
     const userId = req.studyUser!.id;
@@ -86,7 +93,7 @@ router.post("/", upload.array("files", MAX_FILES), async (req, res) => {
       ...urls.map((url) => async () => {
         try {
           const result = await extractFromUrl(url);
-          items.push({ label: url, text: result.text, kind: result.kind, sourceUrl: url });
+          items.push({ label: result.title || url, text: result.text, kind: result.kind, sourceUrl: url });
         } catch (err) {
           items.push({
             label: url,
@@ -134,7 +141,7 @@ router.post("/", upload.array("files", MAX_FILES), async (req, res) => {
     const createdMaterials: any[] = [];
 
     if (combine) {
-      const combinedTitle = title || (usable.length === 1 ? usable[0]!.label : `Study Pack (${usable.length} sources)`);
+      const combinedTitle = cleanTitle(title || (usable.length === 1 ? usable[0]!.label : `Study Pack (${usable.length} sources)`));
       const sections = usable
         .map((i, idx) => `## Source ${idx + 1}: ${i.label}\n\n${i.text}`)
         .join("\n\n---\n\n");
@@ -161,7 +168,7 @@ router.post("/", upload.array("files", MAX_FILES), async (req, res) => {
       createdMaterials.push({ ...material!, conceptCount: 0, flashcardCount: 0 });
     } else {
       for (const item of usable) {
-        const itemTitle = usable.length === 1 && title ? title : item.label;
+        const itemTitle = cleanTitle(usable.length === 1 && title ? title : item.label);
         const [material] = await db
           .insert(studyMaterialsTable)
           .values({
