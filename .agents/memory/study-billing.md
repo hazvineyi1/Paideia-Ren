@@ -23,3 +23,14 @@ In recent Stripe API versions `current_period_end` is on `subscription.items.dat
 
 ## Sandbox/mock fallback
 With no merchant keys, providers' `isConfigured()` is false so `resolveProvider` returns the `mock` provider: a stateless poll that reports `paid` ~6s after initiation. This makes the whole checkout->poll->activate->Pro flow testable end to end without any keys. Go-live envs: `PAYNOW_INTEGRATION_ID/KEY`, `FLUTTERWAVE_SECRET_KEY/SECRET_HASH`. Flutterwave webhook is fail-closed in production when `FLUTTERWAVE_SECRET_HASH` is unset.
+
+## Mock activation is lazy and owner-scoped (matters for e2e tests)
+The mock payment does NOT flip to `paid` on a background timer. It reports `paid` only when the **owner's** session polls `GET /billing/payment/:id` after the ~6s window. So an e2e curl test must keep the original signup cookie jar and poll that endpoint to drive activation; sleeping then querying the DB leaves the row `pending`, and an admin/non-owner cookie cannot trigger it. Restarting api-server between checkout and activation is fine (mock is stateless).
+
+## Coupon redemption cap must be enforced atomically at increment time
+`previewCoupon()` checks `timesRedeemed < maxRedemptions` at checkout, but the count is only bumped later in `activatePayment()`. That is a TOCTOU gap: two concurrent checkouts both pass preview, then both increment.
+**Why:** an unconditional `timesRedeemed = timesRedeemed + 1` lets concurrent last-redemption checkouts oversubscribe the cap.
+**How to apply:** the increment UPDATE is guarded in the same statement: `WHERE code=? AND (max_redemptions IS NULL OR times_redeemed < max_redemptions)`. PostgreSQL evaluates this per-row atomically, so an at-cap coupon increments 0 rows (counter holds). Note this caps the *counter* only; a rare concurrent overage still grants the discount to the extra payment (acceptable for marketing coupons; reserve-at-checkout would be needed to harden further).
+
+## Tiers: Pro is top, Plus can buy up
+3 tiers free|plus|pro (`study_users.subscription_tier`, payment row carries `tier` default 'pro'). Upgrade page (`StudyUpgrade.tsx`): `pro` users get the managed/cancel view; `plus` users see the checkout flow restricted to Pro only (tier locked to 'pro', single tier card); `free` users see both Plus and Pro. Coupons can target a tier via `appliesToTier` (plus|pro|null=any); fixed-amount coupons must match the payment currency or preview rejects them.

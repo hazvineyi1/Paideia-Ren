@@ -6,12 +6,15 @@ import { getUncachableStripeClient } from "../../lib/stripeClient.js";
 import {
   COUNTRIES,
   METHODS,
-  PRO_FEATURES,
+  TIERS,
   isCountryCode,
   isInterval,
   isMethod,
+  isTier,
+  priceFor,
   toMinor,
   type CountryCode,
+  type TierId,
 } from "../../lib/billing/config.js";
 import { resolveProvider, getProviderById } from "../../lib/billing/providers/index.js";
 import {
@@ -19,6 +22,7 @@ import {
   getPaymentById,
   getSubscription,
 } from "../../lib/billing/service.js";
+import { previewCoupon } from "../../lib/billing/coupons.js";
 
 const router: IRouter = Router();
 router.use(requireStudyUser);
@@ -40,7 +44,34 @@ router.get("/config", (req, res) => {
   const selected = isCountryCode(countryParam)
     ? countries.find((c) => c.code === countryParam) ?? null
     : null;
-  res.json({ countries, selected, features: PRO_FEATURES });
+  res.json({
+    countries,
+    selected,
+    tiers: Object.values(TIERS),
+  });
+});
+
+// Validate a coupon against a concrete tier + country + interval, returning the
+// discounted price for the upgrade screen. Read-only; does not redeem.
+router.post("/coupon/preview", async (req, res) => {
+  const { code, tier, country, interval } = req.body ?? {};
+  if (typeof code !== "string" || !code.trim()) {
+    res.status(400).json({ error: "A coupon code is required" });
+    return;
+  }
+  if (!isTier(tier) || !isCountryCode(country) || !isInterval(interval)) {
+    res.status(400).json({ error: "Invalid tier, country, or interval" });
+    return;
+  }
+  const countryDef = COUNTRIES[country as CountryCode];
+  const baseMinor = toMinor(priceFor(country, tier, interval));
+  const preview = await previewCoupon({
+    code,
+    tier,
+    currency: countryDef.currency,
+    baseMinor,
+  });
+  res.json({ ...preview, currency: countryDef.currency, baseMinor });
 });
 
 // Current subscription state for the signed-in learner.
@@ -53,10 +84,10 @@ router.get("/subscription", async (req, res) => {
 // (card / web checkout) or polling info (mobile money push prompt).
 router.post("/mobile/checkout", async (req, res) => {
   const user = req.studyUser!;
-  const { interval, country, method, mobileNumber, autoRenew } = req.body ?? {};
+  const { tier, interval, country, method, mobileNumber, autoRenew, couponCode } = req.body ?? {};
 
-  if (!isInterval(interval) || !isCountryCode(country) || !isMethod(method)) {
-    res.status(400).json({ error: "Invalid interval, country, or method" });
+  if (!isTier(tier) || !isInterval(interval) || !isCountryCode(country) || !isMethod(method)) {
+    res.status(400).json({ error: "Invalid tier, interval, country, or method" });
     return;
   }
   const countryDef = COUNTRIES[country as CountryCode];
@@ -70,8 +101,29 @@ router.post("/mobile/checkout", async (req, res) => {
     return;
   }
 
-  const amountMajor = countryDef.price[interval];
-  const amountMinor = toMinor(amountMajor);
+  const baseMinor = toMinor(priceFor(country, tier as TierId, interval));
+  let amountMinor = baseMinor;
+  let discountMinor = 0;
+  let appliedCoupon: string | null = null;
+
+  // Re-validate any coupon server-side so a tampered client cannot self-discount.
+  if (typeof couponCode === "string" && couponCode.trim()) {
+    const preview = await previewCoupon({
+      code: couponCode,
+      tier: tier as TierId,
+      currency: countryDef.currency,
+      baseMinor,
+    });
+    if (!preview.valid) {
+      res.status(400).json({ error: preview.reason ?? "This coupon cannot be applied." });
+      return;
+    }
+    amountMinor = preview.finalMinor;
+    discountMinor = preview.discountMinor;
+    appliedCoupon = preview.code ?? null;
+  }
+
+  const amountMajor = amountMinor / 100;
   const reference = `SC-${user.id.slice(0, 8)}-${Date.now()}`;
   const provider = resolveProvider(country, method);
 
@@ -88,6 +140,9 @@ router.post("/mobile/checkout", async (req, res) => {
       country,
       currency: countryDef.currency,
       amountMinor,
+      tier,
+      couponCode: appliedCoupon,
+      discountMinor,
       interval,
       reference,
       mobileNumber: mobileNumber ?? null,
@@ -211,7 +266,10 @@ router.post("/cancel", async (req, res) => {
 // paideia_plan=coach so we never attach an unrelated plan's price (e.g. the
 // Teacher plan) to a Coach learner. Returns null when no such plan is configured
 // yet, which lets the caller fall back to a one-time card payment.
-async function findActivePriceId(interval: "month" | "year"): Promise<string | null> {
+async function findActivePriceId(
+  interval: "month" | "year",
+  tier: TierId,
+): Promise<string | null> {
   const result = (await db.execute(sql`
     SELECT pr.id
     FROM stripe.prices pr
@@ -221,6 +279,7 @@ async function findActivePriceId(interval: "month" | "year"): Promise<string | n
       AND pr.recurring IS NOT NULL
       AND (pr.recurring ->> 'interval') = ${interval}
       AND (p.metadata ->> 'paideia_plan') = 'coach'
+      AND (p.metadata ->> 'paideia_tier') = ${tier}
     ORDER BY pr.created DESC
     LIMIT 1
   `)) as unknown as { rows: Array<{ id: string }> };
@@ -279,13 +338,13 @@ router.post("/checkout", async (req, res) => {
 // fall back to a one-time card charge through the local gateway.
 router.post("/card/checkout", async (req, res) => {
   const user = req.studyUser!;
-  const { interval } = req.body ?? {};
-  if (!isInterval(interval)) {
-    res.status(400).json({ error: "Invalid interval" });
+  const { interval, tier } = req.body ?? {};
+  if (!isInterval(interval) || !isTier(tier)) {
+    res.status(400).json({ error: "Invalid interval or tier" });
     return;
   }
 
-  const priceId = await findActivePriceId(interval);
+  const priceId = await findActivePriceId(interval, tier as TierId);
   if (!priceId) {
     res.status(409).json({ error: "card_autopay_unavailable" });
     return;
@@ -299,9 +358,11 @@ router.post("/card/checkout", async (req, res) => {
     customer: customerId,
     mode: "subscription",
     line_items: [{ price: priceId, quantity: 1 }],
+    allow_promotion_codes: true,
     success_url: `${base}/study/upgrade?stripe=success`,
     cancel_url: `${base}/study/upgrade?stripe=cancel`,
-    metadata: { studyUserId: user.id, interval },
+    metadata: { studyUserId: user.id, interval, tier },
+    subscription_data: { metadata: { studyUserId: user.id, tier } },
   });
 
   res.json({ url: session.url ?? "" });

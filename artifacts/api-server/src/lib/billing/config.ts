@@ -1,9 +1,10 @@
 // Pricing + method catalogue for the Coach's African mobile-money billing.
 //
-// Amounts are in MAJOR currency units (e.g. 19 = $19.00, 349 = R349.00) and are
+// Amounts are in MAJOR currency units (e.g. 3.99 = $3.99, 79 = R79.00) and are
 // intentionally easy to tune: edit the `price` blocks below to change what each
-// country pays. Local-currency amounts are first-pass estimates - adjust them to
-// your real localized pricing before going live.
+// country pays per tier. USD is the anchor (Plus $3.99/mo, Pro $5.99/mo); the
+// other currencies are localized estimates - adjust to your real pricing before
+// going live.
 
 export type CountryCode = "ZW" | "ZA" | "ZM" | "BW";
 
@@ -17,6 +18,9 @@ export type PaymentMethod =
   | "card";
 
 export type BillingInterval = "month" | "year";
+
+// The two paid tiers. "free" is the un-purchasable default and never appears here.
+export type TierId = "plus" | "pro";
 
 export interface MethodInfo {
   id: PaymentMethod;
@@ -42,13 +46,15 @@ export const METHODS: Record<PaymentMethod, MethodInfo> = {
   card: { id: "card", label: "Debit / Credit card", kind: "card", requiresPhone: false },
 };
 
+export type TierPricing = Record<TierId, Record<BillingInterval, number>>;
+
 export interface CountryInfo {
   code: CountryCode;
   name: string;
   flag: string;
   currency: string;
   methods: PaymentMethod[];
-  price: Record<BillingInterval, number>;
+  price: TierPricing;
 }
 
 export const COUNTRIES: Record<CountryCode, CountryInfo> = {
@@ -58,7 +64,10 @@ export const COUNTRIES: Record<CountryCode, CountryInfo> = {
     flag: "\u{1F1FF}\u{1F1FC}",
     currency: "USD",
     methods: ["ecocash", "onemoney", "card"],
-    price: { month: 19, year: 149 },
+    price: {
+      plus: { month: 3.99, year: 39.99 },
+      pro: { month: 5.99, year: 59.99 },
+    },
   },
   ZA: {
     code: "ZA",
@@ -66,7 +75,10 @@ export const COUNTRIES: Record<CountryCode, CountryInfo> = {
     flag: "\u{1F1FF}\u{1F1E6}",
     currency: "ZAR",
     methods: ["card"],
-    price: { month: 349, year: 2799 },
+    price: {
+      plus: { month: 79, year: 749 },
+      pro: { month: 109, year: 1099 },
+    },
   },
   ZM: {
     code: "ZM",
@@ -74,7 +86,10 @@ export const COUNTRIES: Record<CountryCode, CountryInfo> = {
     flag: "\u{1F1FF}\u{1F1F2}",
     currency: "ZMW",
     methods: ["mtn_momo", "airtel_money", "zamtel", "card"],
-    price: { month: 499, year: 3999 },
+    price: {
+      plus: { month: 99, year: 999 },
+      pro: { month: 149, year: 1499 },
+    },
   },
   BW: {
     code: "BW",
@@ -82,18 +97,53 @@ export const COUNTRIES: Record<CountryCode, CountryInfo> = {
     flag: "\u{1F1E7}\u{1F1FC}",
     currency: "BWP",
     methods: ["orange_money", "card"],
-    price: { month: 259, year: 2099 },
+    price: {
+      plus: { month: 55, year: 549 },
+      pro: { month: 79, year: 799 },
+    },
   },
 };
 
-export const PRO_FEATURES: string[] = [
-  "Unlimited concepts and materials",
-  "All four coach personalities",
-  "Weekly retrospectives",
-  "Web-search-backed answers",
-  "Concept visuals",
-  "Priority generation queue",
-];
+export interface TierInfo {
+  id: TierId;
+  name: string;
+  tagline: string;
+  features: string[];
+}
+
+// Feature ladder. Pro is a superset of Plus; the screen shows Pro's extras as
+// "Everything in Plus, plus...".
+export const TIERS: Record<TierId, TierInfo> = {
+  plus: {
+    id: "plus",
+    name: "Plus",
+    tagline: "For studying every day",
+    features: [
+      "Unlimited concepts and materials",
+      "All four coach personalities",
+      "Full daily coaching with saved history",
+      "Practice and mock exams",
+      "Weekly retrospectives",
+      "Concept visuals",
+    ],
+  },
+  pro: {
+    id: "pro",
+    name: "Pro",
+    tagline: "For exam season and power users",
+    features: [
+      "Everything in Plus",
+      "Web-search-backed answers",
+      "Priority generation queue",
+      "Knowledge map and deeper analytics",
+      "Card auto-renew",
+      "Early access to new features",
+    ],
+  },
+};
+
+// Where a paid tier sits in the ladder. free < plus < pro.
+export const TIER_RANK: Record<string, number> = { free: 0, plus: 1, pro: 2 };
 
 export function isCountryCode(v: unknown): v is CountryCode {
   return typeof v === "string" && v in COUNTRIES;
@@ -105,6 +155,19 @@ export function isMethod(v: unknown): v is PaymentMethod {
 
 export function isInterval(v: unknown): v is BillingInterval {
   return v === "month" || v === "year";
+}
+
+export function isTier(v: unknown): v is TierId {
+  return v === "plus" || v === "pro";
+}
+
+// Price in major units for a given country / tier / interval.
+export function priceFor(
+  country: CountryCode,
+  tier: TierId,
+  interval: BillingInterval,
+): number {
+  return COUNTRIES[country].price[tier][interval];
 }
 
 export function toMinor(major: number): number {

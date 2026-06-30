@@ -161,19 +161,44 @@ export interface BillingMethod {
   note?: string;
 }
 
+export type TierId = "plus" | "pro";
+
+export interface TierPricing {
+  plus: { month: number; year: number };
+  pro: { month: number; year: number };
+}
+
 export interface BillingCountry {
   code: "ZW" | "ZA" | "ZM" | "BW";
   name: string;
   flag: string;
   currency: string;
   methods: BillingMethod[];
-  price: { month: number; year: number };
+  price: TierPricing;
+}
+
+export interface BillingTier {
+  id: TierId;
+  name: string;
+  tagline: string;
+  features: string[];
 }
 
 export interface BillingConfig {
   countries: BillingCountry[];
   selected: BillingCountry | null;
-  features: string[];
+  tiers: BillingTier[];
+}
+
+export interface CouponPreview {
+  valid: boolean;
+  reason?: string;
+  code?: string;
+  description?: string | null;
+  discountMinor: number;
+  finalMinor: number;
+  currency: string;
+  baseMinor: number;
 }
 
 export interface StudySubscription {
@@ -187,11 +212,13 @@ export interface StudySubscription {
 }
 
 export interface MobileCheckoutInput {
+  tier: TierId;
   interval: "month" | "year";
   country: string;
   method: string;
   mobileNumber?: string;
   autoRenew?: boolean;
+  couponCode?: string;
 }
 
 export interface MobileCheckoutResult {
@@ -242,7 +269,11 @@ export function useStudyMobileCheckout() {
 }
 
 export function useStudyCardCheckout() {
-  return useMutation<CardCheckoutResult, ErrorType<unknown>, { interval: "month" | "year" }>({
+  return useMutation<
+    CardCheckoutResult,
+    ErrorType<unknown>,
+    { tier: TierId; interval: "month" | "year" }
+  >({
     mutationKey: ["studyCardCheckout"],
     mutationFn: async (data) =>
       customFetch<CardCheckoutResult>(`${BASE}/billing/card/checkout`, {
@@ -250,6 +281,99 @@ export function useStudyCardCheckout() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       }),
+  });
+}
+
+export interface CouponPreviewInput {
+  code: string;
+  tier: TierId;
+  country: string;
+  interval: "month" | "year";
+}
+
+export function useStudyCouponPreview() {
+  return useMutation<CouponPreview, ErrorType<unknown>, CouponPreviewInput>({
+    mutationKey: ["studyCouponPreview"],
+    mutationFn: async (data) =>
+      customFetch<CouponPreview>(`${BASE}/billing/coupon/preview`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      }),
+  });
+}
+
+// ─── Admin: coupons ───
+
+export interface AdminCoupon {
+  id: string;
+  code: string;
+  description: string | null;
+  discountType: "percent" | "fixed";
+  percentOff: number | null;
+  amountOffMinor: number | null;
+  currency: string | null;
+  appliesToTier: "plus" | "pro" | null;
+  active: boolean;
+  maxRedemptions: number | null;
+  timesRedeemed: number;
+  expiresAt: string | null;
+  createdAt: string;
+}
+
+export interface AdminCouponInput {
+  code: string;
+  description?: string | null;
+  discountType: "percent" | "fixed";
+  percentOff?: number | null;
+  amountOffMinor?: number | null;
+  currency?: string | null;
+  appliesToTier?: "plus" | "pro" | null;
+  active?: boolean;
+  maxRedemptions?: number | null;
+  expiresAt?: string | null;
+}
+
+export function useStudyAdminCoupons() {
+  return useQuery<{ coupons: AdminCoupon[] }, ErrorType<unknown>>({
+    queryKey: ["studyAdminCoupons"],
+    queryFn: async () => customFetch<{ coupons: AdminCoupon[] }>(`${BASE}/admin/coupons`),
+  });
+}
+
+export function useStudyCreateCoupon() {
+  return useMutation<{ coupon: AdminCoupon }, ErrorType<unknown>, AdminCouponInput>({
+    mutationKey: ["studyCreateCoupon"],
+    mutationFn: async (data) =>
+      customFetch<{ coupon: AdminCoupon }>(`${BASE}/admin/coupons`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      }),
+  });
+}
+
+export function useStudyUpdateCoupon() {
+  return useMutation<
+    { coupon: AdminCoupon },
+    ErrorType<unknown>,
+    { id: string } & AdminCouponInput
+  >({
+    mutationKey: ["studyUpdateCoupon"],
+    mutationFn: async ({ id, ...data }) =>
+      customFetch<{ coupon: AdminCoupon }>(`${BASE}/admin/coupons/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      }),
+  });
+}
+
+export function useStudyDeleteCoupon() {
+  return useMutation<{ ok: true }, ErrorType<unknown>, string>({
+    mutationKey: ["studyDeleteCoupon"],
+    mutationFn: async (id) =>
+      customFetch<{ ok: true }>(`${BASE}/admin/coupons/${id}`, { method: "DELETE" }),
   });
 }
 

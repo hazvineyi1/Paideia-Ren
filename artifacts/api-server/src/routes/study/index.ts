@@ -15,6 +15,7 @@ import adaptiveRouter from "./adaptive.js";
 import assessmentRouter from "./assessment.js";
 import pathsRouter from "./paths.js";
 import strategyRouter from "./strategy.js";
+import adminRouter from "./admin.js";
 
 const router: IRouter = Router();
 
@@ -34,5 +35,6 @@ router.use("/adaptive", adaptiveRouter);
 router.use("/assessments", assessmentRouter);
 router.use("/paths", pathsRouter);
 router.use("/strategy", strategyRouter);
+router.use("/admin", adminRouter);
 
 export default router;

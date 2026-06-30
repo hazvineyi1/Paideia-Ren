@@ -187,3 +187,19 @@ export function requireStudyUser(
   }
   next();
 }
+
+export function requireStudyAdmin(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): void {
+  if (!req.studyUser) {
+    res.status(401).json({ error: "Not signed in" });
+    return;
+  }
+  if (!req.studyUser.isAdmin) {
+    res.status(403).json({ error: "Admin access required" });
+    return;
+  }
+  next();
+}

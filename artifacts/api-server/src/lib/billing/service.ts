@@ -1,8 +1,8 @@
-import { db, studyUsersTable, studyPaymentsTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { db, studyUsersTable, studyPaymentsTable, studyCouponsTable } from "@workspace/db";
+import { and, eq, isNull, or, sql } from "drizzle-orm";
 import { logger } from "../logger.js";
 import { getUncachableStripeClient } from "../stripeClient.js";
-import type { BillingInterval } from "./config.js";
+import { isTier, type BillingInterval } from "./config.js";
 
 export function computePeriodEnd(interval: BillingInterval, from: Date = new Date()): Date {
   const end = new Date(from);
@@ -70,6 +70,7 @@ export async function activatePayment(
 
     const interval = (payment.interval === "year" ? "year" : "month") as BillingInterval;
     const periodEnd = computePeriodEnd(interval);
+    const tier = isTier(payment.tier) ? payment.tier : "pro";
 
     await tx
       .update(studyPaymentsTable)
@@ -84,7 +85,7 @@ export async function activatePayment(
     await tx
       .update(studyUsersTable)
       .set({
-        subscriptionTier: "pro",
+        subscriptionTier: tier,
         subscriptionStatus: "active",
         subscriptionProvider: payment.provider,
         subscriptionInterval: interval,
@@ -92,6 +93,24 @@ export async function activatePayment(
         subscriptionCurrentPeriodEnd: periodEnd,
       })
       .where(eq(studyUsersTable.id, payment.userId));
+
+    // Count the redemption once, only now that the payment has cleared. The
+    // increment is gated on the cap in the same statement so concurrent
+    // checkouts against the last remaining redemption cannot oversubscribe.
+    if (payment.couponCode) {
+      await tx
+        .update(studyCouponsTable)
+        .set({ timesRedeemed: sql`${studyCouponsTable.timesRedeemed} + 1` })
+        .where(
+          and(
+            eq(studyCouponsTable.code, payment.couponCode),
+            or(
+              isNull(studyCouponsTable.maxRedemptions),
+              sql`${studyCouponsTable.timesRedeemed} < ${studyCouponsTable.maxRedemptions}`,
+            ),
+          ),
+        );
+    }
   });
 }
 
@@ -129,6 +148,10 @@ export async function activateStudyStripeFromCustomer(customerId: string): Promi
   const active = ["active", "trialing", "past_due"].includes(sub.status);
   const item = sub.items.data[0];
   const interval = item?.price?.recurring?.interval === "year" ? "year" : "month";
+  // Tier is stamped onto the subscription metadata at card checkout. Default to
+  // pro for older subscriptions created before the three-tier rollout.
+  const metaTier = sub.metadata?.["tier"];
+  const tier = isTier(metaTier) ? metaTier : "pro";
   // In recent Stripe API versions current_period_end lives on the subscription
   // item rather than the subscription itself.
   const periodEndUnix = item?.current_period_end;
@@ -138,7 +161,7 @@ export async function activateStudyStripeFromCustomer(customerId: string): Promi
   await db
     .update(studyUsersTable)
     .set({
-      subscriptionTier: active ? "pro" : "free",
+      subscriptionTier: active ? tier : "free",
       subscriptionStatus: sub.status,
       subscriptionProvider: "stripe",
       subscriptionInterval: interval,

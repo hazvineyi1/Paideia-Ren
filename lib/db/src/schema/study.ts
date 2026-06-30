@@ -18,9 +18,11 @@ export const studyUsersTable = pgTable("study_users", {
   passwordHash: text("password_hash").notNull(),
   name: text("name").notNull(),
   subscriptionStatus: text("subscription_status").notNull().default("free"),
-  // free | pro. The tier that gates features; subscriptionStatus tracks lifecycle
-  // (free | trialing | active | past_due | canceled | expired).
+  // free | plus | pro. The tier that gates features; subscriptionStatus tracks
+  // lifecycle (free | trialing | active | past_due | canceled | expired).
   subscriptionTier: text("subscription_tier").notNull().default("free"),
+  // Grants access to the admin coupon console. Flip in the DB to make an owner.
+  isAdmin: boolean("is_admin").notNull().default(false),
   // Which gateway the active subscription was paid through: paynow | flutterwave | stripe | mock.
   subscriptionProvider: text("subscription_provider"),
   // month | year
@@ -47,7 +49,13 @@ export const studyPaymentsTable = pgTable("study_payments", {
   method: text("method").notNull(), // ecocash | onemoney | orange_money | mtn_momo | airtel_money | zamtel | card
   country: text("country").notNull(), // ZW | ZA | ZM | BW
   currency: text("currency").notNull(), // USD | ZAR | ZMW | BWP
-  amountMinor: integer("amount_minor").notNull(), // smallest currency unit (cents)
+  amountMinor: integer("amount_minor").notNull(), // smallest currency unit (cents), AFTER any coupon
+  // plus | pro. Which tier this payment purchases. Defaults to pro for back-compat
+  // with rows written before the three-tier rollout.
+  tier: text("tier").notNull().default("pro"),
+  // Coupon applied at checkout (uppercase code) and the discount it produced.
+  couponCode: text("coupon_code"),
+  discountMinor: integer("discount_minor").notNull().default(0),
   interval: text("interval").notNull(), // month | year
   reference: text("reference").notNull().unique(), // our merchant reference
   providerRef: text("provider_ref"), // gateway transaction id
@@ -63,6 +71,28 @@ export const studyPaymentsTable = pgTable("study_payments", {
 }, (t) => ({
   userIdx: index("study_payments_user_idx").on(t.userId),
   refIdx: index("study_payments_ref_idx").on(t.reference),
+}));
+
+// ─── Discount coupons (admin-managed sales) ───
+// Admins create coupons that learners apply at checkout. Percent coupons take a
+// whole-number percentOff (1-100); fixed coupons take amountOffMinor in a single
+// currency (must match the payment currency to apply).
+export const studyCouponsTable = pgTable("study_coupons", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  code: text("code").notNull().unique(), // stored uppercase
+  description: text("description"),
+  discountType: text("discount_type").notNull(), // percent | fixed
+  percentOff: integer("percent_off"), // 1-100 when discountType = percent
+  amountOffMinor: integer("amount_off_minor"), // minor units when discountType = fixed
+  currency: text("currency"), // required for fixed coupons: USD | ZAR | ZMW | BWP
+  appliesToTier: text("applies_to_tier"), // plus | pro | null (any paid tier)
+  active: boolean("active").notNull().default(true),
+  maxRedemptions: integer("max_redemptions"), // null = unlimited
+  timesRedeemed: integer("times_redeemed").notNull().default(0),
+  expiresAt: timestamp("expires_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => ({
+  codeIdx: index("study_coupons_code_idx").on(t.code),
 }));
 
 export const studySessionsTable = pgTable("study_sessions", {
