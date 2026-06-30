@@ -11,14 +11,10 @@ import { Footer } from "@/components/layout/Footer";
 
 import Home from "@/pages/Home";
 import About from "@/pages/About";
-import Team from "@/pages/Team";
-import Platform from "@/pages/Platform";
-import Research from "@/pages/Research";
-import ForSchools from "@/pages/ForSchools";
-import ForEducators from "@/pages/ForEducators";
-import StudyTutor from "@/pages/StudyTutor";
-import WhereWeWork from "@/pages/WhereWeWork";
-import News from "@/pages/News";
+import Healthcare from "@/pages/Healthcare";
+import Learning from "@/pages/Learning";
+import Platforms from "@/pages/Platforms";
+import Insights from "@/pages/Insights";
 import Contact from "@/pages/Contact";
 import Privacy from "@/pages/Privacy";
 import Terms from "@/pages/Terms";
@@ -54,14 +50,10 @@ function Router() {
         <Switch>
           <Route path="/" component={Home} />
           <Route path="/about" component={About} />
-          <Route path="/team" component={Team} />
-          <Route path="/platform" component={Platform} />
-          <Route path="/research" component={Research} />
-          <Route path="/for-schools" component={ForSchools} />
-          <Route path="/for-educators" component={ForEducators} />
-          <Route path="/study-tutor" component={StudyTutor} />
-          <Route path="/where-we-work" component={WhereWeWork} />
-          <Route path="/news" component={News} />
+          <Route path="/healthcare" component={Healthcare} />
+          <Route path="/learning" component={Learning} />
+          <Route path="/platforms" component={Platforms} />
+          <Route path="/insights" component={Insights} />
           <Route path="/contact" component={Contact} />
           <Route path="/privacy" component={Privacy} />
           <Route path="/terms" component={Terms} />

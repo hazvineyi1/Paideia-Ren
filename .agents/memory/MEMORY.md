@@ -1,2 +1,4 @@
-- [Stale lib declarations](stale-lib-declarations.md) — editing lib/db source needs `pnpm run typecheck:libs` (tsc --build) before consumers typecheck; web apps use vite build (no tsc).
-- [Synops brand naming](synops-brand-naming.md) — display-name map for the 3 portals; internal identifiers (pkg names, folders, slugs, DB keys) stay unchanged.
+# Memory Index
+
+- [Tailwind v4 theme tokens](tailwind-v4-theme-tokens.md) — a `bg-x`/`text-x` utility only exists if `x` is mapped in the `@theme inline` block; a `:root` `--var` alone renders transparent (silent invisible-element bug).
+- [Verify subagent file ops](subagent-verify-file-ops.md) — design/general subagents sometimes report success but skip file rewrites/deletes; always re-check the filesystem, don't trust the summary.

@@ -1,122 +1,92 @@
+import React from "react";
 import { motion } from "framer-motion";
-
-const fadeUp = {
-  initial: { opacity: 0, y: 24 },
-  whileInView: { opacity: 1, y: 0 },
-  viewport: { once: true },
-  transition: { duration: 0.7 },
-};
+import { Link } from "wouter";
 
 export default function About() {
   return (
-    <div className="min-h-screen pt-20">
-      {/* Page Header */}
-      <section className="py-[120px] max-w-[720px] mx-auto px-6 text-center">
-        <motion.p {...fadeUp} className="text-[13px] font-semibold uppercase tracking-widest text-muted-foreground mb-6">
-          Our Philosophy
-        </motion.p>
-        <motion.h1 {...fadeUp} transition={{ duration: 0.7, delay: 0.1 }}
-          className="font-serif text-5xl md:text-[72px] text-primary leading-[1.1] tracking-wide mb-8">
-          Three traditions. One promise.
-        </motion.h1>
-        <motion.p {...fadeUp} transition={{ duration: 0.7, delay: 0.2 }}
-          className="text-[17px] text-foreground/80 leading-[1.75]">
-          Synops draws from the deepest wells of human educational thought: Greek, Confucian, and African, to build technology that forms whole persons within a shared humanity.
-        </motion.p>
+    <div className="min-h-screen pt-[88px]">
+      <section className="bg-primary-hero pt-24 pb-24 px-6 text-center border-b border-primary/20">
+        <div className="max-w-[800px] mx-auto">
+          <motion.h1 
+            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}
+            className="text-white text-5xl md:text-[64px] font-bold leading-[1.1] tracking-tight mb-8"
+          >
+            About Synops Advisory Group
+          </motion.h1>
+          <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.2 }}
+            className="text-[20px] text-white/80 leading-relaxed max-w-3xl mx-auto space-y-6"
+          >
+            <p>
+              A complementary partnership spanning healthcare operations and education technology, serving organizations across the United States.
+            </p>
+            <p>
+              We offer both strategic advisory and hands-on build capability. Our model is fully remote, allowing us to deploy exactly the right expertise to your challenges, regardless of geography. We don't just write reports. We implement workflows, build curricula, and architect the platforms necessary to sustain change.
+            </p>
+          </motion.div>
+        </div>
       </section>
 
-      {/* Three Traditions */}
-      <section className="py-[120px] bg-secondary">
-        <div className="max-w-[1200px] mx-auto px-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-16">
-            {[
-              {
-                label: "Greek",
-                title: "Paideia",
-                subtitle: "παιδεία",
-                definition: "The lifelong cultivation of excellence in body, intellect, character, and civic life.",
-                quote: "Paideia: the process of educating man into his true form, the real and genuine human nature.",
-                attribution: "Werner Jaeger, Paideia: The Ideals of Greek Culture",
-                body: "In Plato's Republic, education is described as 'the craft of turning the whole soul' toward the Good, not data-loading but an inner reorientation. The paideutic ideal holds that learning is inseparable from character formation. This is our first foundation.",
-              },
-              {
-                label: "Confucian",
-                title: "Ren",
-                subtitle: "仁",
-                subtitleStyle: "font-serif text-[56px] text-accent leading-none",
-                definition: "Humaneness expressed in relationship. The character 仁 depicts two people side by side.",
-                quote: "To love others: that is ren.",
-                attribution: "Confucius, Analects XII.22",
-                body: "Ren is the supreme Confucian virtue: benevolence, compassion, and human-heartedness realized in relationship. A person becomes fully human in right relation with others. Our AI is built never to replace this relational core, only to protect and extend it.",
-              },
-              {
-                label: "African",
-                title: "Ubuntu",
-                subtitle: "umuntu ngumuntu ngabantu",
-                definition: "A person is a person through other persons. I am because we are.",
-                quote: "Umuntu ngumuntu ngabantu: a person is a person through other persons.",
-                attribution: "African proverb",
-                body: "Ubuntu is a communal philosophy of selfhood: my flourishing is bound to yours. In education, this means knowledge is held collectively, learning is dialogical, and we all learn better together.",
-              },
-            ].map((item, i) => (
-              <motion.div key={item.title} initial={{ opacity: 0, y: 32 }} whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }} transition={{ duration: 0.7, delay: i * 0.15 }}>
-                <p className="text-[13px] font-semibold uppercase tracking-widest text-muted-foreground mb-4">{item.label}</p>
-                <h2 className="font-serif text-4xl text-primary mb-2">{item.title}</h2>
-                {item.subtitleStyle ? (
-                  <p className={item.subtitleStyle}>{item.subtitle}</p>
-                ) : (
-                  <p className="font-serif text-[15px] text-accent tracking-[0.2em] mb-6">{item.subtitle}</p>
-                )}
-                <p className="text-[15px] font-semibold text-foreground mb-6 leading-[1.6]">{item.definition}</p>
-                <blockquote className="border-l-gold mb-6">
-                  <p className="font-serif text-xl text-primary italic leading-[1.6] mb-2">"{item.quote}"</p>
-                  <cite className="text-[13px] text-muted-foreground not-italic">{item.attribution}</cite>
-                </blockquote>
-                <p className="text-[17px] text-foreground/80 leading-[1.75]">{item.body}</p>
-              </motion.div>
-            ))}
+      <section className="py-24 px-6 bg-white">
+        <div className="max-w-[1200px] mx-auto space-y-16">
+          {/* Bertha */}
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-12">
+            <div className="md:col-span-4">
+              <h2 className="text-3xl font-bold text-foreground tracking-tight mb-2">Bertha D. Musoni</h2>
+              <p className="text-primary font-semibold text-[16px] mb-4 uppercase tracking-wide">Founder & Principal Consultant</p>
+              <div className="text-[13px] font-semibold text-muted-foreground tracking-widest uppercase flex flex-wrap gap-x-3 gap-y-2">
+                <span>MPH</span><span>·</span><span>MBA</span><span>·</span><span>PMP</span><span>·</span><span>DBA(c)</span>
+              </div>
+            </div>
+            <div className="md:col-span-8 text-[18px] text-muted-foreground leading-relaxed">
+              <p>
+                20+ years in managed care, Medicaid program operations, provider network management, and organizational change. Bertha provides oversight of provider relationships up to $1B in annual spend and has led Joint Operation Committees and enterprise process redesign at one of the nation's largest MCOs. She has directed vendor and offshore teams of up to 300 agents, leading NCQA-aligned quality and health-risk-assessment programs.
+              </p>
+            </div>
+          </div>
+
+          <div className="h-px w-full bg-border"></div>
+
+          {/* Belinda */}
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-12">
+            <div className="md:col-span-4">
+              <h2 className="text-3xl font-bold text-foreground tracking-tight mb-2">Belinda H. Musoni</h2>
+              <p className="text-primary font-semibold text-[16px] mb-4 uppercase tracking-wide">Principal, Learning & AI</p>
+              <div className="text-[13px] font-semibold text-muted-foreground tracking-widest uppercase flex flex-wrap gap-x-3 gap-y-2">
+                <span>M.Ed</span><span>·</span><span>PhD(c) Machine Learning</span><span>·</span><span>Quality Matters</span>
+              </div>
+            </div>
+            <div className="md:col-span-8 text-[18px] text-muted-foreground leading-relaxed">
+              <p>
+                A learning scientist and instructional-design leader with 15+ years designing and quality-assuring education across legal, higher-ed, and K-12 domains. As Lead Instructional Designer & Senior QA Specialist she shipped 40+ courses and curricula. Belinda led an AI-integration initiative that trained designers in generative-AI evaluation and prompt engineering, and built custom GPT models. She administers major LMS platforms, applies learning analytics to lift engagement, and enforces Quality Matters, Section 508 and WCAG 2.1 AA standards.
+              </p>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Synthesis */}
-      <section className="py-[120px] max-w-[720px] mx-auto px-6">
-        <motion.div {...fadeUp}>
-          <p className="text-[13px] font-semibold uppercase tracking-widest text-muted-foreground mb-6 text-center">
-            The Synthesis
-          </p>
-          <h2 className="font-serif text-4xl md:text-[48px] text-primary leading-[1.2] mb-8 text-center">
-            Why this matters
-          </h2>
-          <p className="text-[17px] text-foreground/80 leading-[1.75] mb-8">
-            Three traditions, three continents, three millennia of thought, converging on a single educational anthropology: <strong>true learning forms the whole person, and a whole person is one whose intelligence is bound to humaneness and to community.</strong>
-          </p>
-          <p className="text-[17px] text-foreground/80 leading-[1.75] mb-12">
-            This is the philosophical bedrock for an AI tutoring system grounded in adaptivity (paideia: each soul turned in the way it can turn), relational ethics (ren: technology in service of human relationship, never replacing it), and community (ubuntu: we learn better together).
-          </p>
-
-          <div className="space-y-8">
-            <blockquote className="border-l-gold">
-              <p className="font-serif text-xl text-primary italic leading-[1.6] mb-2">
-                "Paideia: the process of educating man into his true form, the real and genuine human nature."
-              </p>
-              <cite className="text-[13px] text-muted-foreground not-italic">Werner Jaeger</cite>
-            </blockquote>
-            <blockquote className="border-l-gold">
-              <p className="font-serif text-xl text-primary italic leading-[1.6] mb-2">
-                "To love others: that is ren."
-              </p>
-              <cite className="text-[13px] text-muted-foreground not-italic">Confucius</cite>
-            </blockquote>
-            <blockquote className="border-l-gold">
-              <p className="font-serif text-xl text-primary italic leading-[1.6] mb-2">
-                "Umuntu ngumuntu ngabantu: a person is a person through other persons."
-              </p>
-              <cite className="text-[13px] text-muted-foreground not-italic">African proverb</cite>
-            </blockquote>
+      <section className="py-24 px-6 bg-background border-t border-border">
+        <div className="max-w-[1200px] mx-auto">
+          <h2 className="text-4xl font-bold text-primary tracking-tight mb-16">Core Values</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="bg-white border border-border p-10 rounded-none">
+              <h3 className="text-2xl font-bold text-foreground mb-4">Rigor</h3>
+              <p className="text-[16px] text-muted-foreground leading-relaxed">Evidence-based approaches over trends, whether in clinical operations or educational design.</p>
+            </div>
+            <div className="bg-white border border-border p-10 rounded-none">
+              <h3 className="text-2xl font-bold text-foreground mb-4">Accountability</h3>
+              <p className="text-[16px] text-muted-foreground leading-relaxed">Disciplined project management that guarantees our 98% on-time delivery rate.</p>
+            </div>
+            <div className="bg-white border border-border p-10 rounded-none">
+              <h3 className="text-2xl font-bold text-foreground mb-4">Accessibility</h3>
+              <p className="text-[16px] text-muted-foreground leading-relaxed">Systems and content built to be usable by everyone, meeting or exceeding WCAG 2.1 AA standards.</p>
+            </div>
+            <div className="bg-white border border-border p-10 rounded-none">
+              <h3 className="text-2xl font-bold text-foreground mb-4">Measurable Outcomes</h3>
+              <p className="text-[16px] text-muted-foreground leading-relaxed">Clear KPIs from day one, tracking engagement lift, cost reduction, or compliance readiness.</p>
+            </div>
           </div>
-        </motion.div>
+        </div>
       </section>
     </div>
   );

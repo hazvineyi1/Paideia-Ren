@@ -1,61 +1,56 @@
 import React from "react";
 import { Link } from "wouter";
-import { Linkedin } from "lucide-react";
-import { SiX, SiInstagram } from "react-icons/si";
 
 export function Footer() {
   return (
-    <footer className="bg-secondary pt-20 pb-12 border-t border-border">
+    <footer className="bg-background pt-24 pb-12 border-t border-border">
       <div className="max-w-[1200px] mx-auto px-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
-          <div className="col-span-1 md:col-span-1">
-            <Link href="/" className="flex items-center gap-1 mb-4 inline-flex">
-              <span className="font-serif text-2xl font-semibold tracking-wide text-primary">
-                Synops
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-12 mb-20">
+          <div className="col-span-1 md:col-span-2 pr-8">
+            <Link href="/" className="flex items-center gap-3 mb-6 inline-flex">
+              <div className="w-8 h-8 rounded-[4px] bg-primary flex items-center justify-center">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 2L2 12L12 22L22 12L12 2Z" fill="white" />
+                </svg>
+              </div>
+              <span className="font-sans text-[22px] tracking-tight text-foreground">
+                <span className="font-bold">Synops</span> <span className="font-normal">Advisory</span>
               </span>
-              <span className="font-serif text-[13px] text-accent font-bold mb-3">仁</span>
             </Link>
-            <p className="text-[13px] text-muted-foreground leading-relaxed max-w-[200px]">
-              The formation of a relational human.
+            <p className="text-[15px] text-muted-foreground leading-relaxed max-w-sm">
+              Operations, learning, and technology consulting, from strategy to build.
             </p>
           </div>
 
           <div className="flex flex-col gap-4">
-            <h3 className="text-[13px] font-semibold uppercase tracking-widest text-primary mb-2">About</h3>
-            <Link href="/about" className="text-sm text-foreground hover:text-terracotta transition-colors">Our Philosophy</Link>
-            <Link href="/team" className="text-sm text-foreground hover:text-terracotta transition-colors">Leadership & Team</Link>
-            <Link href="/where-we-work" className="text-sm text-foreground hover:text-terracotta transition-colors">Where We Work</Link>
+            <h3 className="text-[13px] font-bold uppercase tracking-wider text-foreground mb-2">Practices</h3>
+            <Link href="/healthcare" className="text-[15px] text-muted-foreground hover:text-accent transition-colors">Healthcare & Operations</Link>
+            <Link href="/learning" className="text-[15px] text-muted-foreground hover:text-accent transition-colors">Learning, EdTech & AI</Link>
+            <Link href="/platforms" className="text-[15px] text-muted-foreground hover:text-accent transition-colors">Platforms & Build</Link>
           </div>
 
           <div className="flex flex-col gap-4">
-            <h3 className="text-[13px] font-semibold uppercase tracking-widest text-primary mb-2">Platform & Research</h3>
-            <Link href="/platform" className="text-sm text-foreground hover:text-terracotta transition-colors">How It Works</Link>
-            <Link href="/research" className="text-sm text-foreground hover:text-terracotta transition-colors">Research & Impact</Link>
-            <Link href="/news" className="text-sm text-foreground hover:text-terracotta transition-colors">News & Insights</Link>
+            <h3 className="text-[13px] font-bold uppercase tracking-wider text-foreground mb-2">Products</h3>
+            <a href="/app/signup" className="text-[15px] text-muted-foreground hover:text-accent transition-colors">Synops Teacher Free Trial</a>
+            <a href="/app/login" className="text-[15px] text-muted-foreground hover:text-accent transition-colors">Teacher Sign-In</a>
+            <a href="/study/" className="text-[15px] text-muted-foreground hover:text-accent transition-colors mt-2">Synops Coach</a>
+            <a href="/study/login" className="text-[15px] text-muted-foreground hover:text-accent transition-colors">Student Sign-In</a>
           </div>
 
           <div className="flex flex-col gap-4">
-            <h3 className="text-[13px] font-semibold uppercase tracking-widest text-primary mb-2">Connect</h3>
-            <Link href="/for-schools" className="text-sm text-foreground hover:text-terracotta transition-colors">For Schools</Link>
-            <Link href="/for-educators" className="text-sm text-foreground hover:text-terracotta transition-colors">For Educators</Link>
-            <Link href="/contact" className="text-sm text-foreground hover:text-terracotta transition-colors">Contact</Link>
+            <h3 className="text-[13px] font-bold uppercase tracking-wider text-foreground mb-2">Company</h3>
+            <Link href="/about" className="text-[15px] text-muted-foreground hover:text-accent transition-colors">About</Link>
+            <Link href="/insights" className="text-[15px] text-muted-foreground hover:text-accent transition-colors">Insights</Link>
+            <Link href="/contact" className="text-[15px] text-muted-foreground hover:text-accent transition-colors">Contact</Link>
           </div>
         </div>
 
         <div className="flex flex-col md:flex-row justify-between items-center pt-8 border-t border-border gap-6">
-          <div className="flex items-center gap-4">
-            <a href="#" className="text-muted-foreground hover:text-primary transition-colors"><Linkedin size={18} strokeWidth={1.5} /></a>
-            <a href="#" className="text-muted-foreground hover:text-primary transition-colors"><SiX size={18} /></a>
-            <a href="#" className="text-muted-foreground hover:text-primary transition-colors"><SiInstagram size={18} /></a>
-          </div>
-
-          <div className="flex flex-wrap justify-center items-center gap-x-6 gap-y-2 text-[13px] text-muted-foreground">
-            <a href="/app/student/login" className="hover:text-foreground" data-testid="link-student-signin">Student sign-in</a>
-            <a href="/app/login" className="hover:text-foreground" data-testid="link-teacher-signin">Teacher sign-in</a>
-            <span className="hidden md:inline text-border">·</span>
-            <Link href="/privacy" className="hover:text-foreground">Privacy Policy</Link>
-            <Link href="/terms" className="hover:text-foreground">Terms of Service</Link>
+          <div className="flex flex-wrap justify-center items-center gap-x-6 gap-y-2 text-[14px] text-muted-foreground">
             <span>© Synops Consulting</span>
+            <span className="hidden md:inline text-border">|</span>
+            <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
+            <Link href="/terms" className="hover:text-foreground transition-colors">Terms of Service</Link>
           </div>
         </div>
       </div>
