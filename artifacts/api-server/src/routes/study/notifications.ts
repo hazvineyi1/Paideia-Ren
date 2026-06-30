@@ -69,6 +69,26 @@ router.patch("/settings", async (req, res) => {
     .where(eq(studyUsersTable.id, userId))
     .returning();
 
+  // Opting in (with a number on file) is the first moment we can actually reach
+  // the user, so fire any pending welcomes now. Both are idempotent, so a user who
+  // already received them is unaffected. The ambassador welcome only sends if they
+  // are enrolled.
+  if (user.whatsappOptIn && user.whatsappNumber) {
+    try {
+      const { sendPlatformWelcome, sendAmbassadorWelcome } = await import(
+        "../../lib/notifications/service.js"
+      );
+      await sendPlatformWelcome(user);
+      const { getAmbassadorByUserId } = await import("../../lib/billing/ambassador.js");
+      const ambassador = await getAmbassadorByUserId(user.id);
+      if (ambassador) {
+        await sendAmbassadorWelcome(user);
+      }
+    } catch {
+      // Welcomes are non-critical; never block saving settings.
+    }
+  }
+
   res.json({
     whatsappNumber: user.whatsappNumber,
     whatsappOptIn: user.whatsappOptIn,

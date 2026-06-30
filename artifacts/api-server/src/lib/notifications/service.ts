@@ -11,6 +11,8 @@ import { logger } from "../logger.js";
 import { isWhatsAppConfigured, sendWhatsAppMessage } from "./whatsapp.js";
 
 export type NotificationKind =
+  | "welcome_platform"
+  | "welcome_ambassador"
   | "renewal_reminder"
   | "brief_ready"
   | "review_nudge";
@@ -246,6 +248,48 @@ export async function runReviewNudges(): Promise<RunSummary> {
     outcomes.push(await notifyUser(user, "review_nudge", body, dedupeKey));
   }
   return tally(outcomes, "review_nudge");
+}
+
+// ─── Welcome messages ───
+// Both are fired best-effort at the first reachable moment (signup, opt-in, or
+// program join). notifyUser is idempotent on the per-user dedupeKey, so each
+// welcome is delivered at most once ever no matter how many triggers fire.
+
+// Welcomes a new learner to the platform and explains how to use it. Safe to call
+// even before the user has a WhatsApp number on file: it simply skips until they
+// are reachable, then the next trigger sends it.
+export async function sendPlatformWelcome(
+  user: Pick<StudyUser, "id" | "name" | "whatsappNumber" | "whatsappOptIn">,
+): Promise<NotifyOutcome> {
+  const startUrl = link("");
+  const body =
+    `Hi ${user.name}, welcome to Synops. Here is how it works: pick a topic or upload your ` +
+    `study material and Synops turns it into guided lessons, practice questions, and flashcards. ` +
+    `Study a little each day, review the cards that are due, and your weekly brief shows what to ` +
+    `focus on next. Jump back in any time` +
+    (startUrl ? `: ${startUrl}` : ".");
+  return notifyUser(user, "welcome_platform", body, `welcome_platform:${user.id}`);
+}
+
+// Welcomes a new ambassador and explains how to earn (referrals) and keep learning.
+// Pulls the live rate schedule, holdback, and cash-out increment so the message
+// always reflects current program settings.
+export async function sendAmbassadorWelcome(
+  user: Pick<StudyUser, "id" | "name" | "whatsappNumber" | "whatsappOptIn">,
+): Promise<NotifyOutcome> {
+  const { getAmbassadorSettings } = await import("../billing/ambassador.js");
+  const settings = await getAmbassadorSettings();
+  const rates = settings.schedule.map((b) => `${b.ratePct}%`).join(", ");
+  const increment = `${(settings.cashoutIncrementUsdMinor / 100).toFixed(0)} USD`;
+  const dashUrl = link("/ambassador");
+  const body =
+    `Hi ${user.name}, welcome to the Synops ambassador program. Here is how to earn and learn: ` +
+    `share your referral link with other learners, and when they pay for a plan you earn a share ` +
+    `of every real payment they make. Your commission is ${rates} and tapers over time, earnings ` +
+    `clear after a ${settings.holdbackDays} day holdback, and you can cash out in ${increment} ` +
+    `increments. Keep studying on Synops while you earn` +
+    (dashUrl ? `. Your dashboard: ${dashUrl}` : ".");
+  return notifyUser(user, "welcome_ambassador", body, `welcome_ambassador:${user.id}`);
 }
 
 // Recent notification log, newest first.

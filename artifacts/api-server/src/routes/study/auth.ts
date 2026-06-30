@@ -91,6 +91,15 @@ router.post("/signup", rateLimit({ windowMs: 60 * 60 * 1000, max: 5 }), async (r
     }
   }
 
+  // Best-effort platform welcome. Skips until the user has a WhatsApp number on
+  // file and has opted in; the same welcome then sends from the opt-in trigger.
+  try {
+    const { sendPlatformWelcome } = await import("../../lib/notifications/service.js");
+    await sendPlatformWelcome(user);
+  } catch {
+    // Welcome is non-critical; never block signup.
+  }
+
   const token = newSessionToken();
   await db.insert(studySessionsTable).values({
     token,

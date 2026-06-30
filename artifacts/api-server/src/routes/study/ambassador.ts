@@ -56,6 +56,16 @@ router.post("/join", async (req, res) => {
     return;
   }
   const ambassador = await joinAmbassadorProgram(userId, method, handle);
+
+  // Best-effort ambassador welcome explaining how to earn and learn. Skips until
+  // the user is reachable on WhatsApp; the opt-in trigger then sends it.
+  try {
+    const { sendAmbassadorWelcome } = await import("../../lib/notifications/service.js");
+    await sendAmbassadorWelcome(req.studyUser!);
+  } catch {
+    // Welcome is non-critical; never block joining.
+  }
+
   res.status(201).json({ referralCode: ambassador.referralCode });
 });
 

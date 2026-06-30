@@ -36,6 +36,13 @@ endpoint) is the intended Phase-1.5 follow-up. Renewal audience = manual-renew (
 auto-renew) paid + active users with period end inside the window; review nudge audience =
 users with flashcards whose `nextReviewAt <= now` (reuses the existing SM-2 schedule).
 
+## One-shot lifecycle welcomes fire from multiple best-effort triggers
+Signup does NOT collect a WhatsApp number (it is set later via PATCH /notifications/settings), so a welcome fired only at signup would never be deliverable. Welcomes (`welcome_platform`, `welcome_ambassador`) therefore fire from several points and rely on the per-user dedupe key for exactly-once delivery:
+- platform welcome (`welcome_platform:<userId>`): fired at signup AND on opt-in.
+- ambassador welcome (`welcome_ambassador:<userId>`): fired on ambassador join AND on opt-in if already enrolled.
+**Why:** the first moment a user is actually reachable on WhatsApp is usually opt-in, not signup/join. Because `not_configured`/`not_opted_in`/`no_number` all RELEASE the dedupe key (see claim-then-release above), whichever trigger first finds them reachable + configured is the one that actually sends; the rest are no-ops.
+**How to apply:** all welcome calls are best-effort (try/catch) so they never block signup, join, or settings saves. New lifecycle welcome = add a `NotificationKind`, a sender in service.ts with a stable per-user dedupeKey, and fire it from every plausible "first reachable" trigger. `kind` is free text (no DB CHECK), so new kinds need no migration.
+
 ## Copy
 No em dashes in any user-facing message (standing user preference). Links built from
 `STUDY_APP_URL` or `REPLIT_DEV_DOMAIN` + `/study`.
