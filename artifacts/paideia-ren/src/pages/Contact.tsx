@@ -78,7 +78,7 @@ export default function Contact() {
     } catch (err) {
       toast({
         title: "Could not send",
-        description: (err as Error).message + ". Please try again or email hazvimusoni@gmail.com.",
+        description: (err as Error).message + ". Please try again or email info@synops-consulting.com.",
         variant: "destructive",
       });
     } finally {
@@ -161,7 +161,7 @@ export default function Contact() {
               </Button>
               
               <p className="text-center text-[14px] text-muted-foreground pt-4">
-                You can also email us directly at <a href="mailto:hazvimusoni@gmail.com" className="text-primary font-bold hover:underline">hazvimusoni@gmail.com</a>
+                You can also email us directly at <a href="mailto:info@synops-consulting.com" className="text-primary font-bold hover:underline">info@synops-consulting.com</a>
               </p>
             </form>
           </Form>

@@ -93,7 +93,7 @@ export function ShortFormDialog({
       } catch (err) {
         toast({
           title: "Could not send",
-          description: (err as Error).message + ". Please try again or email hazvimusoni@gmail.com.",
+          description: (err as Error).message + ". Please try again or email info@synops-consulting.com.",
           variant: "destructive",
         });
       } finally {

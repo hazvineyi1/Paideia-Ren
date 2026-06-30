@@ -66,7 +66,7 @@ export default function Terms() {
 
           <section>
             <h2 className="font-serif text-2xl text-primary mb-3">11. Contact</h2>
-            <p>Questions go to <a className="text-terracotta underline" href="mailto:hazvimusoni@gmail.com">hazvimusoni@gmail.com</a>.</p>
+            <p>Questions go to <a className="text-terracotta underline" href="mailto:info@synops-consulting.com">info@synops-consulting.com</a>.</p>
           </section>
         </div>
       </section>

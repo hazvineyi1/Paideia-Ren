@@ -23,7 +23,7 @@ export default function AwaitingApproval() {
         </p>
         <p className="text-muted-foreground">
           If this is urgent, send a quick note from your school address to
-          hazvimusoni@gmail.com and mention the email you signed up with
+          info@synops-consulting.com and mention the email you signed up with
           ({teacher?.email}).
         </p>
         <div className="pt-2">

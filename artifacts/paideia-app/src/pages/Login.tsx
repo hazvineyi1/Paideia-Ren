@@ -52,7 +52,7 @@ export default function Login() {
           <Link href="/signup" className="text-primary underline">Create one</Link>
         </p>
         <p className="text-xs text-center text-muted-foreground">
-          Lost your password? Email hazvimusoni@gmail.com for a one-time reset link.
+          Lost your password? Email info@synops-consulting.com for a one-time reset link.
         </p>
       </form>
     </AuthShell>

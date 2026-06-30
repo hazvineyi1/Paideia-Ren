@@ -52,12 +52,12 @@ export default function Privacy() {
 
           <section>
             <h2 className="font-serif text-2xl text-primary mb-3">Your rights</h2>
-            <p>You can ask us to export, correct or delete your data at any time. Write to <a className="text-terracotta underline" href="mailto:hazvimusoni@gmail.com">hazvimusoni@gmail.com</a> and we will respond within 30 days. We honour FERPA, COPPA, GDPR and UK GDPR requests from schools.</p>
+            <p>You can ask us to export, correct or delete your data at any time. Write to <a className="text-terracotta underline" href="mailto:info@synops-consulting.com">info@synops-consulting.com</a> and we will respond within 30 days. We honour FERPA, COPPA, GDPR and UK GDPR requests from schools.</p>
           </section>
 
           <section>
             <h2 className="font-serif text-2xl text-primary mb-3">Contact</h2>
-            <p>Questions about this policy go to <a className="text-terracotta underline" href="mailto:hazvimusoni@gmail.com">hazvimusoni@gmail.com</a>.</p>
+            <p>Questions about this policy go to <a className="text-terracotta underline" href="mailto:info@synops-consulting.com">info@synops-consulting.com</a>.</p>
           </section>
         </div>
       </section>
