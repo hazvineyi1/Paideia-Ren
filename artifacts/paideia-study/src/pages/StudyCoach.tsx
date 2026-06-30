@@ -5,7 +5,7 @@ import { useStudyProfile, useDailySession, fetchApi } from "@/hooks/use-study-jo
 import { useStudySubscription, useStudyBillingConfig } from "@/hooks/use-study-api";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowRight, BookOpen, BarChart3, FileText, User, Loader2, Sparkles, Check } from "lucide-react";
+import { ArrowRight, BookOpen, BarChart3, FileText, User, Loader2, Check } from "lucide-react";
 
 type Personality = "drill" | "socratic" | "warm" | "analyst";
 
@@ -69,17 +69,16 @@ export default function StudyCoach() {
   const firstName = (user?.name ?? user?.email ?? "there").split(/[ @]/)[0];
   const primaryStep = session?.session?.primaryStep ?? null;
 
-  // Upgrade nudge. Pro is the ceiling, so we always pitch toward it and pull the
-  // real Pro feature list from billing config so the benefits stay accurate.
+  // Upgrade nudge. Free users see both paid tiers (Plus and Pro) so they can
+  // compare and choose; Plus users only see Pro since that's the one step up.
+  // Tier details come from live billing config so the benefits stay accurate.
   const currentTier = subscription?.tier ?? "free";
   const showUpgrade = currentTier !== "pro";
   const isPlus = currentTier === "plus";
-  const proTier = billingConfig?.tiers.find((t) => t.id === "pro");
-  const upgradeBenefits = (proTier?.features ?? [
-    "Unlimited coaching, whenever you need it",
-    "Deeper feedback on every answer you give",
-    "A study plan that adapts to you each day",
-  ]).slice(0, 3);
+  const paidTiers = (billingConfig?.tiers ?? []).filter(
+    (t) => t.id === "plus" || t.id === "pro",
+  );
+  const upgradeTiers = isPlus ? paidTiers.filter((t) => t.id === "pro") : paidTiers;
 
   async function openConversation(seed: string) {
     if (opening) return;
@@ -185,50 +184,73 @@ export default function StudyCoach() {
           </div>
         </section>
 
-        {/* Upgrade card, prominent and benefit-led so the path to Pro is obvious */}
-        {showUpgrade && (
+        {/* Upgrade section, benefit-led so the path to a paid plan is obvious */}
+        {showUpgrade && upgradeTiers.length > 0 && (
           <section className="mt-14">
-            <div className="relative overflow-hidden rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-6 md:p-8">
-              <div className="flex items-center gap-2 mb-3">
-                <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-primary/15">
-                  <Sparkles className="h-4 w-4 text-primary" />
-                </span>
-                <p className="text-xs uppercase tracking-[0.18em] text-primary font-medium">
-                  {isPlus ? "Coach Pro" : "Unlock Coach Pro"}
-                </p>
-              </div>
+            <p className="text-xs uppercase tracking-[0.18em] text-primary font-medium mb-2">
+              {isPlus ? "Coach Pro" : "Upgrade"}
+            </p>
+            <h2 className="font-serif text-2xl md:text-3xl leading-snug text-foreground mb-2">
+              {isPlus
+                ? "You're one step from your full potential"
+                : "Two ways to go further"}
+            </h2>
+            <p className="text-sm md:text-base text-muted-foreground mb-6 max-w-lg">
+              {isPlus
+                ? "Pro gives you the deepest version of your coach. Go all in on the term ahead."
+                : "Pick the plan that matches how hard you want to push this term. The students who pull ahead don't do it alone."}
+            </p>
 
-              <h2 className="font-serif text-2xl md:text-3xl leading-snug text-foreground mb-2">
-                {isPlus
-                  ? "You're one step from your full potential"
-                  : "Great results are built, not wished for"}
-              </h2>
-              <p className="text-sm md:text-base text-muted-foreground mb-6 max-w-lg">
-                {isPlus
-                  ? "Pro gives you the deepest version of your coach. Go all in on the term ahead."
-                  : "The students who pull ahead don't do it alone. Pro turns your coach into a full study partner that pushes you every single day."}
-              </p>
+            <div
+              className={`grid gap-4 ${
+                upgradeTiers.length > 1 ? "sm:grid-cols-2" : "sm:grid-cols-1"
+              }`}
+            >
+              {upgradeTiers.map((t) => {
+                const isPro = t.id === "pro";
+                return (
+                  <div
+                    key={t.id}
+                    className={`relative overflow-hidden rounded-2xl border p-6 flex flex-col ${
+                      isPro
+                        ? "border-primary/40 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent"
+                        : "border-border/60 bg-card"
+                    }`}
+                  >
+                    {isPro && (
+                      <span className="absolute top-5 right-5 text-[10px] uppercase tracking-wide rounded-full bg-primary/15 text-primary px-2 py-0.5">
+                        Most popular
+                      </span>
+                    )}
+                    <div className="font-serif text-xl text-foreground mb-1">Coach {t.name}</div>
+                    <p className="text-sm text-muted-foreground mb-4">{t.tagline}</p>
 
-              <ul className="grid gap-2.5 mb-7 max-w-lg">
-                {upgradeBenefits.map((b) => (
-                  <li key={b} className="flex items-start gap-2.5 text-sm text-foreground">
-                    <Check className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                    <span>{b}</span>
-                  </li>
-                ))}
-              </ul>
+                    <ul className="grid gap-2 mb-6">
+                      {t.features.slice(0, 4).map((f) => (
+                        <li key={f} className="flex items-start gap-2.5 text-sm text-foreground">
+                          <Check className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                          <span>{f}</span>
+                        </li>
+                      ))}
+                    </ul>
 
-              <div className="flex flex-wrap items-center gap-4">
-                <Button onClick={() => setLoc("/upgrade")} size="lg" className="gap-2">
-                  <Sparkles className="h-4 w-4" />
-                  {isPlus ? "Step up to Pro" : "See what Pro unlocks"}
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-                <span className="text-xs text-muted-foreground">
-                  Pay with mobile money or card. Cancel anytime.
-                </span>
-              </div>
+                    <Button
+                      onClick={() => setLoc("/upgrade")}
+                      size="lg"
+                      variant={isPro ? "default" : "outline"}
+                      className="gap-2 mt-auto w-full sm:w-auto"
+                    >
+                      Choose {t.name}
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                );
+              })}
             </div>
+
+            <p className="text-xs text-muted-foreground mt-4">
+              Pay with mobile money or card. Cancel anytime.
+            </p>
           </section>
         )}
 
