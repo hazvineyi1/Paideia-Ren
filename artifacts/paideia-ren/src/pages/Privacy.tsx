@@ -11,7 +11,7 @@ export default function Privacy() {
         <div className="prose prose-lg max-w-none text-foreground/85 leading-[1.75] space-y-8">
           <section>
             <h2 className="font-serif text-2xl text-primary mb-3">Who we are</h2>
-            <p>Paideia-Ren Inc. ("Paideia-Ren", "we") builds Teaching Companion, a teaching assistant used by educators in pilot classrooms. This policy explains what data we collect, why, and what you can ask us to do with it.</p>
+            <p>Synops ("we") builds Synops Teacher, a teaching assistant used by educators in pilot classrooms. This policy explains what data we collect, why, and what you can ask us to do with it.</p>
           </section>
 
           <section>
@@ -33,7 +33,7 @@ export default function Privacy() {
           <section>
             <h2 className="font-serif text-2xl text-primary mb-3">Why we use it</h2>
             <ul className="list-disc pl-6 space-y-2">
-              <li>To run the Teaching Companion service for you.</li>
+              <li>To run the Synops Teacher service for you.</li>
               <li>To generate the lesson plans, worksheets and quizzes you ask for, by sending the relevant prompt context to a language-model provider on your behalf.</li>
               <li>To respond to pilot enquiries and support requests.</li>
               <li>To understand which features genuinely help teachers.</li>
@@ -42,7 +42,7 @@ export default function Privacy() {
 
           <section>
             <h2 className="font-serif text-2xl text-primary mb-3">Who sees it</h2>
-            <p>Paideia-Ren staff with a need to know. Our infrastructure providers (hosting and database). Our language-model providers, which receive only the prompt content for a single request and do not retain it for training.</p>
+            <p>Synops staff with a need to know. Our infrastructure providers (hosting and database). Our language-model providers, which receive only the prompt content for a single request and do not retain it for training.</p>
           </section>
 
           <section>

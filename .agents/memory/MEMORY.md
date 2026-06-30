@@ -1,0 +1,2 @@
+- [Stale lib declarations](stale-lib-declarations.md) — editing lib/db source needs `pnpm run typecheck:libs` (tsc --build) before consumers typecheck; web apps use vite build (no tsc).
+- [Synops brand naming](synops-brand-naming.md) — display-name map for the 3 portals; internal identifiers (pkg names, folders, slugs, DB keys) stay unchanged.

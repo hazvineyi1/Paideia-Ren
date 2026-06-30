@@ -45,7 +45,7 @@ export default function StudyTutor() {
               <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary/5 text-primary text-[13px] font-semibold uppercase tracking-widest mb-6">
                 <span>New</span>
                 <span className="w-1 h-1 rounded-full bg-primary" />
-                <span>AI Study Tutor</span>
+                <span>Synops Coach</span>
               </div>
             </motion.div>
             <motion.h1
@@ -62,7 +62,7 @@ export default function StudyTutor() {
               transition={{ duration: 0.8, delay: 0.3 }}
               className="text-[17px] text-foreground/80 leading-[1.75] mb-10 max-w-[560px]"
             >
-              The Paideia-Ren Study Tutor is a conversational AI that adapts to how you actually think. It paces explanations, scaffolds the next step, and refines its read of you as you study, rather than handing you finished answers.
+              Synops Coach is a conversational AI that adapts to how you actually think. It paces explanations, scaffolds the next step, and refines its read of you as you study, rather than handing you finished answers.
             </motion.p>
             <motion.div
               initial={{ opacity: 0 }}
@@ -76,7 +76,7 @@ export default function StudyTutor() {
                 className="bg-primary hover:bg-primary/90 text-white px-8 h-14 text-base rounded-none"
               >
                 <a href="/study/">
-                  Open Study Tutor <ArrowRight size={16} className="ml-2" />
+                  Open Synops Coach <ArrowRight size={16} className="ml-2" />
                 </a>
               </Button>
               <Button
@@ -128,7 +128,7 @@ export default function StudyTutor() {
               Four signals. One tutor that adapts.
             </h2>
             <p className="text-[17px] text-foreground/80 leading-[1.75] mb-3">
-              A short diagnostic reads four cognitive signals from <em>how</em> you answer, not from a self-report quiz. The Study Tutor uses them to sequence explanations, pick the next step, and pace the session. The profile carries its own confidence score and refines as you study.
+              A short diagnostic reads four cognitive signals from <em>how</em> you answer, not from a self-report quiz. Synops Coach uses them to sequence explanations, pick the next step, and pace the session. The profile carries its own confidence score and refines as you study.
             </p>
             <p className="text-[13px] text-muted-foreground mb-12">
               We deliberately don't use VARK (visual/auditory/reading/kinesthetic), because that model has not held up in peer-reviewed research.
@@ -169,7 +169,7 @@ export default function StudyTutor() {
               className="bg-accent hover:bg-accent/90 text-white px-10 h-14 text-base rounded-none"
             >
               <a href="/study/">
-                Open Study Tutor <ArrowRight size={16} className="ml-2" />
+                Open Synops Coach <ArrowRight size={16} className="ml-2" />
               </a>
             </Button>
           </motion.div>

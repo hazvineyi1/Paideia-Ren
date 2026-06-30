@@ -72,7 +72,7 @@ const demoItems: DemoItem[] = [
 
 const features = [
   { icon: Activity, title: "Adaptive Content Engine", description: "Real-time modality-responsive content delivery across every subject and grade level." },
-  { icon: Users, title: "Teaching Companion", description: "Rich classroom dashboards, intervention signals, and suggested next steps, in the teacher's language." },
+  { icon: Users, title: "Synops Teacher", description: "Rich classroom dashboards, intervention signals, and suggested next steps, in the teacher's language." },
   { icon: CheckCircle2, title: "Cohort & Community Layer", description: "Peer learning cohorts, dialogical discussion prompts, and collaborative problem-solving tools." },
   { icon: Globe, title: "Built for Real Schools", description: "Designed alongside teachers in the United States, United Kingdom, and Europe. Plain English at launch." },
   { icon: Monitor, title: "Modern Browser Support", description: "Runs on Chromebooks, iPads, and standard desktops used in classrooms and at home. No installation required." },

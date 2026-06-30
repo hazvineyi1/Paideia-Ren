@@ -35,9 +35,9 @@ type LearnerValues = z.infer<typeof learnerSchema>;
 
 const workflows = [
   { icon: Clock, title: "Saves you time on differentiation", description: "The platform handles the adaptation layer, identifying which students need more support, which need a harder path, and which need a different modality. You make the pedagogical decisions. The system does the labor." },
-  { icon: BarChart2, title: "Surfaces what you cannot see", description: "A class of 35 has 35 individual learning trajectories. Paideia-Ren makes the hidden visible: who is in the productive struggle zone, who is cognitively overloaded, who has stopped trying. You see it. You act on it." },
+  { icon: BarChart2, title: "Surfaces what you cannot see", description: "A class of 35 has 35 individual learning trajectories. Synops makes the hidden visible: who is in the productive struggle zone, who is cognitively overloaded, who has stopped trying. You see it. You act on it." },
   { icon: Lightbulb, title: "Respects your professional judgment", description: "Every recommendation the system makes is a suggestion, never an instruction. You override it. You contextualize it. The AI defers to you, always. Your professional expertise is the irreplaceable element in every classroom." },
-  { icon: Heart, title: "Built with teachers, for teachers", description: "Every feature in Paideia-Ren was designed in dialogue with practicing teachers across the United States, United Kingdom, and Europe. We ran user testing in classrooms before we ran it in conference rooms." },
+  { icon: Heart, title: "Built with teachers, for teachers", description: "Every feature in Synops was designed in dialogue with practicing teachers across the United States, United Kingdom, and Europe. We ran user testing in classrooms before we ran it in conference rooms." },
 ];
 
 const interestOptions = [
@@ -80,7 +80,7 @@ export default function ForEducators() {
         </motion.h1>
         <motion.p {...fadeUp} transition={{ duration: 0.7, delay: 0.2 }}
           className="text-[17px] text-foreground/80 leading-[1.75]">
-          Paideia-Ren exists because of educators. It works because of educators. And it will only ever answer to educators.
+          Synops exists because of educators. It works because of educators. And it will only ever answer to educators.
         </motion.p>
       </section>
 
@@ -195,7 +195,7 @@ export default function ForEducators() {
           <motion.div {...fadeUp}>
             <h2 className="font-serif text-3xl md:text-[40px] text-primary mb-4 leading-[1.2]">For self-directed learners.</h2>
             <p className="text-[17px] text-foreground/80 leading-[1.75] mb-12">
-              Register your interest in joining a Paideia-Ren learning cohort. We prioritize learners in underserved communities.
+              Register your interest in joining a Synops learning cohort. We prioritize learners in underserved communities.
             </p>
             <Form {...learnerForm}>
               <form onSubmit={learnerForm.handleSubmit(onLearnerSubmit)} className="space-y-6">

@@ -1,6 +1,6 @@
 kind = "web"
 previewPath = "/app/"
-title = "Paideia-Ren Teacher Co-pilot"
+title = "Synops Teacher"
 version = "1.0.0"
 id = "artifacts/paideia-app"
 router = "path"

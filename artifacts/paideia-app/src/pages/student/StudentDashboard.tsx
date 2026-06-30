@@ -39,12 +39,12 @@ export default function StudentDashboard() {
       <header className="border-b bg-card">
         <div className="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between">
           <div>
-            <div className="font-serif text-xl text-primary">Paideia-Ren</div>
+            <div className="font-serif text-xl text-primary">Synops</div>
             <div className="text-xs text-muted-foreground">Signed in as {student.firstName} {student.lastInitial}</div>
           </div>
           <Link href="/student/tutor">
             <Button variant="ghost" size="sm" className="gap-1.5 mr-2">
-              <MessageSquare className="h-4 w-4" /> Study Tutor
+              <MessageSquare className="h-4 w-4" /> Synops Coach
             </Button>
           </Link>
           <Button variant="ghost" size="sm" onClick={out}><LogOut className="h-4 w-4 mr-1" />Sign out</Button>

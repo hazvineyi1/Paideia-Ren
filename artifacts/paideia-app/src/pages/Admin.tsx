@@ -1016,7 +1016,7 @@ function StudentsTab({ students, onImpersonate }: { students: Student[]; onImper
   return (
     <div className="space-y-3">
       <div className="text-sm text-muted-foreground">
-        {students.length} student{students.length === 1 ? "" : "s"}. Click <strong>Impersonate</strong> to enter that student's Study Tutor view.
+        {students.length} student{students.length === 1 ? "" : "s"}. Click <strong>Impersonate</strong> to enter that student's Synops Coach view.
       </div>
       {students.map((s) => (
         <div key={s.id} className="border rounded-lg bg-card p-5 flex items-start justify-between gap-4 flex-wrap">

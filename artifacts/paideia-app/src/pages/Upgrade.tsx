@@ -79,7 +79,7 @@ export default function Upgrade() {
         <Sparkles className="h-7 w-7 text-accent mt-1" />
         <div>
           <h1 className="font-serif text-4xl text-primary mb-2">
-            {paidOpen ? "Upgrade Paideia-Ren" : "Unlimited is coming soon"}
+            {paidOpen ? "Upgrade Synops Teacher" : "Unlimited is coming soon"}
           </h1>
           <p className="text-muted-foreground">
             {paidOpen

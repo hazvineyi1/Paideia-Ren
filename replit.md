@@ -1,4 +1,4 @@
-# Paideia-Ren Teaching Companion
+# Synops
 
 Marketing site (`paideia-ren`), teacher app (`paideia-app`), student study app
 (`paideia-study`), and shared API (`api-server`).

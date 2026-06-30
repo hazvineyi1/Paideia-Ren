@@ -92,7 +92,7 @@ export default function StudyProfile() {
         <div>
           <h1 className="text-2xl font-bold mb-1">Learner Profile</h1>
           <p className="text-sm text-muted-foreground mb-5">
-            Your cognitive fingerprint shapes how Paideia adapts everything - from flashcard scheduling to question difficulty.
+            Your cognitive fingerprint shapes how Synops adapts everything - from flashcard scheduling to question difficulty.
           </p>
         </div>
 

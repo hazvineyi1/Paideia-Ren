@@ -11,12 +11,12 @@ export default function Terms() {
         <div className="prose prose-lg max-w-none text-foreground/85 leading-[1.75] space-y-8">
           <section>
             <h2 className="font-serif text-2xl text-primary mb-3">1. Who this is between</h2>
-            <p>These terms are between you (the teacher, school administrator or visitor using the service) and Paideia-Ren Inc.</p>
+            <p>These terms are between you (the teacher, school administrator or visitor using the service) and Synops.</p>
           </section>
 
           <section>
             <h2 className="font-serif text-2xl text-primary mb-3">2. What the service is</h2>
-            <p>Teaching Companion helps teachers draft lesson plans, worksheets, quizzes and parent updates, and lets them manage classes and assignments. It is a tool that augments a teacher; it does not replace teacher judgement.</p>
+            <p>Synops Teacher helps teachers draft lesson plans, worksheets, quizzes and parent updates, and lets them manage classes and assignments. It is a tool that augments a teacher; it does not replace teacher judgement.</p>
           </section>
 
           <section>
@@ -41,7 +41,7 @@ export default function Terms() {
 
           <section>
             <h2 className="font-serif text-2xl text-primary mb-3">6. AI-generated drafts</h2>
-            <p>Drafts produced by the service are starting points. They may contain errors. A teacher must review every draft before using it in class or sending it to a parent. Paideia-Ren is not liable for content used in class without that review.</p>
+            <p>Drafts produced by the service are starting points. They may contain errors. A teacher must review every draft before using it in class or sending it to a parent. Synops is not liable for content used in class without that review.</p>
           </section>
 
           <section>
@@ -56,7 +56,7 @@ export default function Terms() {
 
           <section>
             <h2 className="font-serif text-2xl text-primary mb-3">9. Liability</h2>
-            <p>The service is provided "as is" during pilot. To the extent the law allows, Paideia-Ren is not liable for indirect or consequential losses. Nothing in these terms limits any liability that cannot be limited by law.</p>
+            <p>The service is provided "as is" during pilot. To the extent the law allows, Synops is not liable for indirect or consequential losses. Nothing in these terms limits any liability that cannot be limited by law.</p>
           </section>
 
           <section>

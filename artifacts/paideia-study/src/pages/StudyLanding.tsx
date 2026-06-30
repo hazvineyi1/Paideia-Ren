@@ -63,8 +63,8 @@ export default function StudyLanding() {
             <Brain className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <span className="font-bold text-sm tracking-tight">Paideia</span>
-            <span className="font-light text-sm text-muted-foreground ml-0.5">Study</span>
+            <span className="font-bold text-sm tracking-tight">Synops</span>
+            <span className="font-light text-sm text-muted-foreground ml-0.5">Coach</span>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -262,7 +262,7 @@ export default function StudyLanding() {
             </Button>
             <p className="text-xs text-muted-foreground mt-3">
               Free tier includes unlimited materials, flashcards, and practice. Premium unlocks
-              advanced analytics, mock exams, and AI tutor.
+              advanced analytics, mock exams, and Synops Coach.
             </p>
           </div>
         </section>
@@ -273,7 +273,7 @@ export default function StudyLanding() {
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
           <div className="flex items-center gap-2">
             <Brain className="h-4 w-4 text-primary" />
-            <span className="font-semibold">Study Tutor</span>
+            <span className="font-semibold">Synops Coach</span>
           </div>
           <p>Built for learners who want to understand, not just memorize.</p>
         </div>

@@ -135,7 +135,7 @@ export default function ForSchools() {
           <motion.div {...fadeUp}>
             <h2 className="font-serif text-3xl md:text-[40px] text-primary mb-8 leading-[1.2]">What we offer schools.</h2>
             <p className="text-[17px] text-foreground/80 leading-[1.75] mb-6">
-              Paideia-Ren is designed to work inside your existing systems, not replace them. Our platform is curriculum-aligned to Common Core, US state standards, the UK National Curriculum, IB, and Cambridge International, with district and multi-academy trust tooling that enables co-branded deployment at scale.
+              Synops is designed to work inside your existing systems, not replace them. Our platform is curriculum-aligned to Common Core, US state standards, the UK National Curriculum, IB, and Cambridge International, with district and multi-academy trust tooling that enables co-branded deployment at scale.
             </p>
             <p className="text-[17px] text-foreground/80 leading-[1.75] mb-8">
               Every deployment is teacher-augmenting by design. The platform surfaces actionable intelligence for teachers, not generic reports. It flags which students need attention, where the class is collectively stuck, and what the research suggests as the most effective intervention for this cohort.
@@ -219,7 +219,7 @@ export default function ForSchools() {
           <motion.h2 {...fadeUp} className="font-serif text-3xl md:text-[40px] text-primary mb-12 leading-[1.2]">Frequently asked.</motion.h2>
           <div className="divide-y border-y">
             {[
-              { q: "What does a pilot actually look like?", a: "Two to six teachers from your school use Teaching Companion for one term. We onboard each teacher personally, meet every two weeks, and share a written outcomes summary at the end of the term." },
+              { q: "What does a pilot actually look like?", a: "Two to six teachers from your school use Synops Teacher for one term. We onboard each teacher personally, meet every two weeks, and share a written outcomes summary at the end of the term." },
               { q: "What does it cost to run a pilot?", a: "Pilots are run at no charge during this phase of the work. We ask in return for honest feedback, an end-of-term debrief, and permission to anonymise outcome data." },
               { q: "Do you replace teachers?", a: "No. The product is teacher-augmenting by design. It drafts lesson plans, worksheets, quizzes and parent updates that the teacher reviews, edits and owns. The teacher is always in the loop." },
               { q: "How is student data handled?", a: "We minimise child data by default. Rosters live under the teacher's account, are never sold, and are never used to train models. Read our Privacy Policy for the full detail." },

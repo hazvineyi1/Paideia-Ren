@@ -57,7 +57,7 @@ export default function StudyTutorChat() {
       <header className="border-b px-4 py-2 flex items-center justify-between shrink-0 sticky top-12 bg-background/95 backdrop-blur-sm z-40">
         <div className="flex items-center gap-2 min-w-0">
           <h1 className="font-semibold text-sm truncate">
-            {conversation?.title || "Study Tutor"}
+            {conversation?.title || "Synops Coach"}
           </h1>
         </div>
         <div className="flex items-center gap-2 shrink-0">

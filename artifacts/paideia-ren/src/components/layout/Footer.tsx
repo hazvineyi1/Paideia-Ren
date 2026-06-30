@@ -2,8 +2,6 @@ import React from "react";
 import { Link } from "wouter";
 import { Linkedin } from "lucide-react";
 import { SiX, SiInstagram } from "react-icons/si";
-import { Button } from "@/components/ui/button";
-import { ShortFormDialog } from "@/components/ShortFormDialog";
 
 export function Footer() {
   return (
@@ -13,7 +11,7 @@ export function Footer() {
           <div className="col-span-1 md:col-span-1">
             <Link href="/" className="flex items-center gap-1 mb-4 inline-flex">
               <span className="font-serif text-2xl font-semibold tracking-wide text-primary">
-                Paideia-Ren
+                Synops
               </span>
               <span className="font-serif text-[13px] text-accent font-bold mb-3">仁</span>
             </Link>
@@ -26,7 +24,6 @@ export function Footer() {
             <h3 className="text-[13px] font-semibold uppercase tracking-widest text-primary mb-2">About</h3>
             <Link href="/about" className="text-sm text-foreground hover:text-terracotta transition-colors">Our Philosophy</Link>
             <Link href="/team" className="text-sm text-foreground hover:text-terracotta transition-colors">Leadership & Team</Link>
-            <Link href="/transparency" className="text-sm text-foreground hover:text-terracotta transition-colors">Transparency & Governance</Link>
             <Link href="/where-we-work" className="text-sm text-foreground hover:text-terracotta transition-colors">Where We Work</Link>
           </div>
 
@@ -40,7 +37,6 @@ export function Footer() {
           <div className="flex flex-col gap-4">
             <h3 className="text-[13px] font-semibold uppercase tracking-widest text-primary mb-2">Connect</h3>
             <Link href="/for-schools" className="text-sm text-foreground hover:text-terracotta transition-colors">For Schools</Link>
-            <Link href="/for-funders" className="text-sm text-foreground hover:text-terracotta transition-colors">For Funders</Link>
             <Link href="/for-educators" className="text-sm text-foreground hover:text-terracotta transition-colors">For Educators</Link>
             <Link href="/contact" className="text-sm text-foreground hover:text-terracotta transition-colors">Contact</Link>
           </div>
@@ -59,26 +55,8 @@ export function Footer() {
             <span className="hidden md:inline text-border">·</span>
             <Link href="/privacy" className="hover:text-foreground">Privacy Policy</Link>
             <Link href="/terms" className="hover:text-foreground">Terms of Service</Link>
-            <Link href="/transparency" className="hover:text-foreground">Accessibility</Link>
-            <span>© Paideia-Ren Inc.</span>
+            <span>© Synops</span>
           </div>
-
-          <ShortFormDialog
-            testIdPrefix="donate-footer"
-            trigger={
-              <Button className="bg-accent hover:bg-accent/90 text-white rounded-full px-6 font-medium" data-testid="button-donate-footer">
-                Donate
-              </Button>
-            }
-            title="Support our mission"
-            description="Tell us a little about you and our development team will follow up with giving options."
-            orgLabel="Organization (optional)"
-            orgPlaceholder="Foundation, family office, company"
-            showAmount
-            submitLabel="Send"
-            toastTitle="Thank you"
-            toastDescription="Our development team will be in touch within 2 business days."
-          />
         </div>
       </div>
     </footer>

@@ -1,6 +1,6 @@
 kind = "web"
 previewPath = "/study/"
-title = "Paideia Study"
+title = "Synops Coach"
 version = "1.0.0"
 id = "artifacts/paideia-study"
 router = "path"

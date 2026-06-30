@@ -35,7 +35,7 @@ export default function StudyLogin() {
         <CardHeader className="text-center">
           <div className="flex items-center justify-center gap-2 mb-2">
             <BookOpen className="h-6 w-6 text-primary" />
-            <span className="font-bold text-lg">Study Tutor</span>
+            <span className="font-bold text-lg">Synops Coach</span>
           </div>
           <CardTitle>Sign in</CardTitle>
         </CardHeader>

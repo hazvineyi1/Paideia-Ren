@@ -21,7 +21,7 @@ export default function About() {
         </motion.h1>
         <motion.p {...fadeUp} transition={{ duration: 0.7, delay: 0.2 }}
           className="text-[17px] text-foreground/80 leading-[1.75]">
-          Paideia-Ren draws from the deepest wells of human educational thought: Greek, Confucian, and African, to build technology that forms whole persons within a shared humanity.
+          Synops draws from the deepest wells of human educational thought: Greek, Confucian, and African, to build technology that forms whole persons within a shared humanity.
         </motion.p>
       </section>
 
@@ -56,7 +56,7 @@ export default function About() {
                 definition: "A person is a person through other persons. I am because we are.",
                 quote: "Umuntu ngumuntu ngabantu: a person is a person through other persons.",
                 attribution: "African proverb",
-                body: "Ubuntu is a communal philosophy of selfhood: my flourishing is bound to yours. In education, this means knowledge is held collectively, learning is dialogical, and my child's literacy is inseparable from your child's literacy. This is the equity imperative.",
+                body: "Ubuntu is a communal philosophy of selfhood: my flourishing is bound to yours. In education, this means knowledge is held collectively, learning is dialogical, and we all learn better together.",
               },
             ].map((item, i) => (
               <motion.div key={item.title} initial={{ opacity: 0, y: 32 }} whileInView={{ opacity: 1, y: 0 }}
@@ -93,7 +93,7 @@ export default function About() {
             Three traditions, three continents, three millennia of thought, converging on a single educational anthropology: <strong>true learning forms the whole person, and a whole person is one whose intelligence is bound to humaneness and to community.</strong>
           </p>
           <p className="text-[17px] text-foreground/80 leading-[1.75] mb-12">
-            This is the philosophical bedrock that justifies an AI tutoring system grounded in adaptivity (paideia: each soul turned in the way it can turn), relational ethics (ren: technology in service of human relationship, never replacing it), and equity (ubuntu: my child's learning is bound to your child's learning).
+            This is the philosophical bedrock for an AI tutoring system grounded in adaptivity (paideia: each soul turned in the way it can turn), relational ethics (ren: technology in service of human relationship, never replacing it), and community (ubuntu: we learn better together).
           </p>
 
           <div className="space-y-8">

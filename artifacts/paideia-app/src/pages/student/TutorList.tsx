@@ -45,7 +45,7 @@ export default function TutorList() {
       <header className="border-b bg-card">
         <div className="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-semibold">Study Tutor</h1>
+            <h1 className="text-xl font-semibold">Synops Coach</h1>
             <p className="text-sm text-muted-foreground">Chat with your AI tutor about class material</p>
           </div>
           <Button onClick={() => setLoc("/student/tutor/new")} size="sm">

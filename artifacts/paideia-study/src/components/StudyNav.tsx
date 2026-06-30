@@ -36,7 +36,7 @@ export default function StudyNav() {
           onClick={() => setLoc("/dashboard")}
           className="font-semibold text-sm mr-2 sm:mr-4 shrink-0 hover:opacity-80"
         >
-          Study Tutor
+          Synops Coach
         </button>
         <div className="flex items-center gap-0.5 sm:gap-1 overflow-x-auto scrollbar-none flex-1">
           {TABS.map((t) => {
@@ -73,7 +73,7 @@ export default function StudyNav() {
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => setLoc("/tutor")}>
-                <MessageCircle className="h-3.5 w-3.5 mr-2" /> AI tutor
+                <MessageCircle className="h-3.5 w-3.5 mr-2" /> Synops Coach
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setLoc("/start-over")}>
                 <RotateCcw className="h-3.5 w-3.5 mr-2" /> Test &amp; start again

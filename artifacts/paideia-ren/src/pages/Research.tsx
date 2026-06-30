@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Link } from "wouter";
-import { ExternalLink, BookOpen, ArrowRight, Mail } from "lucide-react";
+import { ExternalLink, ArrowRight, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const fadeUp = {
@@ -144,7 +144,7 @@ export default function Research() {
             <div className="space-y-6">
               {[
                 "Effect sizes by region and demographic, disaggregated rather than averaged away.",
-                "Equity gap closure across income, gender, language, and disability status.",
+                "Outcome improvements across income, gender, language, and disability status.",
                 "Teacher time saved and professional confidence gained.",
                 "Long-term knowledge retention at 3, 6, and 12 months.",
                 "Cost-effectiveness per standard deviation of learning gain.",
@@ -162,22 +162,17 @@ export default function Research() {
         </div>
       </section>
 
-      {/* Blueprint & Collaboration */}
+      {/* Framework & Collaboration */}
       <section className="py-[120px]">
         <div className="max-w-[720px] mx-auto px-6 text-center">
           <motion.div {...fadeUp}>
             <h2 className="font-serif text-3xl md:text-[40px] text-primary mb-6 leading-[1.2]">
-              The Paideia-Ren Blueprint
+              Our research framework
             </h2>
             <p className="text-[17px] text-foreground/80 leading-[1.75] mb-10">
-              <em>"Reimagining Education with a Global Technological Lens"</em> is our strategic framework aligning adaptive AI with UNESCO's SDG 4 and SDG 4.7. Read the full Blueprint on this site, or request the complete PDF with appendices.
+              <em>"Reimagining Education with a Global Technological Lens"</em> is our product framework for grounding adaptive AI in rigorous learning science. Request the complete write-up with appendices.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
-              <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-white px-8 h-14 text-base rounded-none">
-                <Link href="/blueprint">
-                  <BookOpen size={18} strokeWidth={1.5} className="mr-2" /> Read the Blueprint
-                </Link>
-              </Button>
               <Button asChild size="lg" variant="outline"
                 className="border-primary text-primary hover:bg-primary/5 px-8 h-14 text-base rounded-none">
                 <Link href="/contact">

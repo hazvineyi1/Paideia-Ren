@@ -31,7 +31,7 @@ export default function WhereWeWork() {
         </motion.h1>
         <motion.p {...fadeUp} transition={{ duration: 0.7, delay: 0.2 }}
           className="text-[17px] text-foreground/80 leading-[1.75]">
-          Paideia-Ren is designed alongside the teachers and students it serves. Our reach grows through partnership and evidence, not declaration. The places named below are where the work has already begun.
+          Synops is designed alongside the teachers and students it serves. Our reach grows through partnership and evidence, not declaration. The places named below are where the work has already begun.
         </motion.p>
       </section>
 
@@ -74,11 +74,11 @@ export default function WhereWeWork() {
       <section className="py-[120px] bg-primary text-center">
         <div className="max-w-[720px] mx-auto px-6">
           <motion.h2 {...fadeUp} className="font-serif text-3xl md:text-[48px] text-white leading-[1.2] mb-6">
-            Bring Paideia-Ren to your school or district.
+            Bring Synops to your school or district.
           </motion.h2>
           <motion.p {...fadeUp} transition={{ duration: 0.7, delay: 0.1 }}
             className="text-[17px] text-white/70 leading-[1.75] mb-10">
-            We are actively seeking district leaders, multi-academy trusts, independent schools, and education foundations who share the conviction that every child deserves an excellent education.
+            We are actively seeking district leaders, multi-academy trusts, independent schools, and education systems that want to give every student an excellent learning experience.
           </motion.p>
           <motion.div {...fadeUp} transition={{ duration: 0.7, delay: 0.2 }}>
             <Button asChild size="lg" className="bg-white text-primary hover:bg-white/90 px-10 h-14 text-base rounded-none">

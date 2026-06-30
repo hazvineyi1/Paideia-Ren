@@ -14,7 +14,6 @@ const schema = z.object({
   name: z.string().min(2, "Name is required"),
   email: z.string().email("Valid email required"),
   organization: z.string().optional(),
-  amount: z.string().optional(),
   message: z.string().optional(),
 });
 
@@ -28,7 +27,6 @@ interface Props {
   description: string;
   orgLabel?: string;
   orgPlaceholder?: string;
-  showAmount?: boolean;
   submitLabel: string;
   toastTitle: string;
   toastDescription: string;
@@ -45,7 +43,6 @@ export function ShortFormDialog({
   description,
   orgLabel,
   orgPlaceholder,
-  showAmount,
   submitLabel,
   toastTitle,
   toastDescription,
@@ -63,7 +60,7 @@ export function ShortFormDialog({
   };
   const form = useForm<Values>({
     resolver: zodResolver(schema),
-    defaultValues: { name: "", email: "", organization: "", amount: "", message: "" },
+    defaultValues: { name: "", email: "", organization: "", message: "" },
   });
 
   const [submitting, setSubmitting] = React.useState(false);
@@ -81,9 +78,7 @@ export function ShortFormDialog({
             contactName: values.name,
             contactEmail: values.email,
             organization: values.organization || null,
-            message: [values.amount ? `Intended gift: ${values.amount}` : null, values.message || null]
-              .filter(Boolean)
-              .join("\n\n") || null,
+            message: values.message || null,
             sourcePath: typeof window !== "undefined" ? window.location.pathname + window.location.search : null,
             sourceReferrer: typeof document !== "undefined" ? document.referrer || null : null,
             sourceUtm: Object.keys(utm).length > 0 ? utm : null,
@@ -98,7 +93,7 @@ export function ShortFormDialog({
       } catch (err) {
         toast({
           title: "Could not send",
-          description: (err as Error).message + ". Please try again or email hello@paideia-ren.org.",
+          description: (err as Error).message + ". Please try again or email hazvimusoni@gmail.com.",
           variant: "destructive",
         });
       } finally {
@@ -142,15 +137,6 @@ export function ShortFormDialog({
                 <FormItem>
                   <FormLabel className="text-[12px] font-semibold uppercase tracking-wide">{orgLabel}</FormLabel>
                   <FormControl><Input {...field} placeholder={orgPlaceholder ?? ""} className="rounded-none h-11" data-testid={`${testIdPrefix}-input-org`} /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )} />
-            )}
-            {showAmount && (
-              <FormField control={form.control} name="amount" render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-[12px] font-semibold uppercase tracking-wide">Intended gift (optional)</FormLabel>
-                  <FormControl><Input {...field} placeholder="e.g. $500, $5,000, or a range" className="rounded-none h-11" data-testid={`${testIdPrefix}-input-amount`} /></FormControl>
                   <FormMessage />
                 </FormItem>
               )} />

@@ -14,14 +14,11 @@ import About from "@/pages/About";
 import Team from "@/pages/Team";
 import Platform from "@/pages/Platform";
 import Research from "@/pages/Research";
-import Blueprint from "@/pages/Blueprint";
 import ForSchools from "@/pages/ForSchools";
-import ForFunders from "@/pages/ForFunders";
 import ForEducators from "@/pages/ForEducators";
 import StudyTutor from "@/pages/StudyTutor";
 import WhereWeWork from "@/pages/WhereWeWork";
 import News from "@/pages/News";
-import Transparency from "@/pages/Transparency";
 import Contact from "@/pages/Contact";
 import Privacy from "@/pages/Privacy";
 import Terms from "@/pages/Terms";
@@ -60,14 +57,11 @@ function Router() {
           <Route path="/team" component={Team} />
           <Route path="/platform" component={Platform} />
           <Route path="/research" component={Research} />
-          <Route path="/blueprint" component={Blueprint} />
           <Route path="/for-schools" component={ForSchools} />
-          <Route path="/for-funders" component={ForFunders} />
           <Route path="/for-educators" component={ForEducators} />
           <Route path="/study-tutor" component={StudyTutor} />
           <Route path="/where-we-work" component={WhereWeWork} />
           <Route path="/news" component={News} />
-          <Route path="/transparency" component={Transparency} />
           <Route path="/contact" component={Contact} />
           <Route path="/privacy" component={Privacy} />
           <Route path="/terms" component={Terms} />

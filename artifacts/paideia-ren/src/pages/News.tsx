@@ -22,7 +22,7 @@ type Category = typeof categories[number];
 
 const articles: Record<Category, { title: string; excerpt: string; status: string }[]> = {
   Research: [
-    { title: "Adaptive tutoring and the 2-sigma gap: what the evidence actually says", excerpt: "A careful review of the RCT evidence on AI tutoring systems, what holds up, what is overstated, and what Paideia-Ren's research agenda will add to the field.", status: "Coming at launch" },
+    { title: "Adaptive tutoring and the 2-sigma gap: what the evidence actually says", excerpt: "A careful review of the RCT evidence on AI tutoring systems, what holds up, what is overstated, and what Synops's research agenda will add to the field.", status: "Coming at launch" },
     { title: "Cognitive-load theory in the real classroom: a practitioner's guide", excerpt: "Translating Sweller's cognitive-load research into classroom practice in US public schools, UK academies, and European secondary education, and what it means for content design.", status: "Coming at launch" },
     { title: "Why 79% of edtech has no evidence, and what the 21% do differently", excerpt: "The Jacobs Foundation finding that most edtech lacks rigorous evidence is a design challenge, not a statistical curiosity. We map the path forward.", status: "Coming at launch" },
   ],
@@ -47,7 +47,7 @@ type SignupValues = z.infer<typeof signupSchema>;
 const interestOptions = [
   { id: "research", label: "Research & Evidence" },
   { id: "schools", label: "Schools & Partnerships" },
-  { id: "funding", label: "Funding & Impact" },
+  { id: "funding", label: "Product Updates" },
 ];
 
 export default function News() {
@@ -74,7 +74,7 @@ export default function News() {
         </motion.h1>
         <motion.p {...fadeUp} transition={{ duration: 0.7, delay: 0.2 }}
           className="text-[17px] text-foreground/80 leading-[1.75]">
-          Research, field notes, and philosophy: the three registers in which Paideia-Ren does its thinking.
+          Research, field notes, and philosophy: the three registers in which Synops does its thinking.
         </motion.p>
       </section>
 
@@ -122,7 +122,7 @@ export default function News() {
           <motion.div {...fadeUp}>
             <h2 className="font-serif text-3xl md:text-[40px] text-primary mb-4 leading-[1.2]">Stay in the conversation.</h2>
             <p className="text-[17px] text-foreground/80 leading-[1.75] mb-12">
-              New thinking from the Paideia-Ren team, delivered to your inbox. Select the topics that matter most to you.
+              New thinking from the Synops team, delivered to your inbox. Select the topics that matter most to you.
             </p>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">

@@ -56,15 +56,15 @@ export default function Team() {
         </motion.h1>
       </section>
 
-      {/* Mission & Foundations */}
+      {/* Approach & Foundations */}
       <section className="py-[120px] bg-secondary">
         <div className="max-w-[720px] mx-auto px-6">
           <motion.div {...fadeUp}>
             <h2 className="font-serif text-3xl md:text-[40px] text-primary mb-8 leading-[1.2]">
-              Our institutional mission
+              How we build
             </h2>
             <p className="text-[17px] text-foreground/80 leading-[1.75] mb-6">
-              Paideia-Ren Inc. exists to ensure that every learner, regardless of geography, income, language, or learning profile, has access to the kind of personalized, adaptive instruction that the most privileged students receive as a matter of course.
+              Synops gives every learner, regardless of geography, language, or learning profile, access to the kind of personalized, adaptive instruction that the most privileged students receive as a matter of course.
             </p>
             <p className="text-[17px] text-foreground/80 leading-[1.75] mb-12">
               Our research agenda is anchored in the most rigorous learning science of our time. We use Bloom's taxonomy to map question types and scaffold mastery, cognitive-load theory to calibrate difficulty, retrieval and spacing research to schedule practice, and Vygotsky's zone of proximal development to hold every learner at the precise edge of their growth. We do not use learning-styles theories such as VARK; they are popular but not supported by evidence, and pretending otherwise would shortchange the learners we serve.
@@ -92,7 +92,7 @@ export default function Team() {
               Reimagining Education with a Global Technological Lens
             </h2>
             <p className="text-[17px] text-foreground/80 leading-[1.75]">
-              Our <em>"Reimagining Education with a Global Technological Lens"</em> blueprint is the strategic framework that aligns our platform with UNESCO's SDG 4 and SDG 4.7 targets, situating adaptive AI within a rights-based, equity-first approach to universal quality education. The blueprint governs our curriculum alignment strategy, our data ethics charter, our government partnership model, and our theory of change.
+              Our product framework situates adaptive AI within a practical approach to high-quality, personalized learning. It guides our curriculum alignment strategy, our data ethics standards, our partnership model with schools and districts, and our product roadmap.
             </p>
           </motion.div>
         </div>

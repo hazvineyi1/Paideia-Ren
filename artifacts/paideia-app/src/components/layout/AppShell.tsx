@@ -68,8 +68,8 @@ export function AppShell({ children }: { children: ReactNode }) {
       <aside className="w-64 shrink-0 border-r bg-card flex flex-col no-print">
         <div className="p-6 border-b">
           <Link href="/dashboard" className="block">
-            <div className="font-serif text-2xl text-primary leading-tight">Paideia-Ren</div>
-            <div className="text-xs tracking-wider uppercase text-muted-foreground mt-1">Teaching Companion</div>
+            <div className="font-serif text-2xl text-primary leading-tight">Synops</div>
+            <div className="text-xs tracking-wider uppercase text-muted-foreground mt-1">Teacher</div>
           </Link>
         </div>
         <nav className="flex-1 p-3 space-y-1">

@@ -31,7 +31,7 @@ export default function StudentLogin() {
     <div className="min-h-screen flex items-center justify-center bg-background p-6">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="font-serif text-3xl text-primary">Paideia-Ren</div>
+          <div className="font-serif text-3xl text-primary">Synops</div>
           <p className="text-sm text-muted-foreground mt-1">Student sign-in</p>
         </div>
         <form onSubmit={submit} className="bg-card border rounded-lg p-6 space-y-4">

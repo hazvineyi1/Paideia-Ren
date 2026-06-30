@@ -94,7 +94,7 @@ export default function StudyTutor() {
         {/* Header line */}
         <div className="flex items-end justify-between gap-3">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold leading-tight">AI Tutor</h1>
+            <h1 className="text-xl sm:text-2xl font-bold leading-tight">Synops Coach</h1>
             <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
               Diagnose what you don't know, then teach exactly that — grounded in your materials.
             </p>

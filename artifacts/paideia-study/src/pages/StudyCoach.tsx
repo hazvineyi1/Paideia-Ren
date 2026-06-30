@@ -108,7 +108,7 @@ export default function StudyCoach() {
   return (
     <div className="min-h-screen bg-background">
       <header className="px-6 py-4 flex items-center justify-between border-b border-border/40">
-        <div className="font-serif text-lg tracking-tight">Paideia</div>
+        <div className="font-serif text-lg tracking-tight">Synops</div>
         <Button variant="ghost" size="sm" onClick={() => setLoc("/profile")} aria-label="Profile">
           <User className="h-4 w-4" />
         </Button>

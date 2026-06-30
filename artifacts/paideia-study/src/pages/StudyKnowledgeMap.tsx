@@ -398,7 +398,7 @@ export default function StudyKnowledgeMap() {
                 </div>
               </div>
               <Button className="w-full" onClick={() => setLoc("/tutor")}>
-                <MessageCircle className="w-4 h-4 mr-2" /> Discuss with AI tutor
+                <MessageCircle className="w-4 h-4 mr-2" /> Discuss with Synops Coach
               </Button>
             </CardContent>
           </Card>

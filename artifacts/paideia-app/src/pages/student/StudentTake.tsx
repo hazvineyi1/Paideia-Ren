@@ -100,7 +100,7 @@ function Shell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card">
-        <div className="max-w-3xl mx-auto px-6 py-4 font-serif text-xl text-primary">Paideia-Ren</div>
+        <div className="max-w-3xl mx-auto px-6 py-4 font-serif text-xl text-primary">Synops</div>
       </header>
       <main className="max-w-3xl mx-auto px-6 py-10">{children}</main>
     </div>

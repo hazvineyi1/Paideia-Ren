@@ -1,13 +1,10 @@
 import React from "react";
 import { Link, useLocation } from "wouter";
 import { Menu, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { ShortFormDialog } from "@/components/ShortFormDialog";
 
 export function Nav() {
   const [isScrolled, setIsScrolled] = React.useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
-  const [mobileDonateOpen, setMobileDonateOpen] = React.useState(false);
   const [location] = useLocation();
 
   React.useEffect(() => {
@@ -22,9 +19,8 @@ export function Nav() {
     { href: "/about", label: "About" },
     { href: "/platform", label: "Platform" },
     { href: "/research", label: "Research" },
-    { href: "/study-tutor", label: "Study Tutor" },
+    { href: "/study-tutor", label: "Synops Coach" },
     { href: "/for-schools", label: "For Schools" },
-    { href: "/for-funders", label: "For Funders" },
     { href: "/for-educators", label: "For Educators" },
   ];
 
@@ -38,7 +34,7 @@ export function Nav() {
         <div className="max-w-[1200px] mx-auto px-6 h-20 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-1 group">
             <span className="font-serif text-2xl font-semibold tracking-wide text-primary">
-              Paideia-Ren
+              Synops
             </span>
             <span className="font-serif text-[13px] text-accent font-bold mb-3">仁</span>
           </Link>
@@ -55,22 +51,6 @@ export function Nav() {
                 {link.label}
               </Link>
             ))}
-            <ShortFormDialog
-              testIdPrefix="donate-nav"
-              trigger={
-                <Button className="bg-accent hover:bg-accent/90 text-white rounded-full px-6 font-medium" data-testid="button-donate-nav">
-                  Donate
-                </Button>
-              }
-              title="Support our mission"
-              description="Tell us a little about you and our development team will follow up with giving options."
-              orgLabel="Organization (optional)"
-              orgPlaceholder="Foundation, family office, company"
-              showAmount
-              submitLabel="Send"
-              toastTitle="Thank you"
-              toastDescription="Our development team will be in touch within 2 business days."
-            />
           </nav>
 
           <button
@@ -89,7 +69,7 @@ export function Nav() {
           <div className="flex items-center justify-between px-6 h-20">
             <Link href="/" className="flex items-center gap-1" onClick={() => setMobileMenuOpen(false)}>
               <span className="font-serif text-2xl font-semibold tracking-wide text-white">
-                Paideia-Ren
+                Synops
               </span>
               <span className="font-serif text-[13px] text-accent font-bold mb-3">仁</span>
             </Link>
@@ -112,33 +92,9 @@ export function Nav() {
                 {link.label}
               </Link>
             ))}
-            <button
-              onClick={() => {
-                setMobileMenuOpen(false);
-                setMobileDonateOpen(true);
-              }}
-              className="font-serif text-4xl text-accent hover:text-white transition-colors"
-              data-testid="button-donate-mobile"
-            >
-              Donate
-            </button>
           </div>
         </div>
       )}
-
-      <ShortFormDialog
-        testIdPrefix="donate-mobile"
-        open={mobileDonateOpen}
-        onOpenChange={setMobileDonateOpen}
-        title="Support our mission"
-        description="Tell us a little about you and our development team will follow up with giving options."
-        orgLabel="Organization (optional)"
-        orgPlaceholder="Foundation, family office, company"
-        showAmount
-        submitLabel="Send"
-        toastTitle="Thank you"
-        toastDescription="Our development team will be in touch within 2 business days."
-      />
     </>
   );
 }

@@ -17,7 +17,7 @@ export default function AwaitingApproval() {
     >
       <div className="space-y-4 text-sm">
         <p>
-          Thanks for signing up, {teacher?.name ?? "teacher"}. To keep Paideia-Ren
+          Thanks for signing up, {teacher?.name ?? "teacher"}. To keep Synops
           focused on real classrooms, every new account is reviewed before it can
           start creating lessons. You will get access as soon as we approve you.
         </p>

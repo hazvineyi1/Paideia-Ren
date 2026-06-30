@@ -14,8 +14,8 @@ export function AuthShell({
     <div className="min-h-screen bg-background flex flex-col">
       <header className="px-8 py-6 border-b bg-card">
         <Link href="/" className="inline-block">
-          <div className="font-serif text-2xl text-primary leading-tight">Paideia-Ren</div>
-          <div className="text-xs tracking-wider uppercase text-muted-foreground">Teaching Companion</div>
+          <div className="font-serif text-2xl text-primary leading-tight">Synops</div>
+          <div className="text-xs tracking-wider uppercase text-muted-foreground">Teacher</div>
         </Link>
       </header>
       <main className="flex-1 flex items-center justify-center px-4 py-12">

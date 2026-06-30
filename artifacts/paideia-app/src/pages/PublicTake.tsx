@@ -222,7 +222,7 @@ function Shell({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card">
         <div className="max-w-3xl mx-auto px-6 py-4">
-          <div className="font-serif text-xl text-primary">Paideia-Ren</div>
+          <div className="font-serif text-xl text-primary">Synops</div>
         </div>
       </header>
       <main className="max-w-3xl mx-auto px-6 py-10">{children}</main>

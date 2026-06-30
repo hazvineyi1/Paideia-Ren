@@ -21,8 +21,8 @@ const fadeUp = {
 const contactRoutes = [
   {
     id: "investor",
-    title: "Investor & Funder",
-    subtitle: "Philanthropic partnerships, grants, and investment conversations",
+    title: "Partnerships & Investment",
+    subtitle: "Partnerships and product inquiries",
     tag: "[investor]",
   },
   {
@@ -96,14 +96,14 @@ function ContactForm({ routeTitle, routeTag }: { routeTitle: string; routeTag: s
         <FormField control={form.control} name="organization" render={({ field }) => (
           <FormItem>
             <FormLabel className="text-[13px] font-semibold uppercase tracking-wide">Organization (optional)</FormLabel>
-            <FormControl><Input {...field} placeholder="Foundation, school, company, etc." className="rounded-none h-11" /></FormControl>
+            <FormControl><Input {...field} placeholder="School, district, company, etc." className="rounded-none h-11" /></FormControl>
             <FormMessage />
           </FormItem>
         )} />
         <FormField control={form.control} name="message" render={({ field }) => (
           <FormItem>
             <FormLabel className="text-[13px] font-semibold uppercase tracking-wide">Message</FormLabel>
-            <FormControl><Textarea {...field} placeholder={`Tell us about your interest in Paideia-Ren (${routeTitle.toLowerCase()})...`} className="rounded-none min-h-[120px] resize-none" data-testid={`textarea-${routeTag}-message`} /></FormControl>
+            <FormControl><Textarea {...field} placeholder={`Tell us about your interest in Synops (${routeTitle.toLowerCase()})...`} className="rounded-none min-h-[120px] resize-none" data-testid={`textarea-${routeTag}-message`} /></FormControl>
             <FormMessage />
           </FormItem>
         )} />
@@ -182,7 +182,7 @@ export default function Contact() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
             <motion.div {...fadeUp}>
               <p className="text-[13px] font-semibold uppercase tracking-widest text-muted-foreground mb-4">Address</p>
-              <p className="font-serif text-lg text-primary mb-1">Paideia-Ren Inc.</p>
+              <p className="font-serif text-lg text-primary mb-1">Synops</p>
               <p className="text-[15px] text-foreground/70 leading-[1.75]">
                 Headquarters TBA<br />
                 Incorporated in the United States<br />

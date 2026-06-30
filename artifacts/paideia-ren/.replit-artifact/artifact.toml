@@ -1,6 +1,6 @@
 kind = "web"
 previewPath = "/paideia-ren-preview"
-title = "Paideia-Ren Inc."
+title = "Synops"
 version = "1.0.0"
 id = "artifacts/paideia-ren"
 router = "path"
