@@ -15,6 +15,7 @@ import Healthcare from "@/pages/Healthcare";
 import Learning from "@/pages/Learning";
 import Platforms from "@/pages/Platforms";
 import Insights from "@/pages/Insights";
+import Article from "@/pages/Article";
 import Contact from "@/pages/Contact";
 import Privacy from "@/pages/Privacy";
 import Terms from "@/pages/Terms";
@@ -54,6 +55,7 @@ function Router() {
           <Route path="/learning" component={Learning} />
           <Route path="/platforms" component={Platforms} />
           <Route path="/insights" component={Insights} />
+          <Route path="/insights/:slug" component={Article} />
           <Route path="/contact" component={Contact} />
           <Route path="/privacy" component={Privacy} />
           <Route path="/terms" component={Terms} />
