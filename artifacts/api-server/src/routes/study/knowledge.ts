@@ -109,7 +109,7 @@ router.post("/generate", async (req, res) => {
       const labelToId: Record<string, string> = {};
       const labelToConcept = new Map(currentConcepts.map((c) => [c.title, c]));
 
-      // Create one node per real concept — no AI freedom over labels/categories.
+      // Create one node per real concept, no AI freedom over labels/categories.
       for (const c of currentConcepts) {
         const id = randomUUID();
         labelToId[c.title] = id;
@@ -124,7 +124,7 @@ router.post("/generate", async (req, res) => {
         });
       }
 
-      // Ask AI only for relationships between the supplied labels — nothing else.
+      // Ask AI only for relationships between the supplied labels, nothing else.
       const raw = await generateJSON<{ edges?: Array<{ from: string; to: string; relationType: string }> }>(
         `You are a knowledge graph builder. You will be given a strict list of concept labels from a single study material titled "${material.title}". Return a JSON object with a top-level array named 'edges'. Each edge has: from (must be EXACTLY one of the supplied labels), to (must be EXACTLY one of the supplied labels, different from 'from'), and relationType (one of: prerequisite, related, subtopic, extension). Do NOT invent new labels. Do NOT include concepts from other subjects. Do NOT output anything other than relationships between the supplied labels. If two concepts are unrelated, omit the edge.`,
         `Material title: ${material.title}\n\nAllowed labels (use EXACTLY these strings, do not invent others):\n${allowedLabels.map((l) => `- ${l}`).join("\n")}`,

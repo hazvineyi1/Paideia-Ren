@@ -29,21 +29,21 @@ export const articles: Article[] = [
     sections: [
       {
         paragraphs: [
-          "Provider disputes are one of the quietest sources of financial leakage in managed care. They rarely show up as a single catastrophic event. Instead, they accumulate — a week of delay here, a misrouted appeal there — until a health plan is carrying millions of dollars in aging, high-dollar claims and a provider network that no longer trusts the process.",
+          "Provider disputes are one of the quietest sources of financial leakage in managed care. They rarely show up as a single catastrophic event. Instead, they accumulate, a week of delay here, a misrouted appeal there, until a health plan is carrying millions of dollars in aging, high-dollar claims and a provider network that no longer trusts the process.",
           "The instinct is to add people. In our experience, the faster path is to redesign the process itself. When we mapped the actual journey of a disputed claim at one of the nation's largest MCOs, the work touched nine handoffs and three systems before anyone with authority to resolve it ever saw the file.",
         ],
       },
       {
         heading: "Start with the journey, not the org chart",
         paragraphs: [
-          "Most escalation frameworks are built around departments, not around the claim. A dispute moves from intake to a queue, from a queue to a reviewer, from a reviewer to a committee — and at each boundary it waits. The waiting, not the working, is where the time goes.",
+          "Most escalation frameworks are built around departments, not around the claim. A dispute moves from intake to a queue, from a queue to a reviewer, from a reviewer to a committee, and at each boundary it waits. The waiting, not the working, is where the time goes.",
           "We instrument the full lifecycle first: every status change, every queue, every owner. Once you can see where a claim sits idle, the redesign almost writes itself. The goal is fewer handoffs and a clear owner who is accountable for the outcome end to end.",
         ],
       },
       {
         heading: "Tier disputes by dollar value and complexity",
         paragraphs: [
-          "Not every dispute deserves the same path. High-dollar claims and systemic disputes need senior review early; routine adjustments should never reach a Joint Operation Committee. A simple two-axis triage — dollar value against complexity — lets you route the small volume of high-impact cases to the people who can actually close them, while the long tail moves through a standardized, rules-based lane.",
+          "Not every dispute deserves the same path. High-dollar claims and systemic disputes need senior review early; routine adjustments should never reach a Joint Operation Committee. A simple two-axis triage, dollar value against complexity, lets you route the small volume of high-impact cases to the people who can actually close them, while the long tail moves through a standardized, rules-based lane.",
           "This single change drove the largest share of the improvement we measured: a roughly 40% reduction in average resolution time, concentrated in exactly the claims that carried the most financial risk.",
         ],
       },
@@ -51,7 +51,7 @@ export const articles: Article[] = [
         heading: "Make the provider relationship part of the design",
         paragraphs: [
           "Dispute resolution is not only an internal operations problem. Providers who understand the process, get timely status, and see consistent decisions stop re-filing and escalating out of frustration. Building a predictable collaboration cadence into the framework reduces inbound volume at the same time it speeds resolution.",
-          "Rigorous dispute resolution protects revenue integrity on both sides. The objective is not to win disputes — it is to make the system fast, fair, and legible enough that fewer of them happen at all.",
+          "Rigorous dispute resolution protects revenue integrity on both sides. The objective is not to win disputes, it is to make the system fast, fair, and legible enough that fewer of them happen at all.",
         ],
       },
     ],
@@ -69,7 +69,7 @@ export const articles: Article[] = [
     sections: [
       {
         paragraphs: [
-          "Automated accessibility checkers are useful, and they are not enough. A course can pass every automated scan and still be unusable for a student relying on a screen reader, a keyboard, or extra time to process information. WCAG 2.1 AA is a floor, not a finish line — and meeting it genuinely requires design decisions that no scanner can make for you.",
+          "Automated accessibility checkers are useful, and they are not enough. A course can pass every automated scan and still be unusable for a student relying on a screen reader, a keyboard, or extra time to process information. WCAG 2.1 AA is a floor, not a finish line, and meeting it genuinely requires design decisions that no scanner can make for you.",
           "After quality-assuring education across legal, higher-ed, and K-12 contexts, the pattern is consistent: the gap between 'passes the checker' and 'works for the learner' is where most of the real accessibility work lives.",
         ],
       },
@@ -84,14 +84,14 @@ export const articles: Article[] = [
         heading: "Build accessibility into the storyboard",
         paragraphs: [
           "The cheapest time to make a course accessible is before it is built. When we storyboard, we specify text alternatives, transcripts, and interaction patterns alongside the content itself. Color is never the only way information is conveyed. Every interactive element is reachable and operable by keyboard from the first draft.",
-          "Treating accessibility as a design constraint — the way you treat learning objectives or assessment alignment — means the finished course is inclusive by construction rather than remediated after the fact.",
+          "Treating accessibility as a design constraint, the way you treat learning objectives or assessment alignment, means the finished course is inclusive by construction rather than remediated after the fact.",
         ],
       },
       {
         heading: "Test with assistive technology, not just tools",
         paragraphs: [
           "There is no substitute for navigating your own course with a screen reader and a keyboard. The friction surfaces immediately: a focus trap, a heading structure that doesn't describe the page, a video player that swallows keyboard input. Pairing automated scans with manual assistive-technology review and SME validation is what moves a course from technically compliant to genuinely usable.",
-          "Section 508 and WCAG 2.1 AA give you the standard. Inclusive design — and disciplined QA against real assistive technology — is how you actually meet it.",
+          "Section 508 and WCAG 2.1 AA give you the standard. Inclusive design, and disciplined QA against real assistive technology, is how you actually meet it.",
         ],
       },
     ],
@@ -109,7 +109,7 @@ export const articles: Article[] = [
     sections: [
       {
         paragraphs: [
-          "Large language models have made it trivially easy to generate educational content. That is precisely why discernment matters more than ever. The question is no longer whether AI can produce a quiz or a study plan — it can — but whether what it produces is rigorous, accurate, and pedagogically sound.",
+          "Large language models have made it trivially easy to generate educational content. That is precisely why discernment matters more than ever. The question is no longer whether AI can produce a quiz or a study plan, it can, but whether what it produces is rigorous, accurate, and pedagogically sound.",
           "Drawing on generative-AI integration work and a doctoral specialization in adaptive systems, here is where we have found AI genuinely earns its place in learning technology, and where it quietly creates risk.",
         ],
       },
@@ -117,7 +117,7 @@ export const articles: Article[] = [
         heading: "Where AI helps",
         paragraphs: [
           "AI is excellent at scaling personalization that would otherwise be uneconomical: reshaping an explanation for a struggling learner, generating practice variations on demand, and adapting difficulty in response to performance data. It is a strong first-draft engine for content that a subject-matter expert then validates.",
-          "Used as a tutor that asks rather than tells, it can support genuine Socratic practice — prompting learners toward an answer instead of handing it over. This is where adaptive learning has always wanted to go; AI finally makes it affordable at scale.",
+          "Used as a tutor that asks rather than tells, it can support genuine Socratic practice, prompting learners toward an answer instead of handing it over. This is where adaptive learning has always wanted to go; AI finally makes it affordable at scale.",
         ],
       },
       {
@@ -131,7 +131,7 @@ export const articles: Article[] = [
         heading: "A pragmatic operating model",
         paragraphs: [
           "The model that works treats AI as a capable assistant under expert supervision, never as an unsupervised authority. Generate with AI; validate with people. Pair every AI-facing feature with structured review, transparency about where AI is used, and clear escalation to a human.",
-          "The hype cycle rewards teams that ship AI features fastest. Learners are better served by teams that ship the right ones — and know which ones to leave out.",
+          "The hype cycle rewards teams that ship AI features fastest. Learners are better served by teams that ship the right ones, and know which ones to leave out.",
         ],
       },
     ],

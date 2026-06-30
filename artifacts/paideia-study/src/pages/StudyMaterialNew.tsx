@@ -450,7 +450,7 @@ export default function StudyMaterialNew() {
                   onChange={(e) => setSourceUrl(e.target.value)}
                 />
                 <p className="text-xs text-muted-foreground mt-2">
-                  We fetch the page and extract its real content. If the page is thin or JavaScript-heavy, we automatically fall back to a grounded web search on that URL — never made-up content.
+                  We fetch the page and extract its real content. If the page is thin or JavaScript-heavy, we automatically fall back to a grounded web search on that URL, never made-up content.
                 </p>
               </div>
             )}
@@ -463,14 +463,14 @@ export default function StudyMaterialNew() {
                   <Badge variant="outline" className="text-[10px] h-5 ml-auto">Cited sources</Badge>
                 </div>
                 <Textarea
-                  placeholder={`Examples:\n• "PMP exam — process groups and knowledge areas"\n• "CCNA — OSI model fundamentals"\n• "AP Biology Unit 4: cell communication and the cell cycle"`}
+                  placeholder={`Examples:\n• "PMP exam, process groups and knowledge areas"\n• "CCNA, OSI model fundamentals"\n• "AP Biology Unit 4: cell communication and the cell cycle"`}
                   value={topic}
                   onChange={(e) => setTopic(e.target.value)}
                   rows={5}
                   className="resize-none text-sm leading-relaxed"
                 />
                 <p className="text-xs text-muted-foreground mt-2">
-                  We use a live web search to gather real, authoritative material — official docs, recognized standards, peer-reviewed sources — and assemble it into a study reference with citations. Nothing is invented. This usually takes 15–30 seconds.
+                  We use a live web search to gather real, authoritative material, official docs, recognized standards, peer-reviewed sources, and assemble it into a study reference with citations. Nothing is invented. This usually takes 15–30 seconds.
                 </p>
               </div>
             )}

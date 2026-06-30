@@ -40,15 +40,15 @@ const messageInputSchema = z.object({
   content: z.string().min(1),
 });
 
-// Coach voice — the four named personalities from "The Coach" spec. Voice/pressure only;
+// Coach voice, the four named personalities from "The Coach" spec. Voice/pressure only;
 // never alters pedagogy or accuracy. Prepended to the existing tutor system prompt so the
 // underlying socraticMode / grounding behaviour is unchanged.
 type CoachPersonality = "drill" | "socratic" | "warm" | "analyst";
 const COACH_VOICE: Record<CoachPersonality, string> = {
   drill:
-    "You are The Drill Sergeant. Voice: direct, no fluff, time-boxed. You expect effort and call out avoidance immediately, but you are never cruel — you push because you believe the learner can do it. Keep responses short. End with a concrete next action (e.g. \"5 minutes. Go.\").",
+    "You are The Drill Sergeant. Voice: direct, no fluff, time-boxed. You expect effort and call out avoidance immediately, but you are never cruel, you push because you believe the learner can do it. Keep responses short. End with a concrete next action (e.g. \"5 minutes. Go.\").",
   socratic:
-    "You are The Socratic Mentor. Voice: patient, curious, deliberate. You never volunteer the answer; you ask the one question that lets the learner find it themselves. When they stall, narrow the question — never widen into a lecture.",
+    "You are The Socratic Mentor. Voice: patient, curious, deliberate. You never volunteer the answer; you ask the one question that lets the learner find it themselves. When they stall, narrow the question, never widen into a lecture.",
   warm:
     "You are The Warm Encourager. Voice: steady, supportive, human. You normalise struggle (\"that confusion means you're at the edge of new territory\"), celebrate small wins specifically, and keep the next step small enough to actually start.",
   analyst:
@@ -368,7 +368,7 @@ async function generateLesson(opts: {
 
   if (socratic) {
     return await generateJSON<LessonShape>(
-      `You are a Socratic tutor. You teach by asking the learner short, progressively deeper guiding questions — never lecturing first. Then you reveal the key insight. Return strict JSON only.`,
+      `You are a Socratic tutor. You teach by asking the learner short, progressively deeper guiding questions, never lecturing first. Then you reveal the key insight. Return strict JSON only.`,
       `Learner profile:
 ${profileText}
 ${contextNote ? `\n${contextNote}\n` : ""}
@@ -663,11 +663,11 @@ router.post("/guided/:conversationId/reply", async (req, res) => {
         contextNote: `Diagnostic results: ${correctCount}/${graded.length} correct. ${
           wrong.length
             ? `They got these wrong: ${wrong.map((w: any) => w.conceptTitle).join("; ")}.`
-            : `They got everything right — go DEEPER on the most important one.`
+            : `They got everything right, go DEEPER on the most important one.`
         }`,
       });
 
-      // Save a "feedback" turn first, then a "lesson" turn — two assistant messages.
+      // Save a "feedback" turn first, then a "lesson" turn, two assistant messages.
       const feedbackTurn = {
         v: 1,
         kind: "feedback" as const,
@@ -827,7 +827,7 @@ router.post("/guided/:conversationId/reply", async (req, res) => {
     } else if (reply.kind === "research_deeper") {
       try {
         const researched = await researchTopic(
-          `${reply.conceptTitle} — give a learner-friendly deep dive with authoritative sources.`,
+          `${reply.conceptTitle}, give a learner-friendly deep dive with authoritative sources.`,
         );
         // Pull citation URLs out of the appended "Sources consulted" block, if any.
         const srcMatch = researched.text.match(/Sources consulted:\n([\s\S]+)$/);

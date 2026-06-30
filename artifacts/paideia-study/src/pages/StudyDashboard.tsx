@@ -100,7 +100,7 @@ export default function StudyDashboard() {
   };
 
   // Single onboarding gate: send incomplete profiles straight to intake.
-  // (The legacy learning-style gate was removed — The Coach spec forbids VARK/modality framing.)
+  // (The legacy learning-style gate was removed, The Coach spec forbids VARK/modality framing.)
   // Wait for profile data to load to avoid a flash-redirect on first paint.
   useEffect(() => {
     if (profile && !profile.diagnosticComplete) {
@@ -213,7 +213,7 @@ export default function StudyDashboard() {
                   <ArrowRight className="h-4 w-4" />
                 </Button>
 
-                {/* Dialogue affordance — the learner should never feel stuck. One tap to ask. */}
+                {/* Dialogue affordance, the learner should never feel stuck. One tap to ask. */}
                 <button
                   type="button"
                   onClick={() => setLoc("/tutor")}
@@ -263,7 +263,7 @@ export default function StudyDashboard() {
             )}
           </>
         ) : hasActivePath && !primaryStep ? (
-          // Path active but nothing available right now — explicit "come back when, bring what" guidance
+          // Path active but nothing available right now, explicit "come back when, bring what" guidance
           // so the learner doesn't have to guess what to do with the down-time.
           <Card className="border-emerald-200 bg-emerald-50/40">
             <CardContent className="py-8 text-center">
@@ -275,11 +275,11 @@ export default function StudyDashboard() {
               <div className="text-left max-w-sm mx-auto space-y-2 text-sm mb-4">
                 <div className="rounded-lg bg-white/70 border border-emerald-100 px-3 py-2">
                   <div className="text-[11px] uppercase tracking-wider text-emerald-700 font-semibold mb-0.5">Come back</div>
-                  <div className="text-gray-800">When you feel ready — your next review unlocks automatically once spaced repetition decides you'll benefit most.</div>
+                  <div className="text-gray-800">When you feel ready, your next review unlocks automatically once spaced repetition decides you'll benefit most.</div>
                 </div>
                 <div className="rounded-lg bg-white/70 border border-emerald-100 px-3 py-2">
                   <div className="text-[11px] uppercase tracking-wider text-emerald-700 font-semibold mb-0.5">Bring with you</div>
-                  <div className="text-gray-800">Just yourself. No prep needed — your AI coach will pick the next step.</div>
+                  <div className="text-gray-800">Just yourself. No prep needed, your AI coach will pick the next step.</div>
                 </div>
               </div>
               <Button variant="outline" size="sm" onClick={() => setLoc("/tutor")} className="gap-1.5">
@@ -288,7 +288,7 @@ export default function StudyDashboard() {
             </CardContent>
           </Card>
         ) : materials && materials.length > 0 ? (
-          // Materials exist but no active path — let the AI build one
+          // Materials exist but no active path, let the AI build one
           <Card className="border-primary/30 bg-primary/5">
             <CardContent className="py-8 px-5 text-center">
               <div className="w-14 h-14 rounded-2xl bg-primary/15 flex items-center justify-center mx-auto mb-3">
@@ -319,7 +319,7 @@ export default function StudyDashboard() {
               </div>
               {buildingPath && (
                 <p className="text-xs text-muted-foreground mt-4">
-                  Building your personalized path — this takes a few seconds.
+                  Building your personalized path, this takes a few seconds.
                 </p>
               )}
               {planError && (
@@ -346,7 +346,7 @@ export default function StudyDashboard() {
             </CardContent>
           </Card>
         ) : (
-          // No materials at all — onboarding
+          // No materials at all, onboarding
           <Card className="border-dashed border-primary/30 bg-primary/5">
             <CardContent className="py-10 text-center">
               <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">

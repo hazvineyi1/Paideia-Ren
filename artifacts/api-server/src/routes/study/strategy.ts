@@ -81,7 +81,7 @@ router.post("/:materialId/generate", async (req, res) => {
   }
 
   const sys = `You are an expert learning coach. Build a personalized study strategy for ONE specific learner and ONE specific material.
-You MUST honour the learner's modality preferences and pace — the strategy is FOR THEM, not generic.
+You MUST honour the learner's modality preferences and pace, the strategy is FOR THEM, not generic.
 Return strict JSON with this shape:
 {
   "summary": string (2-3 sentences explaining the approach, written TO the learner in second person),

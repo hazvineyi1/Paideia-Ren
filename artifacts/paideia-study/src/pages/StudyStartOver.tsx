@@ -21,7 +21,7 @@ const OPTIONS: Array<{
     scope: "progress",
     icon: RefreshCw,
     title: "Just restart my study plan",
-    body: "Use this if you want to take the same goal in a new direction — keep what you've told us about yourself, just clear the path you've been walking.",
+    body: "Use this if you want to take the same goal in a new direction, keep what you've told us about yourself, just clear the path you've been walking.",
     keeps: "Your materials, intake answers, and learning style stay.",
     removes: "All learning paths, practice sessions, and mock exams are deleted.",
   },
@@ -37,7 +37,7 @@ const OPTIONS: Array<{
     scope: "everything",
     icon: RotateCcw,
     title: "Start fully fresh",
-    body: "A clean slate — like a brand new account but with your materials still uploaded. We'll walk you through onboarding from scratch.",
+    body: "A clean slate, like a brand new account but with your materials still uploaded. We'll walk you through onboarding from scratch.",
     keeps: "Only your materials stay.",
     removes: "Intake, learning style, paths, practice, and exams are all cleared.",
   },
@@ -60,7 +60,7 @@ export default function StudyStartOver() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ scope: picked }),
       });
-      // Drop every cached query so the next page-load reflects the cleared state — anything
+      // Drop every cached query so the next page-load reflects the cleared state, anything
       // less and the gates won't re-trigger correctly.
       await qc.invalidateQueries();
       setDone(picked);

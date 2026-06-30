@@ -234,7 +234,7 @@ export default function StudyKnowledgeMap() {
               </div>
               <h3 className="font-semibold text-gray-900 mb-1">No map yet</h3>
               <p className="text-sm text-gray-500 max-w-sm mb-4">
-                Pick a material — the AI will extract concepts and lay out how they connect.
+                Pick a material, the AI will extract concepts and lay out how they connect.
               </p>
               {materials && materials.length > 0 ? (
                 <div className="flex flex-col gap-2 w-full max-w-xs">

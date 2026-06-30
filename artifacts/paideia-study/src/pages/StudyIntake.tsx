@@ -59,7 +59,7 @@ const COACH_OPTIONS = [
   { value: "analyst",  label: "The Strategic Analyst",  hint: "Calm, data-driven. Shows me the path to the exam." },
 ];
 
-// Recommendation — voice/pressure only; never changes pedagogy or accuracy.
+// Recommendation, voice/pressure only; never changes pedagogy or accuracy.
 // Scoring (highest wins) lets multiple weak signals combine instead of one early `return`
 // hiding the rest, e.g. low-confidence avoidant studiers still see Drill if the avoidance
 // signal outweighs the timidity signal.
@@ -170,7 +170,7 @@ export default function StudyIntake() {
         <Card>
           <CardContent className="p-6">
             {step === "goal" && (
-              <Section title="What are you preparing for?" hint="Be specific — exam name, course, certification, etc.">
+              <Section title="What are you preparing for?" hint="Be specific, exam name, course, certification, etc.">
                 <Input
                   autoFocus
                   placeholder="e.g., CompTIA Security+, MCAT Biology, Calc II final"
@@ -198,7 +198,7 @@ export default function StudyIntake() {
             {step === "hoursPerWeek" && (
               <Section
                 title="How many hours a week can you realistically study?"
-                hint="Be honest — under-promising is fine. I adapt as we go."
+                hint="Be honest, under-promising is fine. I adapt as we go."
               >
                 <div className="flex items-center gap-3">
                   <Input
@@ -219,7 +219,7 @@ export default function StudyIntake() {
             )}
 
             {step === "baseline" && (
-              <Section title="Where would you say you're starting from?" hint="Your honest baseline — not where you wish you were.">
+              <Section title="Where would you say you're starting from?" hint="Your honest baseline, not where you wish you were.">
                 <OptionList options={BASELINE_OPTIONS} selected={baseline} onSelect={setBaseline} />
               </Section>
             )}
@@ -236,7 +236,7 @@ export default function StudyIntake() {
             {step === "failureMode" && (
               <Section
                 title="When studying goes wrong for you, it usually looks like…"
-                hint="No judgement — knowing your pattern lets me route around it."
+                hint="No judgement, knowing your pattern lets me route around it."
               >
                 <OptionList options={FAILURE_MODE_OPTIONS} selected={failureMode} onSelect={setFailureMode} />
               </Section>
@@ -266,7 +266,7 @@ export default function StudyIntake() {
                 </p>
                 <ReviewRow label="Goal" value={goal || "(none)"} />
                 <ReviewRow label="Exam date" value={examDate || "Open-ended"} />
-                <ReviewRow label="Hours/week" value={String(hoursPerWeek || "—")} />
+                <ReviewRow label="Hours/week" value={String(hoursPerWeek || "-")} />
                 <ReviewRow label="Baseline" value={labelOf(BASELINE_OPTIONS, baseline)} />
                 <ReviewRow label="Self-prediction" value={labelOf(CALIBRATION_OPTIONS, calibration)} />
                 <ReviewRow label="Failure pattern" value={labelOf(FAILURE_MODE_OPTIONS, failureMode)} />
@@ -368,5 +368,5 @@ function ReviewRow({ label, value }: { label: string; value: string }) {
 }
 
 function labelOf(opts: { value: string; label: string }[], v: string): string {
-  return opts.find((o) => o.value === v)?.label ?? "—";
+  return opts.find((o) => o.value === v)?.label ?? "-";
 }

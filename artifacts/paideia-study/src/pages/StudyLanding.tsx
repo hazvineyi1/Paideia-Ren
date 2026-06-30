@@ -33,11 +33,11 @@ function ContentTypeCard({ icon: Icon, label }: { icon: typeof FileText; label: 
 export default function StudyLanding() {
   const [, setLoc] = useLocation();
   const { user, loading: authLoading } = useStudyAuth();
-  // Only query the profile once we know the user is authed — avoids the 401-and-retry noise
+  // Only query the profile once we know the user is authed, avoids the 401-and-retry noise
   // and means an unauthed visitor never triggers a profile fetch.
   const { data: profile, isLoading: profileLoading } = useStudyProfile(!!user && !authLoading);
 
-  // "Conversation IS the home" — authed users with a finished intake land on /coach,
+  // "Conversation IS the home", authed users with a finished intake land on /coach,
   // not on the marketing page. Incomplete users still see the landing so they can sign in/up.
   const willRedirect = !authLoading && !!user && !!profile?.diagnosticComplete;
   useEffect(() => {

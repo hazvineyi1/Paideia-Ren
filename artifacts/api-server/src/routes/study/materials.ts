@@ -183,10 +183,10 @@ Return ONLY the raw SVG markup (starts with <svg ...> and ends with </svg>). No 
 Rules:
 - viewBox="0 0 400 240", no fixed width/height attributes (so it scales).
 - Use only these colors: #0f172a (slate-900) for primary lines/text, #475569 (slate-600) for secondary, #2563eb (blue-600) for highlight, #e0e7ff (indigo-100) for fill accents, #ffffff for backgrounds.
-- Editorial, calm, schematic style — not cartoonish, not photo-real. Think Stripe or FT Weekend Magazine.
+- Editorial, calm, schematic style, not cartoonish, not photo-real. Think Stripe or FT Weekend Magazine.
 - Include 2-6 short text labels (<text> elements, font-size 12-14, font-family sans-serif).
 - Use <rect>, <line>, <path>, <circle>, <text> only. NO <script>, NO <foreignObject>, NO external <image>.
-- Diagram should reveal the structure, flow, or relationships in the concept — not just decorate it.`;
+- Diagram should reveal the structure, flow, or relationships in the concept, not just decorate it.`;
 
   const userPrompt = `Concept: ${concept.title}\n\nExplanation:\n${concept.explanation.slice(0, 2000)}\n\nKey terms: ${(concept.keyTerms ?? []).join(", ") || "(none)"}\n\nProduce one SVG diagram that visually explains this concept.`;
 

@@ -116,7 +116,7 @@ router.post("/from-material", async (req, res) => {
     .insert(studyLearningPathsTable)
     .values({
       userId,
-      title: `${material.title} — AI Study Plan`,
+      title: `${material.title}, AI Study Plan`,
       description: `An AI-led plan that walks you through every concept in "${material.title}", one step at a time.`,
       goal: `Master all ${concepts.length} concepts from "${material.title}".`,
       status: "active",

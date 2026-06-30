@@ -96,7 +96,7 @@ export default function StudyTutor() {
           <div>
             <h1 className="text-xl sm:text-2xl font-bold leading-tight">Synops Coach</h1>
             <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-              Diagnose what you don't know, then teach exactly that — grounded in your materials.
+              Diagnose what you don't know, then teach exactly that, grounded in your materials.
             </p>
           </div>
           {lastGuided && (
@@ -111,7 +111,7 @@ export default function StudyTutor() {
           )}
         </div>
 
-        {/* Primary CTAs — two paths, above the fold */}
+        {/* Primary CTAs, two paths, above the fold */}
         <div className="grid sm:grid-cols-2 gap-3">
           <Card className="border-primary/30 bg-gradient-to-br from-primary/5 to-transparent">
             <CardContent className="p-4 sm:p-5 space-y-3">
@@ -177,14 +177,14 @@ export default function StudyTutor() {
           </Card>
         </div>
 
-        {/* Today's focus — weakest concepts as one-tap shortcuts */}
+        {/* Today's focus, weakest concepts as one-tap shortcuts */}
         {focusNodes.length > 0 ? (
           <Card>
             <CardContent className="p-4 space-y-2.5">
               <div className="flex items-center gap-2">
                 <Target className="h-4 w-4 text-rose-500" />
                 <h3 className="font-semibold text-sm">Today's focus</h3>
-                <span className="text-xs text-muted-foreground">— your weakest concepts right now</span>
+                <span className="text-xs text-muted-foreground">your weakest concepts right now</span>
               </div>
               <div className="grid sm:grid-cols-3 gap-2">
                 {focusNodes.map((n) => {
@@ -234,7 +234,7 @@ export default function StudyTutor() {
           </Card>
         )}
 
-        {/* Materials strip — one-tap scope */}
+        {/* Materials strip, one-tap scope */}
         {materials && materials.length > 0 && (
           <Card>
             <CardContent className="p-4 space-y-2.5">
@@ -274,14 +274,14 @@ export default function StudyTutor() {
           </Card>
         )}
 
-        {/* Free-form chat — secondary, compact */}
+        {/* Free-form chat, secondary, compact */}
         <Card className="border-dashed">
           <CardContent className="p-3.5 flex items-center gap-3 flex-wrap">
             <MessagesSquare className="h-4 w-4 text-muted-foreground shrink-0" />
             <div className="flex-1 min-w-0">
               <div className="text-sm font-medium">Open-ended chat</div>
               <div className="text-xs text-muted-foreground">
-                Ask anything — no diagnostic, no structure.
+                Ask anything, no diagnostic, no structure.
               </div>
             </div>
             <Button
@@ -297,7 +297,7 @@ export default function StudyTutor() {
           </CardContent>
         </Card>
 
-        {/* Recent sessions — compact list */}
+        {/* Recent sessions, compact list */}
         {isLoading ? (
           <div className="flex justify-center py-6">
             <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />

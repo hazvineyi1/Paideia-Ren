@@ -48,7 +48,7 @@ router.post("/", async (req, res) => {
   const data = parsed.data;
   const userId = req.studyUser!.id;
 
-  // Load concepts for question generation — STRICTLY scoped to selected material
+  // Load concepts for question generation, STRICTLY scoped to selected material
   let concepts: { id: string; title: string; explanation: string; difficulty: string; materialId: string | null }[] = [];
   if (data.conceptIds && data.conceptIds.length > 0) {
     concepts = await db
@@ -167,7 +167,7 @@ router.post("/", async (req, res) => {
     questions = [];
   }
 
-  // Fallback when AI returns nothing usable — flashcards scoped to the same material
+  // Fallback when AI returns nothing usable, flashcards scoped to the same material
   if (questions.length === 0) {
     const fcWhere = data.materialId
       ? and(eq(studyFlashcardsTable.userId, userId), eq(studyFlashcardsTable.materialId, data.materialId))

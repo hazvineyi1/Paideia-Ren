@@ -47,7 +47,7 @@ type Message = {
 
 function MD({ text }: { text: string }) {
   // Lightweight markdown rendering: headings, bold, italic, lists, paragraphs.
-  // Just enough for tutor output — avoids pulling in a markdown library.
+  // Just enough for tutor output, avoids pulling in a markdown library.
   const blocks = text.split(/\n{2,}/).map((b, i) => {
     const trimmed = b.trim();
     if (/^#{1,6}\s/.test(trimmed)) {

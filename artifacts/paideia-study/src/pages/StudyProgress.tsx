@@ -194,7 +194,7 @@ export default function StudyProgress() {
                   </div>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Your 3 weakest concepts — closing these gaps will lift overall mastery the fastest.
+                  Your 3 weakest concepts, closing these gaps will lift overall mastery the fastest.
                 </p>
                 <div className="space-y-1.5">
                   {dailyPlan.map((n, i) => {

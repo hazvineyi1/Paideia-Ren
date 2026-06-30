@@ -79,7 +79,7 @@
   --elevate-1: rgba(0,0,0, .03);
   --elevate-2: rgba(0,0,0, .08);
 
-  /* The Coach — editorial palette.
+  /* The Coach, editorial palette.
      Parchment cream background, deep warm ink, oxblood as the one strong accent.
      Calm and grounded; not gamified-app energy. */
   --background: 36 38% 94%;
@@ -116,7 +116,7 @@
 
   --popover-border: 32 18% 84%;
 
-  --primary: 8 64% 28%;            /* deep oxblood — the one strong accent */
+  --primary: 8 64% 28%;            /* deep oxblood, the one strong accent */
 
   --primary-foreground: 36 40% 98%;
 

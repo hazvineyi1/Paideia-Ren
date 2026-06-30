@@ -223,7 +223,7 @@ export async function extractFromUrl(url: string): Promise<ExtractedContent> {
   });
 
   // Auth-required / forbidden pages must NOT be silently replaced with a
-  // public-web summary — that would mislead the user.
+  // public-web summary, that would mislead the user.
   if (res.status === 401 || res.status === 403) {
     throw new Error(
       `This page requires authentication (HTTP ${res.status}). Paste the content directly, or pick a public URL.`,

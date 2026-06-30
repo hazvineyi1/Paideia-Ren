@@ -135,7 +135,7 @@ export default function StudyReadStep() {
     setCompleting(true);
     try {
       await completeStep.mutateAsync({ pathId, stepId, masteryScore: 1 });
-      // Back to dashboard — daily-session query is invalidated by the mutation
+      // Back to dashboard, daily-session query is invalidated by the mutation
       setLoc("/dashboard");
     } catch {
       setCompleting(false);
@@ -211,7 +211,7 @@ export default function StudyReadStep() {
                     <p className="whitespace-pre-wrap">{concept.explanation}</p>
                   ) : (
                     <p className="text-gray-500 italic">
-                      This step's concept content isn't available — you can still mark it read and continue.
+                      This step's concept content isn't available, you can still mark it read and continue.
                     </p>
                   )}
                 </div>

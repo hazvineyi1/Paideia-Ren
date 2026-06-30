@@ -125,12 +125,12 @@ router.patch("/", async (req, res) => {
   res.json(profile);
 });
 
-// POST /study/profile/reset — test again / start over.
+// POST /study/profile/reset, test again / start over.
 // scope:
-//   "progress"   — wipe study artifacts (paths, practice, exams). Keep materials, profile, learning-style.
-//   "diagnostic" — also clear the 5 intake fields + delete learning-style profile so both gates re-run.
-//   "everything" — both of the above.
-// We never touch materials/concepts — those are the learner's uploaded source content.
+//   "progress"  , wipe study artifacts (paths, practice, exams). Keep materials, profile, learning-style.
+//   "diagnostic", also clear the 5 intake fields + delete learning-style profile so both gates re-run.
+//   "everything", both of the above.
+// We never touch materials/concepts, those are the learner's uploaded source content.
 const resetSchema = z.object({
   scope: z.enum(["progress", "diagnostic", "everything"]),
 });
@@ -170,7 +170,7 @@ router.post("/reset", async (req, res) => {
             updatedAt: new Date(),
           })
           .where(eq(studyLearnerProfilesTable.userId, userId));
-        // Legacy learning-style data — clear so old rows don't shadow the new intake.
+        // Legacy learning-style data, clear so old rows don't shadow the new intake.
         await tx.delete(studyLearningStyleProfilesTable).where(eq(studyLearningStyleProfilesTable.userId, userId));
         await tx.delete(studyAssessmentsTable).where(eq(studyAssessmentsTable.userId, userId));
       }

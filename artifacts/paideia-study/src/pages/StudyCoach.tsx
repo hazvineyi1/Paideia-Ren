@@ -11,22 +11,22 @@ type Personality = "drill" | "socratic" | "warm" | "analyst";
 const COACH_META: Record<Personality, { name: string; opener: (firstName: string) => string; cta: string }> = {
   drill: {
     name: "Coach",
-    opener: (n) => `${n}. No warm-up. We pick up where we left off — what's the first thing you want to attack today?`,
+    opener: (n) => `${n}. No warm-up. We pick up where we left off, what's the first thing you want to attack today?`,
     cta: "Tell me what you're working on.",
   },
   socratic: {
     name: "Mentor",
-    opener: (n) => `Welcome back, ${n}. Before we open anything new — what's the question still sitting with you from last time?`,
+    opener: (n) => `Welcome back, ${n}. Before we open anything new, what's the question still sitting with you from last time?`,
     cta: "What are you wondering about?",
   },
   warm: {
     name: "Coach",
-    opener: (n) => `Hey ${n} — glad you're back. We don't have to do much today, but let's do something. What's been on your mind?`,
+    opener: (n) => `Hey ${n}, glad you're back. We don't have to do much today, but let's do something. What's been on your mind?`,
     cta: "What's on your mind?",
   },
   analyst: {
     name: "Coach",
-    opener: (n) => `Welcome back, ${n}. Based on where you left off, here's what I'd suggest — but tell me what you actually want to work on first.`,
+    opener: (n) => `Welcome back, ${n}. Based on where you left off, here's what I'd suggest, but tell me what you actually want to work on first.`,
     cta: "What would be most useful right now?",
   },
 };
@@ -45,7 +45,7 @@ export default function StudyCoach() {
     if (!authLoading && !user) setLoc("/login");
   }, [authLoading, user, setLoc]);
 
-  // Onboarding gate — only act on a *settled, fresh* profile so we don't bounce a complete
+  // Onboarding gate, only act on a *settled, fresh* profile so we don't bounce a complete
   // user on stale cache while the real fetch is mid-flight.
   useEffect(() => {
     if (profileSettled && !profileFetching && profile && !profile.diagnosticComplete) {
@@ -72,7 +72,7 @@ export default function StudyCoach() {
     let convId: string | null = null;
     try {
       // Coach voice is applied server-side from profile.coachPersonality.
-      // socraticMode only controls "never give direct answers" — we tie it to the socratic coach.
+      // socraticMode only controls "never give direct answers", we tie it to the socratic coach.
       const conv: any = await fetchApi("/study/tutor/conversations", {
         method: "POST",
         body: JSON.stringify({
@@ -83,7 +83,7 @@ export default function StudyCoach() {
       });
       convId = conv?.id ?? null;
       if (convId && seed.trim()) {
-        // Seed message is best-effort — the conversation already exists with a greeting,
+        // Seed message is best-effort, the conversation already exists with a greeting,
         // so a failure here must NOT strand the user on /coach.
         try {
           await fetchApi(`/study/tutor/conversations/${convId}/messages`, {
@@ -115,7 +115,7 @@ export default function StudyCoach() {
       </header>
 
       <main className="max-w-2xl mx-auto px-6 py-12 md:py-16">
-        {/* Coach greeting — the home is a conversation */}
+        {/* Coach greeting, the home is a conversation */}
         <section className="mb-10">
           <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground mb-3">Your {meta.name}</p>
           <h1 className="font-serif text-3xl md:text-4xl leading-tight text-foreground">
@@ -123,7 +123,7 @@ export default function StudyCoach() {
           </h1>
         </section>
 
-        {/* Today's plan card — quiet, sits beside the conversation, doesn't take over */}
+        {/* Today's plan card, quiet, sits beside the conversation, doesn't take over */}
         {primaryStep && (
           <section className="mb-10 border border-border/60 rounded-lg p-5 bg-card">
             <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground mb-2">Today's next step</p>
@@ -142,7 +142,7 @@ export default function StudyCoach() {
           </section>
         )}
 
-        {/* Inline conversation start — the primary surface */}
+        {/* Inline conversation start, the primary surface */}
         <section className="mb-8">
           <Textarea
             value={draft}
@@ -170,7 +170,7 @@ export default function StudyCoach() {
           </div>
         </section>
 
-        {/* Quiet links — power-user shortcuts, not the main surface */}
+        {/* Quiet links, power-user shortcuts, not the main surface */}
         <nav className="mt-16 pt-6 border-t border-border/40 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
           <button onClick={() => setLoc("/materials")} className="hover:text-foreground transition-colors flex items-center gap-1.5">
             <BookOpen className="h-3.5 w-3.5" /> Materials

@@ -194,7 +194,7 @@ router.post("/", async (req, res) => {
     }
   }
 
-  const title = data.title ?? `${labelFormat(data.format)} Exam — ${new Date().toLocaleDateString()}`;
+  const title = data.title ?? `${labelFormat(data.format)} Exam, ${new Date().toLocaleDateString()}`;
   const maxScore = questions.reduce((sum, q) => sum + q.points, 0);
 
   const [exam] = await db
@@ -250,13 +250,13 @@ router.post("/:examId/submit", async (req, res) => {
   }
   const exam = rows[0];
 
-  // We accept incremental submissions — only grade the answers that arrived this call,
+  // We accept incremental submissions, only grade the answers that arrived this call,
   // and merge with anything already persisted. The frontend submits one question at a time.
   const existingAnswers: ExamAnswer[] = Array.isArray(exam.answers) ? (exam.answers as ExamAnswer[]) : [];
   const gradedThisCall: Array<ExamAnswer & { correct?: boolean; explanation?: string; modelAnswer?: string }> = [];
 
   // Validate each answer matches its question's required shape BEFORE grading. We reject the
-  // whole batch on first malformed answer rather than silently grading garbage — completion
+  // whole batch on first malformed answer rather than silently grading garbage, completion
   // status is count-based and a placeholder submission would otherwise force "completed".
   for (const answer of answers) {
     const q = (exam.questions as ExamQuestion[]).find((qq) => qq.id === answer.questionId);
@@ -318,7 +318,7 @@ Be specific: cite what the learner did well and what they missed. Do not over-pr
           coveredPoints = Array.isArray(grading.coveredPoints) ? grading.coveredPoints.slice(0, 10) : [];
         } catch (err) {
           req.log?.warn({ err }, "AI grading failed");
-          aiFeedback = "We couldn't auto-grade this one — your answer is saved. (Grader temporarily unavailable.)";
+          aiFeedback = "We couldn't auto-grade this one, your answer is saved. (Grader temporarily unavailable.)";
         }
       }
 

@@ -136,7 +136,7 @@ export default function StudyMaterialView() {
         </div>
       </header>
 
-      {/* Primary action bar — surface the things people actually want to do */}
+      {/* Primary action bar, surface the things people actually want to do */}
       <div className="border-b bg-gradient-to-b from-primary/[0.03] to-background sticky top-[5.25rem] z-30">
         <div className="max-w-5xl mx-auto px-4 py-2.5 flex flex-wrap items-center gap-2">
           <Button

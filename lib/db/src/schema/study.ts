@@ -233,7 +233,7 @@ export const studyLearnerProfilesTable = pgTable("study_learner_profiles", {
   calibrationSelfRating: text("calibration_self_rating"), // high | mid | low | under
   failureMode: text("failure_mode"), // passive | cram | avoid | scattered | perfect
   // The Coach: chosen personality voice (drill | socratic | warm | analyst).
-  // Voice/pressure only — never changes accuracy or pedagogy.
+  // Voice/pressure only, never changes accuracy or pedagogy.
   coachPersonality: text("coach_personality"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
