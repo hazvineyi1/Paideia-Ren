@@ -76,10 +76,12 @@ export default function StudyUpgrade() {
     if (pending) setActivePaymentId(pending);
   }, []);
 
-  const country = useMemo(
-    () => config?.countries.find((c) => c.code === countryCode) ?? null,
-    [config, countryCode],
-  );
+  const country = useMemo(() => {
+    const found = config?.countries.find((c) => c.code === countryCode);
+    if (!found) return null;
+    // Card payments are not available yet, so hide card methods from the picker.
+    return { ...found, methods: found.methods.filter((m) => m.kind !== "card") };
+  }, [config, countryCode]);
   // For showing prices on the tier cards before a country is chosen, fall back
   // to the USD (Zimbabwe) anchor.
   const priceCountry = useMemo(
@@ -340,8 +342,8 @@ export default function StudyUpgrade() {
                 {isPlus ? "Step up to Coach Pro" : "Pick the plan that fits your term"}
               </h1>
               <p className="text-muted-foreground">
-                Pay with the wallet you already use. Mobile money and card,
-                across Zimbabwe, Zambia, South Africa, and Botswana.
+                Pay with the mobile money wallet you already use, across
+                Zimbabwe, Zambia, South Africa, and Botswana.
               </p>
             </section>
 
@@ -571,8 +573,7 @@ export default function StudyUpgrade() {
               )}
             </div>
             <p className="text-xs text-muted-foreground mt-4">
-              Mobile money renews manually each {interval}; we'll remind you. Card
-              payments can renew automatically.
+              Mobile money renews manually each {interval}; we'll remind you.
             </p>
           </>
         )}
