@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,12 +16,36 @@ export default function StudySignup() {
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  // Capture an ambassador referral code from ?ref= and remember it, so the
+  // attribution survives the user browsing other pages before signing up.
+  useEffect(() => {
+    const code = new URLSearchParams(window.location.search).get("ref");
+    if (code) {
+      try {
+        localStorage.setItem("studyReferralCode", code);
+      } catch {
+        // localStorage may be unavailable; attribution is best-effort.
+      }
+    }
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setSubmitting(true);
     try {
-      await signup(email, password, name);
+      let ref: string | undefined;
+      try {
+        ref = localStorage.getItem("studyReferralCode") ?? undefined;
+      } catch {
+        ref = undefined;
+      }
+      await signup(email, password, name, ref);
+      try {
+        localStorage.removeItem("studyReferralCode");
+      } catch {
+        // ignore
+      }
       setLoc("/coach");
     } catch (err: any) {
       setError(err?.data?.error || "Signup failed");

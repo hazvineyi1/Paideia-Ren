@@ -396,3 +396,271 @@ export function useStudyCancelSubscription() {
       customFetch<StudySubscription>(`${BASE}/billing/cancel`, { method: "POST" }),
   });
 }
+
+// ─── Ambassador program ───
+
+export interface AmbassadorProgramInfo {
+  schedule: Array<{ minMonth: number; maxMonth: number | null; ratePct: number }>;
+  standardCapMonths: number;
+  lifetimeThresholdReferrals: number;
+  holdbackDays: number;
+  payoutMethods: string[];
+  cashoutIncrementUsdMinor: number;
+}
+
+export interface AmbassadorStatus {
+  enrolled: boolean;
+  program: AmbassadorProgramInfo;
+}
+
+export interface AmbassadorBalances {
+  pendingUsdMinor: number;
+  confirmedUsdMinor: number;
+  clawedBackUsdMinor: number;
+  committedUsdMinor: number;
+  availableUsdMinor: number;
+  cashableUsdMinor: number;
+  lifetimeEarnedUsdMinor: number;
+}
+
+export interface AmbassadorReferredCustomer {
+  referralId: string;
+  customerName: string;
+  customerEmail: string;
+  status: string;
+  firstPaidAt: string | null;
+  tenureMonth: number | null;
+  currentRatePct: number;
+  earnedUsdMinor: number;
+}
+
+export interface AmbassadorCommissionEvent {
+  id: string;
+  amountUsdMinor: number;
+  grossUsdMinor: number;
+  rateApplied: number;
+  currency: string;
+  customerTenureMonth: number;
+  state: string;
+  confirmAt: string | null;
+  createdAt: string | null;
+}
+
+export interface AmbassadorPayout {
+  id: string;
+  amountUsdMinor: number;
+  method: string;
+  handle: string | null;
+  status: string;
+  note: string | null;
+  requestedAt: string | null;
+  settledAt: string | null;
+}
+
+export interface AmbassadorDashboard {
+  profile: {
+    referralCode: string;
+    tier: string;
+    status: string;
+    payoutMethod: string | null;
+    payoutHandle: string | null;
+  };
+  program: AmbassadorProgramInfo;
+  balances: AmbassadorBalances;
+  customers: AmbassadorReferredCustomer[];
+  events: AmbassadorCommissionEvent[];
+  payouts: AmbassadorPayout[];
+}
+
+export function useAmbassadorStatus() {
+  return useQuery<AmbassadorStatus, ErrorType<unknown>>({
+    queryKey: ["ambassadorStatus"],
+    queryFn: async () => customFetch<AmbassadorStatus>(`${BASE}/ambassador/status`),
+  });
+}
+
+export function useAmbassadorDashboard(enabled: boolean) {
+  return useQuery<AmbassadorDashboard, ErrorType<unknown>>({
+    queryKey: ["ambassadorDashboard"],
+    enabled,
+    queryFn: async () => customFetch<AmbassadorDashboard>(`${BASE}/ambassador/me`),
+  });
+}
+
+export function useAmbassadorJoin() {
+  return useMutation<
+    { referralCode: string },
+    ErrorType<unknown>,
+    { payoutMethod?: string; payoutHandle?: string } | void
+  >({
+    mutationKey: ["ambassadorJoin"],
+    mutationFn: async (body) =>
+      customFetch<{ referralCode: string }>(`${BASE}/ambassador/join`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body ?? {}),
+      }),
+  });
+}
+
+export function useAmbassadorSetPayoutMethod() {
+  return useMutation<
+    { payoutMethod: string; payoutHandle: string },
+    ErrorType<unknown>,
+    { payoutMethod: string; payoutHandle: string }
+  >({
+    mutationKey: ["ambassadorSetPayoutMethod"],
+    mutationFn: async (data) =>
+      customFetch<{ payoutMethod: string; payoutHandle: string }>(
+        `${BASE}/ambassador/payout-method`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        },
+      ),
+  });
+}
+
+export function useAmbassadorCashout() {
+  return useMutation<{ payout: AmbassadorPayout }, ErrorType<unknown>, void>({
+    mutationKey: ["ambassadorCashout"],
+    mutationFn: async () =>
+      customFetch<{ payout: AmbassadorPayout }>(`${BASE}/ambassador/cashout`, {
+        method: "POST",
+      }),
+  });
+}
+
+// ─── Ambassador admin ───
+
+export interface AmbassadorSettings {
+  id: string;
+  schedule: Array<{ minMonth: number; maxMonth: number | null; ratePct: number }>;
+  standardCapMonths: number;
+  lifetimeThresholdReferrals: number;
+  holdbackDays: number;
+  payoutMethods: string[];
+  cashoutIncrementUsdMinor: number;
+  fxRatesToUsd: Record<string, number>;
+}
+
+export interface AdminAmbassadorRow {
+  id: string;
+  tier: string;
+  status: string;
+  referralCode: string;
+  payoutMethod: string | null;
+  payoutHandle: string | null;
+  userName: string;
+  userEmail: string;
+  createdAt: string | null;
+  referralsTotal: number;
+  referralsActive: number;
+  balances: AmbassadorBalances;
+}
+
+export interface AdminPayoutRow {
+  id: string;
+  ambassadorId: string;
+  amountUsdMinor: number;
+  method: string;
+  handle: string | null;
+  status: string;
+  note: string | null;
+  requestedAt: string | null;
+  settledAt: string | null;
+  userName: string;
+  userEmail: string;
+  referralCode: string;
+}
+
+export function useAdminAmbassadorSettings() {
+  return useQuery<{ settings: AmbassadorSettings }, ErrorType<unknown>>({
+    queryKey: ["adminAmbassadorSettings"],
+    queryFn: async () =>
+      customFetch<{ settings: AmbassadorSettings }>(`${BASE}/admin/ambassador/settings`),
+  });
+}
+
+export function useAdminUpdateAmbassadorSettings() {
+  return useMutation<
+    { settings: AmbassadorSettings },
+    ErrorType<unknown>,
+    Partial<Omit<AmbassadorSettings, "id">>
+  >({
+    mutationKey: ["adminUpdateAmbassadorSettings"],
+    mutationFn: async (data) =>
+      customFetch<{ settings: AmbassadorSettings }>(`${BASE}/admin/ambassador/settings`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      }),
+  });
+}
+
+export function useAdminAmbassadors() {
+  return useQuery<{ ambassadors: AdminAmbassadorRow[] }, ErrorType<unknown>>({
+    queryKey: ["adminAmbassadors"],
+    queryFn: async () =>
+      customFetch<{ ambassadors: AdminAmbassadorRow[] }>(`${BASE}/admin/ambassadors`),
+  });
+}
+
+export function useAdminPayouts(status?: string) {
+  return useQuery<{ payouts: AdminPayoutRow[] }, ErrorType<unknown>>({
+    queryKey: ["adminPayouts", status ?? "all"],
+    queryFn: async () => {
+      const qs = status ? `?status=${encodeURIComponent(status)}` : "";
+      return customFetch<{ payouts: AdminPayoutRow[] }>(`${BASE}/admin/payouts${qs}`);
+    },
+  });
+}
+
+export function useAdminUpdatePayout() {
+  return useMutation<
+    { payout: AmbassadorPayout },
+    ErrorType<unknown>,
+    { id: string; status: string; note?: string }
+  >({
+    mutationKey: ["adminUpdatePayout"],
+    mutationFn: async ({ id, ...data }) =>
+      customFetch<{ payout: AmbassadorPayout }>(`${BASE}/admin/payouts/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      }),
+  });
+}
+
+export function useAdminSetAmbassadorTier() {
+  return useMutation<
+    { ambassador: unknown },
+    ErrorType<unknown>,
+    { id: string; tier: "standard" | "lifetime" }
+  >({
+    mutationKey: ["adminSetAmbassadorTier"],
+    mutationFn: async ({ id, tier }) =>
+      customFetch<{ ambassador: unknown }>(`${BASE}/admin/ambassadors/${id}/tier`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tier }),
+      }),
+  });
+}
+
+export function useAdminSetAmbassadorStatus() {
+  return useMutation<
+    { ambassador: unknown },
+    ErrorType<unknown>,
+    { id: string; status: "active" | "suspended" }
+  >({
+    mutationKey: ["adminSetAmbassadorStatus"],
+    mutationFn: async ({ id, status }) =>
+      customFetch<{ ambassador: unknown }>(`${BASE}/admin/ambassadors/${id}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      }),
+  });
+}

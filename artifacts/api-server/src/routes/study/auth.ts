@@ -23,6 +23,8 @@ const signupSchema = z.object({
   email: z.string().email().max(200),
   password: z.string().min(8).max(200),
   name: z.string().min(1).max(120),
+  // Optional ambassador referral code captured from a ?ref= link.
+  ref: z.string().max(64).optional(),
 });
 
 const loginSchema = z.object({
@@ -77,6 +79,17 @@ router.post("/signup", rateLimit({ windowMs: 60 * 60 * 1000, max: 5 }), async (r
     preferredDifficulty: "mixed",
     dailyStudyMinutes: 30,
   });
+
+  // Best-effort ambassador attribution from a referral link. Never mints
+  // commission (that only happens on a cleared payment) and never blocks signup.
+  if (data.ref) {
+    try {
+      const { attributeReferral } = await import("../../lib/billing/ambassador.js");
+      await attributeReferral(user.id, data.ref);
+    } catch {
+      // Attribution is non-critical; ignore failures so signup always succeeds.
+    }
+  }
 
   const token = newSessionToken();
   await db.insert(studySessionsTable).values({

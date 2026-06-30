@@ -32,6 +32,8 @@ import StudyStartOver from "@/pages/StudyStartOver";
 import StudyCoach from "@/pages/StudyCoach";
 import StudyUpgrade from "@/pages/StudyUpgrade";
 import StudyAdminCoupons from "@/pages/StudyAdminCoupons";
+import StudyAmbassador from "@/pages/StudyAmbassador";
+import StudyAdminAmbassadors from "@/pages/StudyAdminAmbassadors";
 
 const queryClient = new QueryClient();
 
@@ -85,7 +87,9 @@ function Router() {
       <Route path="/strategy/:materialId" component={() => <Protected component={StudyStrategy} />} />
       <Route path="/progress" component={() => <Protected component={StudyProgress} />} />
       <Route path="/upgrade" component={() => <Protected component={StudyUpgrade} />} />
+      <Route path="/ambassador" component={() => <Protected component={StudyAmbassador} />} />
       <Route path="/admin/coupons" component={() => <Protected component={StudyAdminCoupons} />} />
+      <Route path="/admin/ambassadors" component={() => <Protected component={StudyAdminAmbassadors} />} />
       <Route component={NotFound} />
     </Switch>
   );

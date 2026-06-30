@@ -7,6 +7,7 @@ import {
   integer,
   uuid,
   index,
+  uniqueIndex,
   boolean,
   real,
 } from "drizzle-orm/pg-core";
@@ -664,3 +665,140 @@ export type StudyCognitiveProfile = typeof studyCognitiveProfilesTable.$inferSel
 export type StudyActivityLog = typeof studyActivityLogTable.$inferSelect;
 export type StudyLearningStyleProfile = typeof studyLearningStyleProfilesTable.$inferSelect;
 export type InsertStudyLearningStyleProfile = typeof studyLearningStyleProfilesTable.$inferInsert;
+
+// ─── Ambassador residual-commission program ───
+// A single-tier referral program: an ambassador earns a residual share of the
+// REAL, CLEARED payments made by customers they personally referred. There is no
+// downline / multi-level structure: a referral links exactly one ambassador to
+// one customer, and commission is only ever minted from a cleared payment row.
+
+// One row per ambassador (a free opt-in for any logged-in Coach user).
+export const studyAmbassadorsTable = pgTable("study_ambassadors", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .unique()
+    .references(() => studyUsersTable.id, { onDelete: "cascade" }),
+  referralCode: text("referral_code").notNull().unique(), // shareable code (uppercase)
+  // standard = residuals only through the standard cap window; lifetime = residuals
+  // continue indefinitely at the tail rate. Auto-upgraded past a referral threshold
+  // or granted manually by an admin.
+  tier: text("tier").notNull().default("standard"), // standard | lifetime
+  status: text("status").notNull().default("active"), // active | suspended
+  payoutMethod: text("payout_method"), // ecocash | mpesa | mukuru | bank_transfer
+  payoutHandle: text("payout_handle"), // phone number / account reference for the payout
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (t) => ({
+  codeIdx: index("study_ambassadors_code_idx").on(t.referralCode),
+}));
+
+// Attribution: links a referred customer to the ambassador who referred them.
+// customerId is unique so a customer is attributed to at most one ambassador
+// (first referral wins). Depth is exactly one: we never walk a chain upward.
+export const studyReferralsTable = pgTable("study_referrals", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  ambassadorId: uuid("ambassador_id")
+    .notNull()
+    .references(() => studyAmbassadorsTable.id, { onDelete: "cascade" }),
+  customerId: uuid("customer_id")
+    .notNull()
+    .unique()
+    .references(() => studyUsersTable.id, { onDelete: "cascade" }),
+  status: text("status").notNull().default("pending"), // pending | active | churned
+  attributedAt: timestamp("attributed_at").defaultNow().notNull(),
+  firstPaidAt: timestamp("first_paid_at"), // when the customer first cleared a payment
+}, (t) => ({
+  ambassadorIdx: index("study_referrals_ambassador_idx").on(t.ambassadorId),
+}));
+
+// One row per commission earned from one cleared payment. Idempotency is enforced
+// by the unique (sourceKind, sourcePaymentId) pair: re-processing a webhook or a
+// poll cannot double-credit. Amounts are stored in BOTH the payment currency and
+// USD (the cash-out / threshold currency) using admin-configurable FX rates.
+export const studyCommissionEventsTable = pgTable("study_commission_events", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  referralId: uuid("referral_id")
+    .notNull()
+    .references(() => studyReferralsTable.id, { onDelete: "cascade" }),
+  ambassadorId: uuid("ambassador_id")
+    .notNull()
+    .references(() => studyAmbassadorsTable.id, { onDelete: "cascade" }),
+  sourceKind: text("source_kind").notNull(), // local | stripe
+  sourcePaymentId: text("source_payment_id").notNull(), // local payment uuid or stripe invoice id
+  grossMinor: integer("gross_minor").notNull(), // cleared payment amount, payment currency
+  currency: text("currency").notNull(), // USD | ZAR | ZMW | BWP
+  grossUsdMinor: integer("gross_usd_minor").notNull(), // gross normalized to USD cents
+  rateApplied: real("rate_applied").notNull(), // percent applied (e.g. 20, 10, 5)
+  amountMinor: integer("amount_minor").notNull(), // commission in payment currency
+  amountUsdMinor: integer("amount_usd_minor").notNull(), // commission in USD cents (ledger currency)
+  customerTenureMonth: integer("customer_tenure_month").notNull(), // 1-based month index since first payment
+  // pending = inside the holdback window; confirmed = cleared holdback and counts
+  // toward balance; clawed_back = reversed by a refund / chargeback.
+  state: text("state").notNull().default("pending"), // pending | confirmed | clawed_back
+  confirmAt: timestamp("confirm_at").notNull(), // paidAt + holdback window
+  confirmedAt: timestamp("confirmed_at"),
+  clawedBackAt: timestamp("clawed_back_at"),
+  clawbackReason: text("clawback_reason"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => ({
+  ambassadorIdx: index("study_commission_events_ambassador_idx").on(t.ambassadorId),
+  referralIdx: index("study_commission_events_referral_idx").on(t.referralId),
+  sourceUniq: uniqueIndex("study_commission_events_source_uniq").on(t.sourceKind, t.sourcePaymentId),
+}));
+
+// Ambassador-initiated cash-out requests, paid out by an admin. Amounts are in USD
+// cents and only ever a whole multiple of the configured increment ($20).
+export const studyPayoutsTable = pgTable("study_payouts", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  ambassadorId: uuid("ambassador_id")
+    .notNull()
+    .references(() => studyAmbassadorsTable.id, { onDelete: "cascade" }),
+  amountUsdMinor: integer("amount_usd_minor").notNull(),
+  method: text("method").notNull(), // ecocash | mpesa | mukuru | bank_transfer
+  handle: text("handle").notNull(), // snapshot of the payout handle at request time
+  status: text("status").notNull().default("requested"), // requested | processing | paid | failed
+  note: text("note"), // admin note (e.g. transfer reference or failure reason)
+  requestedAt: timestamp("requested_at").defaultNow().notNull(),
+  settledAt: timestamp("settled_at"),
+}, (t) => ({
+  ambassadorIdx: index("study_payouts_ambassador_idx").on(t.ambassadorId),
+}));
+
+// Singleton config row driving every rate / cap / window. Admin-editable.
+export const studyAmbassadorSettingsTable = pgTable("study_ambassador_settings", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  // Tapering schedule: ordered brackets matched by customer tenure month. maxMonth
+  // null = open-ended tail. e.g. m1-3 = 20%, m4-12 = 10%, m13+ = 5%.
+  schedule: jsonb("schedule").$type<Array<{ minMonth: number; maxMonth: number | null; ratePct: number }>>()
+    .notNull()
+    .default([
+      { minMonth: 1, maxMonth: 3, ratePct: 20 },
+      { minMonth: 4, maxMonth: 12, ratePct: 10 },
+      { minMonth: 13, maxMonth: null, ratePct: 5 },
+    ]),
+  // Standard ambassadors earn residuals only through this many tenure months;
+  // lifetime ambassadors keep earning the tail rate indefinitely.
+  standardCapMonths: integer("standard_cap_months").notNull().default(12),
+  // Active referrals at or above this count auto-upgrade an ambassador to lifetime.
+  lifetimeThresholdReferrals: integer("lifetime_threshold_referrals").notNull().default(10),
+  // Holdback window (days) before a pending commission becomes confirmed.
+  holdbackDays: integer("holdback_days").notNull().default(30),
+  // Allowed payout rails.
+  payoutMethods: jsonb("payout_methods").$type<string[]>()
+    .notNull()
+    .default(["ecocash", "mpesa", "mukuru", "bank_transfer"]),
+  // USD per 1 unit of each currency (used to normalize commissions to USD cents).
+  fxRatesToUsd: jsonb("fx_rates_to_usd").$type<Record<string, number>>()
+    .notNull()
+    .default({ USD: 1, ZAR: 0.054, ZMW: 0.037, BWP: 0.074 }),
+  // Cash-out granularity in USD cents (2000 = $20).
+  cashoutIncrementUsdMinor: integer("cashout_increment_usd_minor").notNull().default(2000),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export type StudyAmbassador = typeof studyAmbassadorsTable.$inferSelect;
+export type StudyReferral = typeof studyReferralsTable.$inferSelect;
+export type StudyCommissionEvent = typeof studyCommissionEventsTable.$inferSelect;
+export type StudyPayout = typeof studyPayoutsTable.$inferSelect;
+export type StudyAmbassadorSettings = typeof studyAmbassadorSettingsTable.$inferSelect;

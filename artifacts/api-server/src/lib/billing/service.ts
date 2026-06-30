@@ -3,6 +3,7 @@ import { and, eq, isNull, or, sql } from "drizzle-orm";
 import { logger } from "../logger.js";
 import { getUncachableStripeClient } from "../stripeClient.js";
 import { isTier, type BillingInterval } from "./config.js";
+import { creditCommissionForPayment } from "./ambassador.js";
 
 export function computePeriodEnd(interval: BillingInterval, from: Date = new Date()): Date {
   const end = new Date(from);
@@ -111,7 +112,35 @@ export async function activatePayment(
           ),
         );
     }
+
+    // Mint any ambassador residual from this cleared payment, in the same
+    // transaction. Idempotent on (sourceKind, sourcePaymentId), so a replayed
+    // webhook/poll cannot double-credit.
+    await creditCommissionForPayment(
+      {
+        customerId: payment.userId,
+        sourceKind: "local",
+        sourcePaymentId: payment.id,
+        grossMinor: payment.amountMinor,
+        currency: payment.currency,
+        paidAt: new Date(),
+      },
+      tx,
+    );
   });
+}
+
+// Map a Stripe customer id back to a study learner, if any. Used by the Stripe
+// webhook to attribute renewal commissions and refund clawbacks.
+export async function getStudyUserIdByStripeCustomer(
+  customerId: string,
+): Promise<string | null> {
+  const rows = await db
+    .select({ id: studyUsersTable.id })
+    .from(studyUsersTable)
+    .where(eq(studyUsersTable.stripeCustomerId, customerId))
+    .limit(1);
+  return rows[0]?.id ?? null;
 }
 
 export async function markPaymentFailed(

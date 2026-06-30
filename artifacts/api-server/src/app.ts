@@ -61,10 +61,69 @@ app.post(
       if (typeof customerId === "string" && customerId.length > 0) {
         await syncTeacherFromCustomer(customerId);
         // Also reflect Stripe state onto study learners (card auto-renew).
-        const { activateStudyStripeFromCustomer } = await import(
-          "./lib/billing/service.js"
-        );
+        const { activateStudyStripeFromCustomer, getStudyUserIdByStripeCustomer } =
+          await import("./lib/billing/service.js");
         await activateStudyStripeFromCustomer(customerId);
+
+        // Ambassador residuals: credit on each cleared invoice (initial + renewal),
+        // claw back on refund / dispute. Best-effort: never break the webhook.
+        try {
+          if (!event) throw new Error("missing event");
+          const obj = event.data.object as Record<string, unknown>;
+          const { safeCreditCommission, clawbackBySourcePayment } = await import(
+            "./lib/billing/ambassador.js"
+          );
+          if (event.type === "invoice.payment_succeeded") {
+            const amountPaid = Number(obj["amount_paid"] ?? 0);
+            const invoiceId = typeof obj["id"] === "string" ? (obj["id"] as string) : null;
+            const currency =
+              typeof obj["currency"] === "string"
+                ? (obj["currency"] as string).toUpperCase()
+                : "USD";
+            const studyUserId = await getStudyUserIdByStripeCustomer(customerId);
+            if (studyUserId && invoiceId && amountPaid > 0) {
+              await safeCreditCommission({
+                customerId: studyUserId,
+                sourceKind: "stripe",
+                sourcePaymentId: invoiceId,
+                grossMinor: amountPaid,
+                currency,
+                paidAt: new Date(),
+              });
+            }
+          } else if (event.type === "charge.refunded") {
+            // The event object is a charge, which carries the invoice id directly.
+            const invoiceId = typeof obj["invoice"] === "string" ? (obj["invoice"] as string) : null;
+            if (invoiceId) {
+              await clawbackBySourcePayment("stripe", invoiceId, `stripe ${event.type}`);
+            }
+          } else if (event.type === "charge.dispute.created") {
+            // The event object is a dispute, which does NOT expose `invoice`.
+            // Resolve the underlying charge first, then read its invoice id so the
+            // clawback targets the same source payment that minted the commission.
+            let invoiceId: string | null =
+              typeof obj["invoice"] === "string" ? (obj["invoice"] as string) : null;
+            const chargeId = typeof obj["charge"] === "string" ? (obj["charge"] as string) : null;
+            if (!invoiceId && chargeId) {
+              try {
+                const { getUncachableStripeClient } = await import("./lib/stripeClient.js");
+                const stripe = await getUncachableStripeClient();
+                const charge = (await stripe.charges.retrieve(chargeId)) as unknown as Record<
+                  string,
+                  unknown
+                >;
+                invoiceId = typeof charge["invoice"] === "string" ? (charge["invoice"] as string) : null;
+              } catch (lookupErr) {
+                logger.error({ err: lookupErr, chargeId }, "dispute charge lookup failed");
+              }
+            }
+            if (invoiceId) {
+              await clawbackBySourcePayment("stripe", invoiceId, `stripe ${event.type}`);
+            }
+          }
+        } catch (err) {
+          logger.error({ err }, "ambassador commission hook failed");
+        }
       }
       res.status(200).json({ received: true });
     } catch (err) {

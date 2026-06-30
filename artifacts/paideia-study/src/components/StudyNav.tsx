@@ -3,7 +3,7 @@ import { useStudyAuth } from "@/hooks/use-study-auth";
 import {
   LayoutDashboard, BookOpen, TrendingUp,
   LogOut, User, ChevronDown, RotateCcw,
-  MessageCircle,
+  MessageCircle, Gift,
 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent,
@@ -79,6 +79,9 @@ export default function StudyNav() {
                 <RotateCcw className="h-3.5 w-3.5 mr-2" /> Test &amp; start again
               </DropdownMenuItem>
               <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setLoc("/ambassador")}>
+                <Gift className="h-3.5 w-3.5 mr-2" /> Ambassador program
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setLoc("/profile")}>
                 <User className="h-3.5 w-3.5 mr-2" /> Account settings
               </DropdownMenuItem>

@@ -17,6 +17,7 @@ import pathsRouter from "./paths.js";
 import strategyRouter from "./strategy.js";
 import adminRouter from "./admin.js";
 import notificationsRouter from "./notifications.js";
+import ambassadorRouter from "./ambassador.js";
 
 const router: IRouter = Router();
 
@@ -38,5 +39,6 @@ router.use("/paths", pathsRouter);
 router.use("/strategy", strategyRouter);
 router.use("/admin", adminRouter);
 router.use("/notifications", notificationsRouter);
+router.use("/ambassador", ambassadorRouter);
 
 export default router;
