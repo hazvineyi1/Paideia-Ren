@@ -34,8 +34,35 @@ export const studyUsersTable = pgTable("study_users", {
   stripeCustomerId: text("stripe_customer_id"),
   stripeSubscriptionId: text("stripe_subscription_id"),
   subscriptionCurrentPeriodEnd: timestamp("subscription_current_period_end"),
+  // WhatsApp (Twilio) outbound notifications. Number stored in E.164 (e.g. +263...).
+  // optIn must be true for any outbound message to be sent.
+  whatsappNumber: text("whatsapp_number"),
+  whatsappOptIn: boolean("whatsapp_opt_in").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
+// ─── Outbound notifications log (WhatsApp via Twilio, Phase 1) ───
+// One row per attempted notification. dedupeKey makes sends idempotent: a repeat run
+// with the same key is skipped (unique constraint + onConflictDoNothing). status:
+// queued -> sent | failed | skipped. reason holds the skip cause or send error.
+export const studyNotificationsTable = pgTable("study_notifications", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => studyUsersTable.id, { onDelete: "cascade" }),
+  channel: text("channel").notNull().default("whatsapp"),
+  kind: text("kind").notNull(), // renewal_reminder | brief_ready | review_nudge
+  toAddress: text("to_address"),
+  body: text("body"),
+  status: text("status").notNull().default("queued"), // queued | sent | failed | skipped
+  reason: text("reason"), // skip cause (not_configured | not_opted_in | no_number | duplicate) or send error
+  providerRef: text("provider_ref"), // Twilio message SID
+  dedupeKey: text("dedupe_key").unique(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  sentAt: timestamp("sent_at"),
+}, (t) => ({
+  userIdx: index("study_notifications_user_idx").on(t.userId),
+}));
 
 // ─── Mobile-money / card payments (African gateways: Paynow, Flutterwave, ...) ───
 // One row per payment attempt. Mobile money cannot auto-charge, so each renewal

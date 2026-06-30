@@ -4,6 +4,14 @@ import { desc, eq } from "drizzle-orm";
 import { requireStudyAdmin } from "../../middlewares/auth.js";
 import { normalizeCode } from "../../lib/billing/coupons.js";
 import { isTier } from "../../lib/billing/config.js";
+import { isWhatsAppConfigured } from "../../lib/notifications/whatsapp.js";
+import {
+  recentNotifications,
+  runBriefReady,
+  runRenewalReminders,
+  runReviewNudges,
+  type RunSummary,
+} from "../../lib/notifications/service.js";
 
 const router: IRouter = Router();
 router.use(requireStudyAdmin);
@@ -195,6 +203,55 @@ router.delete("/coupons/:id", async (req, res) => {
     return;
   }
   res.json({ ok: true });
+});
+
+// ─── WhatsApp notifications (Phase 1) ───
+
+// Whether the Twilio credentials are wired up yet.
+router.get("/notifications/status", (_req, res) => {
+  res.json({ whatsappConfigured: isWhatsAppConfigured() });
+});
+
+// Recent notification log, newest first.
+router.get("/notifications", async (_req, res) => {
+  const notifications = await recentNotifications(100);
+  res.json({ notifications });
+});
+
+// Guards against overlapping batch runs in this process. The per-notification dedupe
+// claim already prevents double sends; this just stops accidental concurrent batches
+// (e.g. a double-click or an overlapping scheduler tick) from doing redundant work.
+let notificationRunInProgress = false;
+
+// Trigger a notification batch. Until a scheduler is wired up, this is the manual /
+// externally-callable entry point. kind: renewal | brief | review | all.
+router.post("/notifications/run", async (req, res) => {
+  const kind = (req.body?.kind ?? "all") as string;
+  const valid = ["renewal", "brief", "review", "all"];
+  if (!valid.includes(kind)) {
+    res.status(400).json({ error: `kind must be one of ${valid.join(", ")}` });
+    return;
+  }
+
+  if (notificationRunInProgress) {
+    res.status(409).json({ error: "A notification run is already in progress" });
+    return;
+  }
+  notificationRunInProgress = true;
+
+  const summaries: RunSummary[] = [];
+  try {
+    if (kind === "renewal" || kind === "all") summaries.push(await runRenewalReminders());
+    if (kind === "brief" || kind === "all") summaries.push(await runBriefReady());
+    if (kind === "review" || kind === "all") summaries.push(await runReviewNudges());
+  } catch (err) {
+    res.status(500).json({ error: "Notification run failed", detail: err instanceof Error ? err.message : String(err) });
+    return;
+  } finally {
+    notificationRunInProgress = false;
+  }
+
+  res.json({ whatsappConfigured: isWhatsAppConfigured(), summaries });
 });
 
 export default router;

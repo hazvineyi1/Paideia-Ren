@@ -16,6 +16,7 @@ import assessmentRouter from "./assessment.js";
 import pathsRouter from "./paths.js";
 import strategyRouter from "./strategy.js";
 import adminRouter from "./admin.js";
+import notificationsRouter from "./notifications.js";
 
 const router: IRouter = Router();
 
@@ -36,5 +37,6 @@ router.use("/assessments", assessmentRouter);
 router.use("/paths", pathsRouter);
 router.use("/strategy", strategyRouter);
 router.use("/admin", adminRouter);
+router.use("/notifications", notificationsRouter);
 
 export default router;
