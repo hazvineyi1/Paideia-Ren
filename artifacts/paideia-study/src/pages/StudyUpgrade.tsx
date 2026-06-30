@@ -514,8 +514,8 @@ export default function StudyUpgrade() {
                   <div className="flex-1 text-sm">
                     <span className="font-medium">{coupon.code}</span> applied
                     <span className="text-muted-foreground">
-                      {" "}
-                      &mdash; you save {formatMoney(payCurrency, coupon.discountMinor / 100)}
+                      {", you save "}
+                      {formatMoney(payCurrency, coupon.discountMinor / 100)}
                     </span>
                   </div>
                   <button
