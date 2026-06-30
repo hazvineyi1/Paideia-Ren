@@ -5,8 +5,7 @@ import { useStudyProfile, useDailySession, fetchApi } from "@/hooks/use-study-jo
 import { useStudySubscription, useStudyBillingConfig } from "@/hooks/use-study-api";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowRight, BookOpen, BarChart3, User, Loader2, Check } from "lucide-react";
-import StudyPracticeDemo from "@/components/StudyPracticeDemo";
+import { ArrowRight, User, Loader2, Check } from "lucide-react";
 
 type Personality = "drill" | "socratic" | "warm" | "analyst";
 
@@ -185,11 +184,6 @@ export default function StudyCoach() {
           </div>
         </section>
 
-        {/* Practice, shown in motion so the experience speaks for itself */}
-        <section className="mb-10">
-          <StudyPracticeDemo />
-        </section>
-
         {/* Upgrade section, benefit-led so the path to a paid plan is obvious */}
         {showUpgrade && upgradeTiers.length > 0 && (
           <section className="mt-14">
@@ -260,17 +254,11 @@ export default function StudyCoach() {
           </section>
         )}
 
-        {/* Quiet links, power-user shortcuts, not the main surface */}
-        <nav className="mt-12 pt-6 border-t border-border/40 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
-          <button onClick={() => setLoc("/materials")} className="hover:text-foreground transition-colors flex items-center gap-1.5">
-            <BookOpen className="h-3.5 w-3.5" /> Materials
-          </button>
-          <button onClick={() => setLoc("/progress")} className="hover:text-foreground transition-colors flex items-center gap-1.5">
-            <BarChart3 className="h-3.5 w-3.5" /> Progress
-          </button>
+        {/* Quiet link to the full dashboard, not the main surface */}
+        <nav className="mt-12 pt-6 border-t border-border/40 text-sm text-muted-foreground">
           <button
             onClick={() => setLoc("/dashboard")}
-            className="hover:text-foreground transition-colors ml-auto"
+            className="hover:text-foreground transition-colors"
           >
             Open full dashboard →
           </button>
