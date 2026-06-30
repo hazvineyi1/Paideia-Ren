@@ -22,7 +22,7 @@ export default function StudySignup() {
     setSubmitting(true);
     try {
       await signup(email, password, name);
-      setLoc("/dashboard");
+      setLoc("/coach");
     } catch (err: any) {
       setError(err?.data?.error || "Signup failed");
     } finally {

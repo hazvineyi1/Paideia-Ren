@@ -21,7 +21,7 @@ export default function StudyLogin() {
     setSubmitting(true);
     try {
       await login(email, password);
-      setLoc("/dashboard");
+      setLoc("/coach");
     } catch (err: any) {
       setError(err?.data?.error || "Invalid email or password");
     } finally {

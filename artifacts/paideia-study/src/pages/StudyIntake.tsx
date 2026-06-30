@@ -140,7 +140,7 @@ export default function StudyIntake() {
         failureMode: failureMode || null,
         coachPersonality: (coachPersonality || recommended) as "drill" | "socratic" | "warm" | "analyst",
       });
-      setLoc("/dashboard");
+      setLoc("/coach");
     } catch {
       setSaving(false);
       alert("Couldn't save your intake. Please try again.");

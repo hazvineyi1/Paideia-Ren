@@ -13,7 +13,7 @@ import {
 // Pared-down nav: only three primary destinations. Everything else lives in
 // the profile dropdown or is reached contextually from the AI-led "Today" flow.
 const TABS = [
-  { href: "/dashboard", label: "Today", icon: LayoutDashboard },
+  { href: "/coach", label: "Today", icon: LayoutDashboard },
   { href: "/materials", label: "Materials", icon: BookOpen, match: ["/materials"] },
   { href: "/progress", label: "Progress", icon: TrendingUp },
 ];
@@ -33,7 +33,7 @@ export default function StudyNav() {
     <nav className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur-sm">
       <div className="max-w-6xl mx-auto px-3 sm:px-4 h-12 flex items-center gap-1">
         <button
-          onClick={() => setLoc("/dashboard")}
+          onClick={() => setLoc("/coach")}
           className="font-semibold text-sm mr-2 sm:mr-4 shrink-0 hover:opacity-80"
         >
           Synops Coach

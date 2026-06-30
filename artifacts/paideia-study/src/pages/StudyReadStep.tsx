@@ -135,8 +135,8 @@ export default function StudyReadStep() {
     setCompleting(true);
     try {
       await completeStep.mutateAsync({ pathId, stepId, masteryScore: 1 });
-      // Back to dashboard, daily-session query is invalidated by the mutation
-      setLoc("/dashboard");
+      // Back to today (the coach home), daily-session query is invalidated by the mutation
+      setLoc("/coach");
     } catch {
       setCompleting(false);
       alert("Couldn't mark this step complete. Please try again.");
@@ -150,7 +150,7 @@ export default function StudyReadStep() {
       <StudyNav />
       <div className="max-w-3xl mx-auto px-4 py-6">
         <button
-          onClick={() => setLoc("/dashboard")}
+          onClick={() => setLoc("/coach")}
           className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 mb-4"
         >
           <ArrowLeft className="w-4 h-4" /> Back to today
@@ -168,7 +168,7 @@ export default function StudyReadStep() {
             <CardContent className="p-8 text-center text-gray-700">
               <p className="font-semibold mb-2">We couldn't find this step.</p>
               <p className="text-sm text-gray-500 mb-4">It may have been completed or removed.</p>
-              <Button onClick={() => setLoc("/dashboard")}>Back to today</Button>
+              <Button onClick={() => setLoc("/coach")}>Back to today</Button>
             </CardContent>
           </Card>
         ) : (
