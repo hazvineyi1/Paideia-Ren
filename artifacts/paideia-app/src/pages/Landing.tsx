@@ -72,7 +72,7 @@ export default function Landing() {
       </section>
 
       <footer className="px-8 py-8 border-t text-center text-xs text-muted-foreground">
-        Synops. A teacher tool. No student personal data is collected in v1.
+        Synops. A teacher tool. No student personal data is collected.
       </footer>
     </div>
   );
