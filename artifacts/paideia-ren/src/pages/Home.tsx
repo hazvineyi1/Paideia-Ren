@@ -1,7 +1,8 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { Link } from "wouter";
-import { ArrowRight, CheckCircle2 } from "lucide-react";
+import { ArrowRight, CheckCircle2, Quote } from "lucide-react";
+import { articles } from "@/data/insights";
 
 export default function Home() {
   return (
@@ -42,6 +43,9 @@ export default function Home() {
                   See our services
                 </Link>
               </div>
+              <p className="text-[14px] text-white/60 mt-6">
+                A 30-minute strategy call. No obligation, no sales script.
+              </p>
             </motion.div>
           </div>
         </div>
@@ -61,6 +65,26 @@ export default function Home() {
           <div className="md:px-8 flex flex-col pt-6 md:pt-0">
             <span className="text-[40px] font-bold text-white mb-2 tracking-tight">98%</span>
             <span className="text-[15px] text-white/80 font-medium leading-relaxed">On-time delivery across projects</span>
+          </div>
+        </div>
+      </section>
+
+      {/* Trusted by / engagement context */}
+      <section className="bg-white py-14 px-6 border-b border-border">
+        <div className="max-w-[1200px] mx-auto">
+          <p className="text-center text-[13px] font-bold uppercase tracking-widest text-muted-foreground mb-8">
+            Trusted across regulated, outcomes-driven sectors
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4 text-[16px] font-semibold text-primary/70">
+            <span>Managed-Care Organizations</span>
+            <span className="text-border">•</span>
+            <span>Health Plans</span>
+            <span className="text-border">•</span>
+            <span>Higher Education</span>
+            <span className="text-border">•</span>
+            <span>K-12 Districts</span>
+            <span className="text-border">•</span>
+            <span>EdTech Teams</span>
           </div>
         </div>
       </section>
@@ -129,6 +153,40 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Selected outcomes */}
+      <section className="py-24 lg:py-32 px-6 bg-primary-hero text-white">
+        <div className="max-w-[1200px] mx-auto">
+          <div className="max-w-3xl mb-16">
+            <span className="block text-[13px] font-bold text-accent uppercase tracking-widest mb-5">Selected outcomes</span>
+            <h2 className="text-4xl lg:text-[48px] font-bold tracking-tight mb-6">
+              Results, not just recommendations
+            </h2>
+            <p className="text-[20px] text-white/80 leading-relaxed">
+              We measure engagements by what changes after we leave. A sample of the work, with the thinking behind it.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {articles.filter((a) => a.outcome).map((a) => (
+              <Link
+                key={a.slug}
+                href={`/insights/${a.slug}`}
+                className="group flex flex-col bg-white/5 border border-white/10 p-10 hover:bg-white/10 transition-colors"
+              >
+                <span className="text-[13px] font-bold text-accent uppercase tracking-widest mb-6">{a.category}</span>
+                <div className="flex items-baseline gap-3 mb-6">
+                  <span className="text-[56px] font-bold text-white leading-none tracking-tight">{a.outcome!.metric}</span>
+                  <span className="text-[15px] text-white/70 max-w-[180px] leading-snug">{a.outcome!.label}</span>
+                </div>
+                <p className="text-[17px] text-white/80 leading-relaxed flex-1 mb-8">{a.summary}</p>
+                <span className="text-white font-bold text-[15px] flex items-center gap-2">
+                  Read the approach <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* How we work */}
       <section className="py-24 lg:py-32 px-6 bg-background border-t border-border">
         <div className="max-w-[1200px] mx-auto">
@@ -152,6 +210,67 @@ export default function Home() {
                 <p className="text-[16px] text-muted-foreground leading-relaxed">{step.copy}</p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Principals */}
+      <section className="py-24 lg:py-32 px-6 bg-white border-t border-border">
+        <div className="max-w-[1200px] mx-auto">
+          <div className="max-w-3xl mb-16">
+            <h2 className="text-4xl lg:text-[48px] font-bold text-primary tracking-tight mb-6">
+              Led by the people doing the work
+            </h2>
+            <p className="text-[20px] text-muted-foreground leading-relaxed">
+              Synops is a complementary partnership. You work directly with the principals, not a rotating bench of juniors.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+            {[
+              {
+                initials: "BM",
+                name: "Bertha D. Musoni",
+                role: "Founder & Principal Consultant",
+                creds: "MPH · MBA · PMP · DBA(c)",
+                bio: "20+ years in managed care, Medicaid operations, and provider network management, with oversight of provider relationships up to $1B in annual spend.",
+              },
+              {
+                initials: "BM",
+                name: "Belinda H. Musoni",
+                role: "Principal, Learning & AI",
+                creds: "M.Ed · PhD(c) ML · Quality Matters",
+                bio: "A learning scientist and instructional-design leader who has shipped 40+ courses to WCAG 2.1 AA, with deep work in AI evaluation and adaptive systems.",
+              },
+            ].map((p) => (
+              <div key={p.name} className="flex gap-6 border border-border p-8 bg-background">
+                <div className="shrink-0 w-16 h-16 rounded-[6px] bg-primary flex items-center justify-center">
+                  <span className="text-white font-bold text-[20px] tracking-tight">{p.initials}</span>
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-foreground tracking-tight">{p.name}</h3>
+                  <p className="text-primary font-semibold text-[14px] uppercase tracking-wide mb-1">{p.role}</p>
+                  <p className="text-[12px] font-semibold text-muted-foreground tracking-widest uppercase mb-4">{p.creds}</p>
+                  <p className="text-[15px] text-muted-foreground leading-relaxed">{p.bio}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <Link href="/about" className="text-primary font-bold text-[16px] inline-flex items-center gap-2 hover:text-accent transition-colors group">
+            Read more about the firm <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+          </Link>
+        </div>
+      </section>
+
+      {/* Founder conviction */}
+      <section className="py-24 lg:py-32 px-6 bg-background border-t border-border">
+        <div className="max-w-[860px] mx-auto text-center">
+          <Quote className="text-accent mx-auto mb-8" size={40} />
+          <blockquote className="text-[26px] lg:text-[32px] font-medium text-foreground leading-[1.4] tracking-tight mb-8">
+            "We don't hand over a slide deck and wish you luck. We build the workflow, ship the course, stand up the platform, and stay until your team can run it without us."
+          </blockquote>
+          <div className="text-[15px]">
+            <span className="font-bold text-foreground">Bertha D. Musoni</span>
+            <span className="text-muted-foreground"> · Founder & Principal Consultant</span>
           </div>
         </div>
       </section>

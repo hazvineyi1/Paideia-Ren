@@ -56,11 +56,11 @@ export function Nav() {
             ))}
           </nav>
           
-          <div className="hidden md:flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-6">
             <a 
               href="/app/signup" 
-              className={`text-[14px] font-bold px-5 py-2.5 rounded-[6px] border transition-colors ${
-                isScrolled ? "border-border text-foreground hover:border-foreground" : "border-white/30 text-white hover:border-white"
+              className={`text-[14px] font-medium transition-colors hover:text-accent ${
+                isScrolled ? "text-foreground" : "text-white/90"
               }`}
             >
               Start free trial
@@ -102,13 +102,6 @@ export function Nav() {
               ))}
             </div>
             <div className="flex flex-col gap-4 pt-4">
-              <a 
-                href="/app/signup" 
-                onClick={() => setMobileMenuOpen(false)}
-                className="w-full text-center text-[16px] font-bold px-5 py-4 rounded-[6px] border border-border text-foreground"
-              >
-                Start free trial
-              </a>
               <Link 
                 href="/contact" 
                 onClick={() => setMobileMenuOpen(false)}
@@ -116,6 +109,13 @@ export function Nav() {
               >
                 Book a consultation
               </Link>
+              <a 
+                href="/app/signup" 
+                onClick={() => setMobileMenuOpen(false)}
+                className="w-full text-center text-[15px] font-semibold py-2 text-muted-foreground"
+              >
+                Start free trial
+              </a>
             </div>
           </div>
         </div>

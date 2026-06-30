@@ -3,6 +3,11 @@ export interface ArticleSection {
   paragraphs: string[];
 }
 
+export interface ArticleOutcome {
+  metric: string;
+  label: string;
+}
+
 export interface Article {
   slug: string;
   category: string;
@@ -12,6 +17,7 @@ export interface Article {
   authorRole: string;
   date: string;
   readingTime: string;
+  outcome?: ArticleOutcome;
   sections: ArticleSection[];
 }
 
@@ -26,6 +32,7 @@ export const articles: Article[] = [
     authorRole: "Founder & Principal Consultant",
     date: "Mar 15, 2024",
     readingTime: "6 min read",
+    outcome: { metric: "40%", label: "reduction in average dispute resolution time" },
     sections: [
       {
         paragraphs: [
@@ -66,6 +73,7 @@ export const articles: Article[] = [
     authorRole: "Principal, Learning & AI",
     date: "Apr 2, 2024",
     readingTime: "7 min read",
+    outcome: { metric: "40+", label: "courses delivered to WCAG 2.1 AA standards" },
     sections: [
       {
         paragraphs: [

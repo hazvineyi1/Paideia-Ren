@@ -58,6 +58,12 @@ export default function Article() {
             <span className="text-white/40">·</span>
             <span>{article.readingTime}</span>
           </div>
+          {article.outcome && (
+            <div className="mt-10 inline-flex items-baseline gap-3 border-l-2 border-accent pl-5">
+              <span className="text-[40px] font-bold text-white leading-none tracking-tight">{article.outcome.metric}</span>
+              <span className="text-[15px] text-white/80 max-w-[260px] leading-snug">{article.outcome.label}</span>
+            </div>
+          )}
         </div>
       </section>
 
