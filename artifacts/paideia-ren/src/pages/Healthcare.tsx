@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "wouter";
+import { CTASection } from "@/components/layout/CTASection";
 
 export default function Healthcare() {
   return (
@@ -67,6 +68,13 @@ export default function Healthcare() {
           </div>
         </div>
       </section>
+
+      <CTASection
+        heading="Ready to strengthen your operations?"
+        subtext="Talk to Bertha about provider networks, managed-care programs, and high-dollar claim remediation."
+        buttonLabel="Request a consultation"
+        href="/contact?area=healthcare"
+      />
     </div>
   );
 }

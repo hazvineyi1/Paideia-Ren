@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "wouter";
+import { CTASection } from "@/components/layout/CTASection";
 
 export default function Learning() {
   return (
@@ -49,6 +50,13 @@ export default function Learning() {
           </div>
         </div>
       </section>
+
+      <CTASection
+        heading="Have a learning project in mind?"
+        subtext="From curriculum design to AI integration, let's scope the right approach for your team."
+        buttonLabel="Discuss a learning project"
+        href="/contact?area=learning"
+      />
     </div>
   );
 }

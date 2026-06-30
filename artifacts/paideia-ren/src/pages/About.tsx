@@ -1,6 +1,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { Link } from "wouter";
+import { CTASection } from "@/components/layout/CTASection";
 
 export default function About() {
   return (
@@ -88,6 +89,13 @@ export default function About() {
           </div>
         </div>
       </section>
+
+      <CTASection
+        heading="Let's build something that lasts"
+        subtext="Bring us your hardest operational or learning challenge. We advise, then we build."
+        buttonLabel="Book a consultation"
+        href="/contact"
+      />
     </div>
   );
 }

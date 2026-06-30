@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "wouter";
 import { ArrowRight } from "lucide-react";
+import { CTASection } from "@/components/layout/CTASection";
 
 export default function Insights() {
   return (
@@ -58,6 +59,13 @@ export default function Insights() {
           ))}
         </div>
       </section>
+
+      <CTASection
+        heading="Want to go deeper?"
+        subtext="Tell us what you're working on and our principals will follow up with a perspective tailored to you."
+        buttonLabel="Get in touch"
+        href="/contact"
+      />
     </div>
   );
 }
