@@ -15,7 +15,8 @@ export type PaymentMethod =
   | "mtn_momo"
   | "airtel_money"
   | "zamtel"
-  | "card";
+  | "card"
+  | "bank_transfer";
 
 export type BillingInterval = "month" | "year";
 
@@ -25,7 +26,7 @@ export type TierId = "plus" | "pro";
 export interface MethodInfo {
   id: PaymentMethod;
   label: string;
-  kind: "mobile_money" | "card";
+  kind: "mobile_money" | "card" | "bank";
   requiresPhone: boolean;
   note?: string;
 }
@@ -44,7 +45,20 @@ export const METHODS: Record<PaymentMethod, MethodInfo> = {
   airtel_money: { id: "airtel_money", label: "Airtel Money", kind: "mobile_money", requiresPhone: true },
   zamtel: { id: "zamtel", label: "Zamtel Kwacha", kind: "mobile_money", requiresPhone: true },
   card: { id: "card", label: "Debit / Credit card", kind: "card", requiresPhone: false },
+  bank_transfer: {
+    id: "bank_transfer",
+    label: "Bank transfer",
+    kind: "bank",
+    requiresPhone: false,
+    note: "You'll be redirected to complete a secure bank transfer.",
+  },
 };
+
+// Methods offered in every country, regardless of which gateway serves it. Card
+// works through both Paynow (Zimbabwe) and Flutterwave (everywhere else), so any
+// new country gets it automatically. Per-country `methods` below only list the
+// local / mobile options unique to that country.
+export const GLOBAL_METHODS: PaymentMethod[] = ["card"];
 
 export type TierPricing = Record<TierId, Record<BillingInterval, number>>;
 
@@ -63,7 +77,7 @@ export const COUNTRIES: Record<CountryCode, CountryInfo> = {
     name: "Zimbabwe",
     flag: "\u{1F1FF}\u{1F1FC}",
     currency: "USD",
-    methods: ["ecocash", "onemoney", "card"],
+    methods: ["ecocash", "onemoney"],
     price: {
       plus: { month: 3.99, year: 39.99 },
       pro: { month: 5.99, year: 59.99 },
@@ -74,7 +88,7 @@ export const COUNTRIES: Record<CountryCode, CountryInfo> = {
     name: "South Africa",
     flag: "\u{1F1FF}\u{1F1E6}",
     currency: "ZAR",
-    methods: ["card"],
+    methods: ["bank_transfer"],
     price: {
       plus: { month: 79, year: 749 },
       pro: { month: 109, year: 1099 },
@@ -85,7 +99,7 @@ export const COUNTRIES: Record<CountryCode, CountryInfo> = {
     name: "Zambia",
     flag: "\u{1F1FF}\u{1F1F2}",
     currency: "ZMW",
-    methods: ["mtn_momo", "airtel_money", "zamtel", "card"],
+    methods: ["mtn_momo", "airtel_money", "zamtel", "bank_transfer"],
     price: {
       plus: { month: 99, year: 999 },
       pro: { month: 149, year: 1499 },
@@ -96,7 +110,7 @@ export const COUNTRIES: Record<CountryCode, CountryInfo> = {
     name: "Botswana",
     flag: "\u{1F1E7}\u{1F1FC}",
     currency: "BWP",
-    methods: ["orange_money", "card"],
+    methods: ["orange_money", "bank_transfer"],
     price: {
       plus: { month: 55, year: 549 },
       pro: { month: 79, year: 799 },
@@ -144,6 +158,21 @@ export const TIERS: Record<TierId, TierInfo> = {
 
 // Where a paid tier sits in the ladder. free < plus < pro.
 export const TIER_RANK: Record<string, number> = { free: 0, plus: 1, pro: 2 };
+
+// The full, ordered method list a country supports: its local methods first, then
+// the global ones (card), de-duplicated. Use this everywhere instead of reading
+// COUNTRIES[code].methods directly, so global methods stay consistent.
+export function methodsForCountry(country: CountryCode): PaymentMethod[] {
+  const seen = new Set<PaymentMethod>();
+  const out: PaymentMethod[] = [];
+  for (const m of [...COUNTRIES[country].methods, ...GLOBAL_METHODS]) {
+    if (!seen.has(m)) {
+      seen.add(m);
+      out.push(m);
+    }
+  }
+  return out;
+}
 
 export function isCountryCode(v: unknown): v is CountryCode {
   return typeof v === "string" && v in COUNTRIES;

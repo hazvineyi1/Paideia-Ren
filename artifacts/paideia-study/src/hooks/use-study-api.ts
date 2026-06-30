@@ -156,7 +156,7 @@ export function useStudyLogActivity() {
 export interface BillingMethod {
   id: string;
   label: string;
-  kind: "mobile_money" | "card";
+  kind: "mobile_money" | "card" | "bank";
   requiresPhone: boolean;
   note?: string;
 }

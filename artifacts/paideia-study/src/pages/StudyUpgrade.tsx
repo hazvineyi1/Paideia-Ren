@@ -21,6 +21,7 @@ import {
   Loader2,
   Smartphone,
   CreditCard,
+  Landmark,
   ShieldCheck,
   Tag,
   X,
@@ -414,36 +415,33 @@ export default function StudyUpgrade() {
               })}
             </div>
 
-            {/* Country */}
-            <div className="mb-8">
-              <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+            {/* Country, a discreet dropdown so the list scales as more countries
+                are added. Payment methods only appear once a country is chosen. */}
+            <div className="mb-8 max-w-xs">
+              <Label htmlFor="country" className="text-xs uppercase tracking-wide text-muted-foreground">
                 Your country
               </Label>
-              <div className="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <select
+                id="country"
+                value={countryCode ?? ""}
+                onChange={(e) => {
+                  const code = e.target.value;
+                  setCountryCode(code ? (code as BillingCountry["code"]) : null);
+                  setMethod(null);
+                }}
+                className="mt-1.5 w-full rounded-lg border border-border/60 bg-background px-3 py-2 text-sm transition-colors hover:border-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+              >
+                <option value="">Select your country</option>
                 {config.countries.map((c) => (
-                  <button
-                    key={c.code}
-                    onClick={() => {
-                      setCountryCode(c.code);
-                      setMethod(null);
-                    }}
-                    className={`rounded-lg border p-3 text-left transition-colors ${
-                      countryCode === c.code
-                        ? "border-primary bg-primary/5"
-                        : "border-border/60 hover:border-border"
-                    }`}
-                  >
-                    <div className="text-xl leading-none mb-1">{c.flag}</div>
-                    <div className="text-sm font-medium">{c.name}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {formatMoney(c.currency, c.price[tier][interval])}/{interval === "month" ? "mo" : "yr"}
-                    </div>
-                  </button>
+                  <option key={c.code} value={c.code}>
+                    {c.flag} {c.name} ({formatMoney(c.currency, c.price[tier][interval])}/
+                    {interval === "month" ? "mo" : "yr"})
+                  </option>
                 ))}
-              </div>
+              </select>
             </div>
 
-            {/* Method */}
+            {/* Method, revealed only after a country is picked */}
             {country && (
               <div className="mb-8">
                 <Label className="text-xs uppercase tracking-wide text-muted-foreground">
@@ -462,6 +460,8 @@ export default function StudyUpgrade() {
                     >
                       {m.kind === "card" ? (
                         <CreditCard className="h-4 w-4 text-muted-foreground shrink-0" />
+                      ) : m.kind === "bank" ? (
+                        <Landmark className="h-4 w-4 text-muted-foreground shrink-0" />
                       ) : (
                         <Smartphone className="h-4 w-4 text-muted-foreground shrink-0" />
                       )}

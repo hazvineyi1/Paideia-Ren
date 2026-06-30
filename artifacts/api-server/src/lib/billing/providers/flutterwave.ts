@@ -26,6 +26,8 @@ function paymentOptions(method: string): string {
       return "mobilemoneyzambia";
     case "orange_money":
       return "mobilemoneyfranco,card";
+    case "bank_transfer":
+      return "banktransfer,account,card";
     case "card":
     default:
       return "card";

@@ -11,6 +11,7 @@ import {
   isInterval,
   isMethod,
   isTier,
+  methodsForCountry,
   priceFor,
   toMinor,
   type CountryCode,
@@ -39,7 +40,7 @@ router.get("/config", (req, res) => {
   const countryParam = req.query["country"];
   const countries = Object.values(COUNTRIES).map((c) => ({
     ...c,
-    methods: c.methods.map((m) => METHODS[m]),
+    methods: methodsForCountry(c.code).map((m) => METHODS[m]),
   }));
   const selected = isCountryCode(countryParam)
     ? countries.find((c) => c.code === countryParam) ?? null
@@ -91,7 +92,7 @@ router.post("/mobile/checkout", async (req, res) => {
     return;
   }
   const countryDef = COUNTRIES[country as CountryCode];
-  if (!countryDef.methods.includes(method)) {
+  if (!methodsForCountry(country as CountryCode).includes(method)) {
     res.status(400).json({ error: `${method} is not available in ${countryDef.name}` });
     return;
   }
