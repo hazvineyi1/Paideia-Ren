@@ -102,6 +102,26 @@ own deployable web service:
    skip the pending-approval queue and are activated automatically on
    signup, and `/admin` is granted to them on every login.
 
+### Coach on its own domain (synopscoach.com)
+
+The Coach is reachable directly on a dedicated domain, bypassing the
+marketing site. All apps run behind one deployment and are routed by
+path (marketing at `/`, Coach at `/study/`); custom domains all hit the
+same server. `api-server` (`src/app.ts`) inspects the request host and,
+for a Coach domain, redirects the visitor into the Coach app at
+`/study/` (preserving the sub-path and query string) so they never see
+marketing.
+
+- Attach the domain in Replit's Publish -> Custom Domains panel and add
+  the DNS records it shows. Point `synopscoach.com` (and optionally
+  `www.synopscoach.com`) at this deployment.
+- The recognised Coach hosts default to `synopscoach.com` and
+  `www.synopscoach.com`. To change them, set the `COACH_HOSTS` env var
+  (comma-separated) on the API deployment.
+- The Coach is built with base `/study/`, so the visible URL on the
+  Coach domain is `synopscoach.com/study/...`. The redirect keeps assets
+  and SPA routing correct; marketing is never shown on that domain.
+
 ## User preferences
 
 - No em dashes anywhere in user-facing copy.

@@ -76,6 +76,58 @@ app.use(loadTeacher);
 
 app.use("/api", router);
 
+// Host-based routing for the Coach's own domain (e.g. synopscoach.com).
+// All apps live behind one deployment and are routed by path on the primary
+// domain (marketing at "/", Coach at "/study/"). Custom domains all hit this
+// same server, so when a request arrives on a Coach domain we send the visitor
+// straight into the Coach app (served at "/study/") instead of the marketing
+// site - they never see marketing. The Coach is built with base "/study/", so
+// redirecting (rather than serving its HTML at root) keeps asset and SPA-router
+// paths correct. Override the domain list with the COACH_HOSTS env var.
+const coachHosts = new Set(
+  (process.env["COACH_HOSTS"] ?? "synopscoach.com,www.synopscoach.com")
+    .split(",")
+    .map((h) => h.trim().toLowerCase())
+    .filter(Boolean),
+);
+app.use((req, res, next) => {
+  const forwarded = req.headers["x-forwarded-host"];
+  const rawHost =
+    (Array.isArray(forwarded) ? forwarded[0] : forwarded) ||
+    req.headers.host ||
+    "";
+  const host = rawHost.toString().toLowerCase().split(":")[0];
+  if (!coachHosts.has(host)) {
+    next();
+    return;
+  }
+
+  const p = req.path;
+  // The shared API is served on every host - let it through untouched. Match
+  // only the real "/api" segment, not look-alikes like "/apiary".
+  if (p === "/api" || p.startsWith("/api/")) {
+    next();
+    return;
+  }
+  // Requests already inside the Coach app (served by the "/study/" path router)
+  // are left alone. Use the trailing slash so look-alikes like "/studyfoo" are
+  // NOT treated as Coach routes - they must be redirected, or they would fall
+  // through to the marketing catch-all and leak marketing on the Coach domain.
+  if (p.startsWith("/study/")) {
+    next();
+    return;
+  }
+
+  // Everything else on a Coach host goes into the Coach app at "/study/".
+  // Bare "/" and "/study" canonicalize to "/study/"; other paths keep their
+  // sub-path (e.g. "/coach" -> "/study/coach").
+  const queryIndex = req.originalUrl.indexOf("?");
+  const search = queryIndex === -1 ? "" : req.originalUrl.slice(queryIndex);
+  const target =
+    p === "/" || p === "/study" ? "/study/" + search : "/study" + p + search;
+  res.redirect(302, target);
+});
+
 app.use(express.static(reactBuildPath));
 app.get(/^(?!\/api).*/, (_req, res) => {
   res.sendFile(path.join(reactBuildPath, "index.html"));
