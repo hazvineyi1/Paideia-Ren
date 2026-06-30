@@ -2,10 +2,10 @@ import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { useStudyAuth } from "@/hooks/use-study-auth";
 import { useStudyProfile, useDailySession, fetchApi } from "@/hooks/use-study-journey";
-import { useStudySubscription } from "@/hooks/use-study-api";
+import { useStudySubscription, useStudyBillingConfig } from "@/hooks/use-study-api";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowRight, BookOpen, BarChart3, FileText, User, Loader2, Sparkles } from "lucide-react";
+import { ArrowRight, BookOpen, BarChart3, FileText, User, Loader2, Sparkles, Check } from "lucide-react";
 
 type Personality = "drill" | "socratic" | "warm" | "analyst";
 
@@ -39,6 +39,7 @@ export default function StudyCoach() {
   const { data: profile, isLoading: profileLoading, isFetching: profileFetching, isSuccess: profileSettled } = profileQuery;
   const { data: session } = useDailySession();
   const { data: subscription } = useStudySubscription();
+  const { data: billingConfig } = useStudyBillingConfig();
   const [draft, setDraft] = useState("");
   const [opening, setOpening] = useState(false);
 
@@ -67,6 +68,18 @@ export default function StudyCoach() {
   const meta = COACH_META[personality] ?? COACH_META.warm;
   const firstName = (user?.name ?? user?.email ?? "there").split(/[ @]/)[0];
   const primaryStep = session?.session?.primaryStep ?? null;
+
+  // Upgrade nudge. Pro is the ceiling, so we always pitch toward it and pull the
+  // real Pro feature list from billing config so the benefits stay accurate.
+  const currentTier = subscription?.tier ?? "free";
+  const showUpgrade = currentTier !== "pro";
+  const isPlus = currentTier === "plus";
+  const proTier = billingConfig?.tiers.find((t) => t.id === "pro");
+  const upgradeBenefits = (proTier?.features ?? [
+    "Unlimited coaching, whenever you need it",
+    "Deeper feedback on every answer you give",
+    "A study plan that adapts to you each day",
+  ]).slice(0, 3);
 
   async function openConversation(seed: string) {
     if (opening) return;
@@ -172,8 +185,55 @@ export default function StudyCoach() {
           </div>
         </section>
 
+        {/* Upgrade card, prominent and benefit-led so the path to Pro is obvious */}
+        {showUpgrade && (
+          <section className="mt-14">
+            <div className="relative overflow-hidden rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-6 md:p-8">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-primary/15">
+                  <Sparkles className="h-4 w-4 text-primary" />
+                </span>
+                <p className="text-xs uppercase tracking-[0.18em] text-primary font-medium">
+                  {isPlus ? "Coach Pro" : "Unlock Coach Pro"}
+                </p>
+              </div>
+
+              <h2 className="font-serif text-2xl md:text-3xl leading-snug text-foreground mb-2">
+                {isPlus
+                  ? "You're one step from your full potential"
+                  : "Great results are built, not wished for"}
+              </h2>
+              <p className="text-sm md:text-base text-muted-foreground mb-6 max-w-lg">
+                {isPlus
+                  ? "Pro gives you the deepest version of your coach. Go all in on the term ahead."
+                  : "The students who pull ahead don't do it alone. Pro turns your coach into a full study partner that pushes you every single day."}
+              </p>
+
+              <ul className="grid gap-2.5 mb-7 max-w-lg">
+                {upgradeBenefits.map((b) => (
+                  <li key={b} className="flex items-start gap-2.5 text-sm text-foreground">
+                    <Check className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                    <span>{b}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <div className="flex flex-wrap items-center gap-4">
+                <Button onClick={() => setLoc("/upgrade")} size="lg" className="gap-2">
+                  <Sparkles className="h-4 w-4" />
+                  {isPlus ? "Step up to Pro" : "See what Pro unlocks"}
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+                <span className="text-xs text-muted-foreground">
+                  Pay with mobile money or card. Cancel anytime.
+                </span>
+              </div>
+            </div>
+          </section>
+        )}
+
         {/* Quiet links, power-user shortcuts, not the main surface */}
-        <nav className="mt-16 pt-6 border-t border-border/40 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
+        <nav className="mt-12 pt-6 border-t border-border/40 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
           <button onClick={() => setLoc("/materials")} className="hover:text-foreground transition-colors flex items-center gap-1.5">
             <BookOpen className="h-3.5 w-3.5" /> Materials
           </button>
@@ -183,19 +243,9 @@ export default function StudyCoach() {
           <button onClick={() => setLoc("/progress")} className="hover:text-foreground transition-colors flex items-center gap-1.5">
             <BarChart3 className="h-3.5 w-3.5" /> Progress
           </button>
-          {subscription && subscription.tier !== "pro" && (
-            <button
-              onClick={() => setLoc("/upgrade")}
-              className="hover:text-foreground transition-colors flex items-center gap-1.5 text-primary ml-auto"
-            >
-              <Sparkles className="h-3.5 w-3.5" /> Go Pro
-            </button>
-          )}
           <button
             onClick={() => setLoc("/dashboard")}
-            className={`hover:text-foreground transition-colors ${
-              subscription && subscription.tier !== "pro" ? "" : "ml-auto"
-            }`}
+            className="hover:text-foreground transition-colors ml-auto"
           >
             Open full dashboard →
           </button>
