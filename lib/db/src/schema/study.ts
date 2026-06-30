@@ -18,11 +18,52 @@ export const studyUsersTable = pgTable("study_users", {
   passwordHash: text("password_hash").notNull(),
   name: text("name").notNull(),
   subscriptionStatus: text("subscription_status").notNull().default("free"),
+  // free | pro. The tier that gates features; subscriptionStatus tracks lifecycle
+  // (free | trialing | active | past_due | canceled | expired).
+  subscriptionTier: text("subscription_tier").notNull().default("free"),
+  // Which gateway the active subscription was paid through: paynow | flutterwave | stripe | mock.
+  subscriptionProvider: text("subscription_provider"),
+  // month | year
+  subscriptionInterval: text("subscription_interval"),
+  // ISO country the learner pays from: ZW | ZA | ZM | BW
+  billingCountry: text("billing_country"),
+  // Card subscriptions can auto-renew (Stripe); mobile money renews manually.
+  autoRenew: boolean("auto_renew").notNull().default(false),
   stripeCustomerId: text("stripe_customer_id"),
   stripeSubscriptionId: text("stripe_subscription_id"),
   subscriptionCurrentPeriodEnd: timestamp("subscription_current_period_end"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
+// ─── Mobile-money / card payments (African gateways: Paynow, Flutterwave, ...) ───
+// One row per payment attempt. Mobile money cannot auto-charge, so each renewal
+// is a fresh row; card auto-renew goes through Stripe instead.
+export const studyPaymentsTable = pgTable("study_payments", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => studyUsersTable.id, { onDelete: "cascade" }),
+  provider: text("provider").notNull(), // paynow | flutterwave | stripe | mock
+  method: text("method").notNull(), // ecocash | onemoney | orange_money | mtn_momo | airtel_money | zamtel | card
+  country: text("country").notNull(), // ZW | ZA | ZM | BW
+  currency: text("currency").notNull(), // USD | ZAR | ZMW | BWP
+  amountMinor: integer("amount_minor").notNull(), // smallest currency unit (cents)
+  interval: text("interval").notNull(), // month | year
+  reference: text("reference").notNull().unique(), // our merchant reference
+  providerRef: text("provider_ref"), // gateway transaction id
+  pollUrl: text("poll_url"), // Paynow status-poll URL
+  redirectUrl: text("redirect_url"), // hosted checkout URL (card / web)
+  mobileNumber: text("mobile_number"),
+  status: text("status").notNull().default("pending"), // pending | paid | failed | canceled
+  instructions: text("instructions"), // human-facing next step (e.g. EcoCash prompt)
+  raw: jsonb("raw").$type<Record<string, unknown> | null>().default(null),
+  paidAt: timestamp("paid_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (t) => ({
+  userIdx: index("study_payments_user_idx").on(t.userId),
+  refIdx: index("study_payments_ref_idx").on(t.reference),
+}));
 
 export const studySessionsTable = pgTable("study_sessions", {
   id: serial("id").primaryKey(),

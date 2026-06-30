@@ -150,3 +150,125 @@ export function useStudyLogActivity() {
       }),
   });
 }
+
+// ─── Billing (mobile money + card) ───
+
+export interface BillingMethod {
+  id: string;
+  label: string;
+  kind: "mobile_money" | "card";
+  requiresPhone: boolean;
+  note?: string;
+}
+
+export interface BillingCountry {
+  code: "ZW" | "ZA" | "ZM" | "BW";
+  name: string;
+  flag: string;
+  currency: string;
+  methods: BillingMethod[];
+  price: { month: number; year: number };
+}
+
+export interface BillingConfig {
+  countries: BillingCountry[];
+  selected: BillingCountry | null;
+  features: string[];
+}
+
+export interface StudySubscription {
+  tier: string;
+  status: string;
+  provider: string | null;
+  interval: string | null;
+  country: string | null;
+  autoRenew: boolean;
+  currentPeriodEnd: string | null;
+}
+
+export interface MobileCheckoutInput {
+  interval: "month" | "year";
+  country: string;
+  method: string;
+  mobileNumber?: string;
+  autoRenew?: boolean;
+}
+
+export interface MobileCheckoutResult {
+  paymentId: string;
+  provider: string;
+  sandbox: boolean;
+  status: "pending" | "paid" | "failed";
+  redirectUrl: string | null;
+  instructions: string | null;
+  requiresPolling: boolean;
+}
+
+export interface PaymentStatusResult {
+  status: "pending" | "paid" | "failed";
+  paid: boolean;
+  instructions?: string | null;
+  subscription?: StudySubscription;
+}
+
+export interface CardCheckoutResult {
+  url: string;
+}
+
+export function useStudyBillingConfig() {
+  return useQuery<BillingConfig, ErrorType<unknown>>({
+    queryKey: ["studyBillingConfig"],
+    queryFn: async () => customFetch<BillingConfig>(`${BASE}/billing/config`),
+  });
+}
+
+export function useStudySubscription() {
+  return useQuery<StudySubscription, ErrorType<unknown>>({
+    queryKey: ["studySubscription"],
+    queryFn: async () => customFetch<StudySubscription>(`${BASE}/billing/subscription`),
+  });
+}
+
+export function useStudyMobileCheckout() {
+  return useMutation<MobileCheckoutResult, ErrorType<unknown>, MobileCheckoutInput>({
+    mutationKey: ["studyMobileCheckout"],
+    mutationFn: async (data) =>
+      customFetch<MobileCheckoutResult>(`${BASE}/billing/mobile/checkout`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      }),
+  });
+}
+
+export function useStudyCardCheckout() {
+  return useMutation<CardCheckoutResult, ErrorType<unknown>, { interval: "month" | "year" }>({
+    mutationKey: ["studyCardCheckout"],
+    mutationFn: async (data) =>
+      customFetch<CardCheckoutResult>(`${BASE}/billing/card/checkout`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      }),
+  });
+}
+
+export function useStudyPaymentStatus(paymentId: string | null) {
+  return useQuery<PaymentStatusResult, ErrorType<unknown>>({
+    queryKey: ["studyPaymentStatus", paymentId],
+    enabled: !!paymentId,
+    refetchInterval: (query) => {
+      const data = query.state.data;
+      return data && (data.status === "paid" || data.status === "failed") ? false : 3000;
+    },
+    queryFn: async () => customFetch<PaymentStatusResult>(`${BASE}/billing/payment/${paymentId}`),
+  });
+}
+
+export function useStudyCancelSubscription() {
+  return useMutation<StudySubscription, ErrorType<unknown>, void>({
+    mutationKey: ["studyCancelSubscription"],
+    mutationFn: async () =>
+      customFetch<StudySubscription>(`${BASE}/billing/cancel`, { method: "POST" }),
+  });
+}

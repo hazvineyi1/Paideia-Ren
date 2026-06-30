@@ -30,6 +30,7 @@ import StudyProgress from "@/pages/StudyProgress";
 import StudyIntake from "@/pages/StudyIntake";
 import StudyStartOver from "@/pages/StudyStartOver";
 import StudyCoach from "@/pages/StudyCoach";
+import StudyUpgrade from "@/pages/StudyUpgrade";
 
 const queryClient = new QueryClient();
 
@@ -82,6 +83,7 @@ function Router() {
       <Route path="/start-over" component={() => <Protected component={StudyStartOver} />} />
       <Route path="/strategy/:materialId" component={() => <Protected component={StudyStrategy} />} />
       <Route path="/progress" component={() => <Protected component={StudyProgress} />} />
+      <Route path="/upgrade" component={() => <Protected component={StudyUpgrade} />} />
       <Route component={NotFound} />
     </Switch>
   );

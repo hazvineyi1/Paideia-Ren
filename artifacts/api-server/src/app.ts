@@ -60,11 +60,96 @@ app.post(
       const customerId = event?.data?.object?.customer;
       if (typeof customerId === "string" && customerId.length > 0) {
         await syncTeacherFromCustomer(customerId);
+        // Also reflect Stripe state onto study learners (card auto-renew).
+        const { activateStudyStripeFromCustomer } = await import(
+          "./lib/billing/service.js"
+        );
+        await activateStudyStripeFromCustomer(customerId);
       }
       res.status(200).json({ received: true });
     } catch (err) {
       logger.error({ err }, "stripe webhook failed");
       res.status(400).json({ error: "Webhook handling failed" });
+    }
+  },
+);
+
+// Mobile-money webhooks (Paynow result URL, Flutterwave). These must be raw and
+// registered BEFORE express.json(). We never trust the posted body for money
+// state: we look the payment up by reference and re-confirm with the gateway
+// before activating.
+app.post(
+  "/api/study/billing/webhook/paynow",
+  express.raw({ type: "*/*" }),
+  async (req, res) => {
+    try {
+      const body = Buffer.isBuffer(req.body) ? req.body.toString("utf8") : "";
+      const params = new URLSearchParams(body);
+      const reference = params.get("reference") ?? "";
+      const { getPaymentByReference, activatePayment, markPaymentFailed } = await import(
+        "./lib/billing/service.js"
+      );
+      const { getProviderById } = await import("./lib/billing/providers/index.js");
+      const payment = reference ? await getPaymentByReference(reference) : null;
+      if (payment && payment.status === "pending") {
+        const provider = getProviderById(payment.provider);
+        const result = await provider.checkStatus({
+          reference: payment.reference,
+          providerRef: payment.providerRef,
+          pollUrl: payment.pollUrl,
+        });
+        if (result.status === "paid") await activatePayment(payment.reference, result.raw);
+        else if (result.status === "failed") await markPaymentFailed(payment.reference, result.raw);
+      }
+      res.status(200).send("ok");
+    } catch (err) {
+      logger.error({ err }, "paynow webhook failed");
+      res.status(200).send("ok");
+    }
+  },
+);
+
+app.post(
+  "/api/study/billing/webhook/flutterwave",
+  express.raw({ type: "*/*" }),
+  async (req, res) => {
+    try {
+      const expected = process.env["FLUTTERWAVE_SECRET_HASH"];
+      const signature = req.headers["verif-hash"];
+      // Fail closed: in production, refuse unsigned webhooks (missing hash means
+      // the gateway is misconfigured, so we must not accept forgeable posts).
+      if (!expected) {
+        if (process.env["NODE_ENV"] === "production") {
+          logger.error("flutterwave webhook rejected: FLUTTERWAVE_SECRET_HASH not set");
+          res.status(401).send("webhook not configured");
+          return;
+        }
+      } else if (signature !== expected) {
+        res.status(401).send("invalid signature");
+        return;
+      }
+      const body = Buffer.isBuffer(req.body) ? req.body.toString("utf8") : "{}";
+      const event = JSON.parse(body) as { data?: { tx_ref?: string } };
+      const reference = event.data?.tx_ref ?? "";
+      const { getPaymentByReference, activatePayment, markPaymentFailed } = await import(
+        "./lib/billing/service.js"
+      );
+      const { getProviderById } = await import("./lib/billing/providers/index.js");
+      const payment = reference ? await getPaymentByReference(reference) : null;
+      if (payment && payment.status === "pending") {
+        const provider = getProviderById(payment.provider);
+        const result = await provider.checkStatus({
+          reference: payment.reference,
+          providerRef: payment.providerRef,
+          pollUrl: payment.pollUrl,
+        });
+        if (result.status === "paid") await activatePayment(payment.reference, result.raw);
+        else if (result.status === "failed") await markPaymentFailed(payment.reference, result.raw);
+      }
+      res.status(200).send("ok");
+    } catch (err) {
+      logger.error({ err }, "flutterwave webhook failed");
+      res.status(200).send("ok");
     }
   },
 );

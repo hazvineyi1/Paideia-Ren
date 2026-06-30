@@ -1,8 +1,24 @@
 import { Router, type IRouter } from "express";
-import { db, studyUsersTable } from "@workspace/db";
+import { db, studyUsersTable, studyPaymentsTable } from "@workspace/db";
 import { eq, sql } from "drizzle-orm";
 import { requireStudyUser } from "../../middlewares/auth.js";
 import { getUncachableStripeClient } from "../../lib/stripeClient.js";
+import {
+  COUNTRIES,
+  METHODS,
+  PRO_FEATURES,
+  isCountryCode,
+  isInterval,
+  isMethod,
+  toMinor,
+  type CountryCode,
+} from "../../lib/billing/config.js";
+import { resolveProvider, getProviderById } from "../../lib/billing/providers/index.js";
+import {
+  activatePayment,
+  getPaymentById,
+  getSubscription,
+} from "../../lib/billing/service.js";
 
 const router: IRouter = Router();
 router.use(requireStudyUser);
@@ -12,7 +28,190 @@ function publicBaseUrl(): string {
   return domain ? `https://${domain}` : "http://localhost:5000";
 }
 
-async function findActivePriceId(): Promise<string | null> {
+// ─── Mobile-money / card billing (Paynow, Flutterwave, sandbox) ───
+
+// Pricing + supported methods, for the upgrade screen.
+router.get("/config", (req, res) => {
+  const countryParam = req.query["country"];
+  const countries = Object.values(COUNTRIES).map((c) => ({
+    ...c,
+    methods: c.methods.map((m) => METHODS[m]),
+  }));
+  const selected = isCountryCode(countryParam)
+    ? countries.find((c) => c.code === countryParam) ?? null
+    : null;
+  res.json({ countries, selected, features: PRO_FEATURES });
+});
+
+// Current subscription state for the signed-in learner.
+router.get("/subscription", async (req, res) => {
+  const sub = await getSubscription(req.studyUser!.id);
+  res.json(sub);
+});
+
+// Begin a mobile-money or local-card payment. Returns either a redirect URL
+// (card / web checkout) or polling info (mobile money push prompt).
+router.post("/mobile/checkout", async (req, res) => {
+  const user = req.studyUser!;
+  const { interval, country, method, mobileNumber, autoRenew } = req.body ?? {};
+
+  if (!isInterval(interval) || !isCountryCode(country) || !isMethod(method)) {
+    res.status(400).json({ error: "Invalid interval, country, or method" });
+    return;
+  }
+  const countryDef = COUNTRIES[country as CountryCode];
+  if (!countryDef.methods.includes(method)) {
+    res.status(400).json({ error: `${method} is not available in ${countryDef.name}` });
+    return;
+  }
+  const methodDef = METHODS[method];
+  if (methodDef.requiresPhone && !mobileNumber) {
+    res.status(400).json({ error: "A mobile number is required for mobile money" });
+    return;
+  }
+
+  const amountMajor = countryDef.price[interval];
+  const amountMinor = toMinor(amountMajor);
+  const reference = `SC-${user.id.slice(0, 8)}-${Date.now()}`;
+  const provider = resolveProvider(country, method);
+
+  const returnUrl = `${publicBaseUrl()}/study/upgrade?ref=${reference}`;
+  const resultUrl = `${publicBaseUrl()}/api/study/billing/webhook/${provider.id}`;
+
+  // Persist the attempt up front so polling/webhooks have a row to update.
+  const inserted = await db
+    .insert(studyPaymentsTable)
+    .values({
+      userId: user.id,
+      provider: provider.id,
+      method,
+      country,
+      currency: countryDef.currency,
+      amountMinor,
+      interval,
+      reference,
+      mobileNumber: mobileNumber ?? null,
+      status: "pending",
+    })
+    .returning({ id: studyPaymentsTable.id });
+  const paymentId = inserted[0]!.id;
+
+  // Record the auto-renew preference (mobile money still renews manually).
+  if (typeof autoRenew === "boolean") {
+    await db
+      .update(studyUsersTable)
+      .set({ autoRenew })
+      .where(eq(studyUsersTable.id, user.id));
+  }
+
+  try {
+    const result = await provider.initiate({
+      reference,
+      amountMajor,
+      amountMinor,
+      currency: countryDef.currency,
+      country,
+      method,
+      interval,
+      mobileNumber: mobileNumber ?? undefined,
+      email: user.email,
+      name: user.name,
+      returnUrl,
+      resultUrl,
+    });
+
+    await db
+      .update(studyPaymentsTable)
+      .set({
+        providerRef: result.providerRef ?? null,
+        pollUrl: result.pollUrl ?? null,
+        redirectUrl: result.redirectUrl ?? null,
+        instructions: result.instructions ?? null,
+        raw: result.raw ?? null,
+        updatedAt: new Date(),
+      })
+      .where(eq(studyPaymentsTable.id, paymentId));
+
+    res.json({
+      paymentId,
+      provider: provider.id,
+      sandbox: provider.id === "mock",
+      status: result.status,
+      redirectUrl: result.redirectUrl ?? null,
+      instructions: result.instructions ?? null,
+      requiresPolling: !result.redirectUrl,
+    });
+  } catch (err) {
+    await db
+      .update(studyPaymentsTable)
+      .set({ status: "failed", updatedAt: new Date() })
+      .where(eq(studyPaymentsTable.id, paymentId));
+    const message = err instanceof Error ? err.message : "Payment could not be started";
+    res.status(502).json({ error: message });
+  }
+});
+
+// Poll a payment's status. On success, activates the subscription.
+router.get("/payment/:id", async (req, res) => {
+  const user = req.studyUser!;
+  const payment = await getPaymentById(req.params.id);
+  if (!payment || payment.userId !== user.id) {
+    res.status(404).json({ error: "Payment not found" });
+    return;
+  }
+
+  if (payment.status === "paid") {
+    res.json({ status: "paid", paid: true, subscription: await getSubscription(user.id) });
+    return;
+  }
+  if (payment.status === "failed") {
+    res.json({ status: "failed", paid: false });
+    return;
+  }
+
+  // Resolve by the provider that actually initiated this payment (persisted on
+  // the row), never by current env - keys may have changed mid-flight.
+  const provider = getProviderById(payment.provider);
+  const result = await provider.checkStatus({
+    reference: payment.reference,
+    providerRef: payment.providerRef,
+    pollUrl: payment.pollUrl,
+  });
+
+  if (result.status === "paid") {
+    await activatePayment(payment.reference, result.raw);
+    res.json({ status: "paid", paid: true, subscription: await getSubscription(user.id) });
+    return;
+  }
+  if (result.status === "failed") {
+    await db
+      .update(studyPaymentsTable)
+      .set({ status: "failed", updatedAt: new Date() })
+      .where(eq(studyPaymentsTable.id, payment.id));
+    res.json({ status: "failed", paid: false });
+    return;
+  }
+  res.json({ status: "pending", paid: false, instructions: payment.instructions });
+});
+
+// Turn off auto-renew. Access remains until the current period ends.
+router.post("/cancel", async (req, res) => {
+  const user = req.studyUser!;
+  await db
+    .update(studyUsersTable)
+    .set({ autoRenew: false, subscriptionStatus: "canceled" })
+    .where(eq(studyUsersTable.id, user.id));
+  res.json(await getSubscription(user.id));
+});
+
+// ─── Stripe (card auto-renew) ───
+
+// Find an active recurring Stripe price for the Coach Pro plan, matching the
+// requested billing interval. The product MUST be tagged with metadata
+// paideia_plan=coach so we never attach an unrelated plan's price (e.g. the
+// Teacher plan) to a Coach learner. Returns null when no such plan is configured
+// yet, which lets the caller fall back to a one-time card payment.
+async function findActivePriceId(interval: "month" | "year"): Promise<string | null> {
   const result = (await db.execute(sql`
     SELECT pr.id
     FROM stripe.prices pr
@@ -20,6 +219,8 @@ async function findActivePriceId(): Promise<string | null> {
     WHERE pr.active = true
       AND p.active = true
       AND pr.recurring IS NOT NULL
+      AND (pr.recurring ->> 'interval') = ${interval}
+      AND (p.metadata ->> 'paideia_plan') = 'coach'
     ORDER BY pr.created DESC
     LIMIT 1
   `)) as unknown as { rows: Array<{ id: string }> };
@@ -28,10 +229,10 @@ async function findActivePriceId(): Promise<string | null> {
 
 async function ensureCustomer(userId: string, email: string, name: string): Promise<string> {
   return db.transaction(async (tx) => {
-    const rows = await tx.execute(sql`
+    const rows = (await tx.execute(sql`
       SELECT stripe_customer_id FROM study_users
       WHERE id = ${userId} FOR UPDATE
-    `) as unknown as { rows: Array<{ stripe_customer_id: string | null }> };
+    `)) as unknown as { rows: Array<{ stripe_customer_id: string | null }> };
     const existing = rows.rows[0]?.stripe_customer_id;
     if (existing) return existing;
     const stripe = await getUncachableStripeClient();
@@ -70,6 +271,40 @@ router.post("/checkout", async (req, res) => {
   });
 
   res.json({ sessionId: session.id, url: session.url ?? "" });
+});
+
+// Card auto-renew via a Stripe subscription. The price is discovered from the
+// connected Stripe account, so the frontend does not need to know price IDs.
+// Returns 409 when no live Stripe plan exists yet, letting the Upgrade screen
+// fall back to a one-time card charge through the local gateway.
+router.post("/card/checkout", async (req, res) => {
+  const user = req.studyUser!;
+  const { interval } = req.body ?? {};
+  if (!isInterval(interval)) {
+    res.status(400).json({ error: "Invalid interval" });
+    return;
+  }
+
+  const priceId = await findActivePriceId(interval);
+  if (!priceId) {
+    res.status(409).json({ error: "card_autopay_unavailable" });
+    return;
+  }
+
+  const customerId = await ensureCustomer(user.id, user.email, user.name);
+  const stripe = await getUncachableStripeClient();
+  const base = publicBaseUrl();
+
+  const session = await stripe.checkout.sessions.create({
+    customer: customerId,
+    mode: "subscription",
+    line_items: [{ price: priceId, quantity: 1 }],
+    success_url: `${base}/study/upgrade?stripe=success`,
+    cancel_url: `${base}/study/upgrade?stripe=cancel`,
+    metadata: { studyUserId: user.id, interval },
+  });
+
+  res.json({ url: session.url ?? "" });
 });
 
 router.post("/portal", async (req, res) => {

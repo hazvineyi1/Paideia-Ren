@@ -2,9 +2,10 @@ import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { useStudyAuth } from "@/hooks/use-study-auth";
 import { useStudyProfile, useDailySession, fetchApi } from "@/hooks/use-study-journey";
+import { useStudySubscription } from "@/hooks/use-study-api";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowRight, BookOpen, BarChart3, FileText, User, Loader2 } from "lucide-react";
+import { ArrowRight, BookOpen, BarChart3, FileText, User, Loader2, Sparkles } from "lucide-react";
 
 type Personality = "drill" | "socratic" | "warm" | "analyst";
 
@@ -37,6 +38,7 @@ export default function StudyCoach() {
   const profileQuery = useStudyProfile();
   const { data: profile, isLoading: profileLoading, isFetching: profileFetching, isSuccess: profileSettled } = profileQuery;
   const { data: session } = useDailySession();
+  const { data: subscription } = useStudySubscription();
   const [draft, setDraft] = useState("");
   const [opening, setOpening] = useState(false);
 
@@ -181,7 +183,20 @@ export default function StudyCoach() {
           <button onClick={() => setLoc("/progress")} className="hover:text-foreground transition-colors flex items-center gap-1.5">
             <BarChart3 className="h-3.5 w-3.5" /> Progress
           </button>
-          <button onClick={() => setLoc("/dashboard")} className="hover:text-foreground transition-colors ml-auto">
+          {subscription && subscription.tier !== "pro" && (
+            <button
+              onClick={() => setLoc("/upgrade")}
+              className="hover:text-foreground transition-colors flex items-center gap-1.5 text-primary ml-auto"
+            >
+              <Sparkles className="h-3.5 w-3.5" /> Go Pro
+            </button>
+          )}
+          <button
+            onClick={() => setLoc("/dashboard")}
+            className={`hover:text-foreground transition-colors ${
+              subscription && subscription.tier !== "pro" ? "" : "ml-auto"
+            }`}
+          >
             Open full dashboard →
           </button>
         </nav>
